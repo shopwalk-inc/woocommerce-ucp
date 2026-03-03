@@ -200,5 +200,19 @@ function shopwalk_ai_deactivate(): void {
     if (class_exists('Shopwalk_WC_Sync')) {
         Shopwalk_WC_Sync::unschedule_cron();
     }
+    // Notify Shopwalk so feeds stop syncing this store immediately.
+    // Fire-and-forget — errors are silently ignored to never block deactivation.
+    $plugin_key = get_option('shopwalk_wc_plugin_key', '');
+    if (!empty($plugin_key)) {
+        wp_remote_post('https://api.shopwalk.com/api/v1/plugin/deactivate', [
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode([
+                'plugin_key' => $plugin_key,
+                'site_url'   => home_url(),
+            ]),
+            'timeout'  => 8,
+            'blocking' => false, // Non-blocking — don't wait for response
+        ]);
+    }
 }
 register_deactivation_hook(__FILE__, 'shopwalk_ai_deactivate');
