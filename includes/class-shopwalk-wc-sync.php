@@ -22,8 +22,22 @@ class Shopwalk_WC_Sync {
     /** Max queue size (events). */
     private const QUEUE_CAP = 500;
 
-    /** Max events to flush per init call. */
+    /** Max events to flush per cron run. */
     private const QUEUE_FLUSH_BATCH = 50;
+
+    /** WP-Cron hook name for queue flush. */
+    private const CRON_FLUSH_HOOK = 'shopwalk_wc_queue_flush';
+
+    /** Bulk sync batch size (products per API burst). */
+    private const BULK_BATCH_SIZE = 25;
+
+    /**
+     * In-request deduplication: track product IDs already sent a delete event
+     * this request to prevent double-fire from wp_trash_post + before_delete_post.
+     *
+     * @var int[]
+     */
+    private static array $deleted_this_request = [];
 
     public static function instance(): self {
         if (null === self::$instance) {
@@ -41,7 +55,8 @@ class Shopwalk_WC_Sync {
         add_action('woocommerce_delete_product', [$this, 'delete_product'], 10, 1);
         add_action('wp_trash_post', [$this, 'trash_product'], 10, 1);
 
-        // Fallback: catch permanent deletes for variable products and other edge cases
+        // Fallback: catch permanent deletes for variable products and other edge cases.
+        // Uses $deleted_this_request to avoid double-firing with woocommerce_delete_product.
         add_action('before_delete_post', [$this, 'maybe_delete_product'], 10, 1);
 
         // Stock-only updates (skip vector re-embedding on the API side)
@@ -56,8 +71,34 @@ class Shopwalk_WC_Sync {
         add_action('woocommerce_update_coupon', [$this, 'sync_coupon_upsert'], 10, 2);
         add_action('woocommerce_delete_coupon', [$this, 'sync_coupon_delete'], 10, 2);
 
-        // Retry queue — flush up to QUEUE_FLUSH_BATCH events on every init
-        add_action('init', [$this, 'flush_sync_queue'], 20);
+        // Queue flush runs via WP-Cron every 5 minutes — NOT on every init.
+        // Scheduled on plugin activation; see shopwalk_ai_activate() in shopwalk-ai.php.
+        add_action(self::CRON_FLUSH_HOOK, [$this, 'flush_sync_queue']);
+    }
+
+    // =========================================================================
+    // Cron scheduling helpers (called from plugin activation/deactivation)
+    // =========================================================================
+
+    /**
+     * Schedule the queue-flush cron job if not already scheduled.
+     * Call from the plugin activation hook.
+     */
+    public static function schedule_cron(): void {
+        if (!wp_next_scheduled(self::CRON_FLUSH_HOOK)) {
+            wp_schedule_event(time(), 'shopwalk_every_5min', self::CRON_FLUSH_HOOK);
+        }
+    }
+
+    /**
+     * Remove the queue-flush cron job.
+     * Call from the plugin deactivation hook.
+     */
+    public static function unschedule_cron(): void {
+        $timestamp = wp_next_scheduled(self::CRON_FLUSH_HOOK);
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, self::CRON_FLUSH_HOOK);
+        }
     }
 
     // =========================================================================
@@ -92,6 +133,7 @@ class Shopwalk_WC_Sync {
     /**
      * POST an event payload to the Shopwalk sync endpoint.
      * On failure (WP_Error or non-2xx), queues the payload for retry.
+     * On 401, marks the key invalid and does NOT queue.
      *
      * @param  array $payload Structured event array.
      * @return bool  true on success, false on failure.
@@ -161,8 +203,8 @@ class Shopwalk_WC_Sync {
 
     /**
      * Flush up to QUEUE_FLUSH_BATCH events from the retry queue.
+     * Runs via WP-Cron every 5 minutes (not on every page load).
      * Successfully sent events are removed; failures stay in the queue.
-     * Registered on the 'init' hook (priority 20).
      */
     public function flush_sync_queue(): void {
         $api_key = $this->get_api_key();
@@ -193,6 +235,39 @@ class Shopwalk_WC_Sync {
         // Put failures back in front, then the untouched tail
         $new_queue = array_merge($failed, $remaining);
         update_option(self::QUEUE_OPTION, $new_queue, false);
+    }
+
+    /**
+     * Send a single queued payload. Extracted from flush_sync_queue for testability.
+     * Detects 401 Unauthorized and marks the key as invalid to stop infinite retries.
+     *
+     * @param  string $api_key      The plugin API key.
+     * @param  string $payload_json JSON-encoded event payload.
+     * @return bool   true on success, false on any failure.
+     */
+    protected function flush_one(string $api_key, string $payload_json): bool {
+        $response = wp_remote_post(self::SYNC_ENDPOINT, [
+            'timeout' => 10,
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'X-API-Key'    => $api_key,
+            ],
+            'body' => $payload_json,
+        ]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+
+        if ($code === 401) {
+            update_option('shopwalk_wc_key_invalid', 1);
+            update_option('shopwalk_wc_sync_status', 'Error: invalid API key (401)');
+            return false;
+        }
+
+        return ($code >= 200 && $code < 300);
     }
 
     // =========================================================================
@@ -234,6 +309,7 @@ class Shopwalk_WC_Sync {
 
     /**
      * Notify Shopwalk when a product is permanently deleted (product.delete).
+     * Deduplicates within the same request via $deleted_this_request.
      */
     public function delete_product(int $product_id): void {
         if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
@@ -243,6 +319,12 @@ class Shopwalk_WC_Sync {
         if (empty($this->get_api_key())) {
             return;
         }
+
+        // Deduplicate: woocommerce_delete_product and before_delete_post both fire
+        if (in_array($product_id, self::$deleted_this_request, true)) {
+            return;
+        }
+        self::$deleted_this_request[] = $product_id;
 
         $payload = [
             'event_type'  => 'product.delete',
@@ -258,22 +340,54 @@ class Shopwalk_WC_Sync {
 
     /**
      * Handle trashed products — treat as a delete signal.
+     * Also deduplicates via $deleted_this_request.
      */
     public function trash_product(int $post_id): void {
         if (get_post_type($post_id) !== 'product') {
             return;
         }
-        $this->delete_product($post_id);
+
+        // Deduplicate: wp_trash_post and maybe_delete_product can both fire
+        if (in_array($post_id, self::$deleted_this_request, true)) {
+            return;
+        }
+        self::$deleted_this_request[] = $post_id;
+
+        if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
+            return;
+        }
+
+        if (empty($this->get_api_key())) {
+            return;
+        }
+
+        $payload = [
+            'event_type'  => 'product.delete',
+            'source'      => 'plugin',
+            'merchant_id' => $this->get_merchant_id(),
+            'product'     => [
+                'external_id' => (string) $post_id,
+            ],
+        ];
+
+        $this->send_event($payload);
     }
 
     /**
      * Fallback permanent-delete hook.
      * Catches variable products and any type missed by woocommerce_delete_product.
+     * Skips if delete_product() or trash_product() already handled this ID.
      */
     public function maybe_delete_product(int $post_id): void {
         if (get_post_type($post_id) !== 'product') {
             return;
         }
+
+        // Skip if already handled this request (deduplication)
+        if (in_array($post_id, self::$deleted_this_request, true)) {
+            return;
+        }
+
         $this->delete_product($post_id);
     }
 
@@ -284,10 +398,6 @@ class Shopwalk_WC_Sync {
     /**
      * Sync a stock-status change (product.stock_update).
      * Hooked to woocommerce_product_set_stock_status.
-     *
-     * @param int        $product_id
-     * @param string     $status      'instock'|'outofstock'|'onbackorder'
-     * @param WC_Product $product
      */
     public function sync_stock_update(int $product_id, string $status, WC_Product $product): void {
         if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
@@ -316,10 +426,6 @@ class Shopwalk_WC_Sync {
     /**
      * Sync a stock-quantity change (product.stock_update).
      * Hooked to woocommerce_product_set_stock.
-     *
-     * @param WC_Product $product
-     * @param int|null   $stock_quantity  New stock quantity
-     * @param int|null   $old_stock       Previous stock quantity
      */
     public function sync_stock_update_quantity($product, $stock_quantity, $old_stock): void {
         if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
@@ -357,11 +463,7 @@ class Shopwalk_WC_Sync {
 
     /**
      * Sync a price/sale change (product.price_update).
-     * Hooked to woocommerce_product_object_updated_props.
      * Only fires if price-related props were among the changed properties.
-     *
-     * @param WC_Product $product
-     * @param string[]   $updated_props
      */
     public function sync_price_update(WC_Product $product, array $updated_props): void {
         $price_props = ['regular_price', 'sale_price', 'price'];
@@ -403,10 +505,6 @@ class Shopwalk_WC_Sync {
 
     /**
      * Sync a coupon create or update (product.coupon_update / action: upsert).
-     * Hooked to woocommerce_new_coupon and woocommerce_update_coupon.
-     *
-     * @param int            $coupon_id
-     * @param WC_Coupon|null $coupon
      */
     public function sync_coupon_upsert(int $coupon_id, $coupon = null): void {
         if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
@@ -442,10 +540,6 @@ class Shopwalk_WC_Sync {
 
     /**
      * Sync a coupon deletion (product.coupon_update / action: delete).
-     * Hooked to woocommerce_delete_coupon.
-     *
-     * @param int            $coupon_id
-     * @param WC_Coupon|null $coupon
      */
     public function sync_coupon_delete(int $coupon_id, $coupon = null): void {
         if (get_option('shopwalk_wc_enable_sync', 'yes') !== 'yes') {
@@ -485,26 +579,36 @@ class Shopwalk_WC_Sync {
 
     /**
      * Bulk-sync all published products. Invoked by the 'shopwalk_wc_bulk_sync' cron event.
+     * Processes in batches of BULK_BATCH_SIZE with a 1-second pause between batches
+     * to avoid rate-limiting on large stores.
      */
     public static function run_bulk_sync(): void {
-        $products = wc_get_products(['status' => 'publish', 'limit' => -1, 'return' => 'ids']);
-        $synced   = 0;
-        $failed   = 0;
+        $all_ids = wc_get_products(['status' => 'publish', 'limit' => -1, 'return' => 'ids']);
+        $batches = array_chunk($all_ids, self::BULK_BATCH_SIZE);
+        $synced  = 0;
+        $failed  = 0;
 
-        foreach ($products as $id) {
-            $instance = self::instance();
-            try {
-                $instance->sync_product($id);
-                $synced++;
-            } catch (\Throwable $e) {
-                $failed++;
+        foreach ($batches as $batch_index => $batch) {
+            // Pause 1 second between batches (not before the first)
+            if ($batch_index > 0) {
+                sleep(1);
+            }
+
+            foreach ($batch as $id) {
+                $instance = self::instance();
+                try {
+                    $instance->sync_product($id);
+                    $synced++;
+                } catch (\Throwable $e) {
+                    $failed++;
+                }
             }
         }
 
         update_option('shopwalk_wc_bulk_sync_result', [
             'synced' => $synced,
             'failed' => $failed,
-            'total'  => count($products),
+            'total'  => count($all_ids),
             'at'     => current_time('Y-m-d H:i:s'),
         ]);
     }
@@ -515,9 +619,6 @@ class Shopwalk_WC_Sync {
 
     /**
      * Build the full product.upsert event payload.
-     *
-     * @param  WC_Product $product
-     * @return array
      */
     protected function build_upsert_event(WC_Product $product): array {
         // Categories
@@ -580,39 +681,18 @@ class Shopwalk_WC_Sync {
             ],
         ];
     }
-    /**
-     * Send a single queued payload. Extracted from flush_sync_queue for testability.
-     * Detects 401 Unauthorized and marks the key as invalid to stop infinite retries.
-     *
-     * @param  string $api_key      The plugin API key.
-     * @param  string $payload_json JSON-encoded event payload.
-     * @return bool   true on success, false on any failure.
-     */
-    protected function flush_one(string $api_key, string $payload_json): bool {
-        $response = wp_remote_post(self::SYNC_ENDPOINT, [
-            'timeout' => 10,
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'X-API-Key'    => $api_key,
-            ],
-            'body' => $payload_json,
-        ]);
-
-        if (is_wp_error($response)) {
-            return false;
-        }
-
-        $code = wp_remote_retrieve_response_code($response);
-
-        if ($code === 401) {
-            update_option('shopwalk_wc_key_invalid', 1);
-            update_option('shopwalk_wc_sync_status', 'Error: invalid API key (401)');
-            return false;
-        }
-
-        return ($code >= 200 && $code < 300);
-    }
 }
+
+// Register custom 5-minute cron interval
+add_filter('cron_schedules', function (array $schedules): array {
+    if (!isset($schedules['shopwalk_every_5min'])) {
+        $schedules['shopwalk_every_5min'] = [
+            'interval' => 300,
+            'display'  => __('Every 5 Minutes (Shopwalk)', 'shopwalk-ai'),
+        ];
+    }
+    return $schedules;
+});
 
 // Boot the sync singleton
 add_action('plugins_loaded', function () {

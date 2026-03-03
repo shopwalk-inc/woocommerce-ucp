@@ -117,6 +117,10 @@ add_action('plugins_loaded', 'shopwalk_ai_init');
  */
 function shopwalk_ai_activate(): void {
     flush_rewrite_rules();
+    // Schedule the sync queue flush cron (every 5 min)
+    if (class_exists('Shopwalk_WC_Sync')) {
+        Shopwalk_WC_Sync::schedule_cron();
+    }
 }
 register_activation_hook(__FILE__, 'shopwalk_ai_activate');
 
@@ -125,5 +129,9 @@ register_activation_hook(__FILE__, 'shopwalk_ai_activate');
  */
 function shopwalk_ai_deactivate(): void {
     flush_rewrite_rules();
+    // Remove the sync queue flush cron
+    if (class_exists('Shopwalk_WC_Sync')) {
+        Shopwalk_WC_Sync::unschedule_cron();
+    }
 }
 register_deactivation_hook(__FILE__, 'shopwalk_ai_deactivate');
