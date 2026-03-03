@@ -4,7 +4,7 @@ Tags: ai shopping, product sync, woocommerce, ai commerce, ai checkout, ucp
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 

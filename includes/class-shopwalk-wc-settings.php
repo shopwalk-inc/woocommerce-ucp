@@ -10,6 +10,7 @@
 defined('ABSPATH') || exit;
 
 class Shopwalk_WC_Settings {
+    private Shopwalk_WC_Dashboard $dashboard;
 
     private static ?self $instance = null;
 
@@ -32,6 +33,7 @@ class Shopwalk_WC_Settings {
         add_action('wp_ajax_shopwalk_wc_sync_all',         [$this, 'ajax_sync_all']);
         add_action('wp_ajax_shopwalk_wc_test_connection',  [$this, 'ajax_test_connection']);
         add_action('wp_ajax_shopwalk_auto_register',       [$this, 'ajax_auto_register']);
+        $this->dashboard = new Shopwalk_WC_Dashboard();
         add_action('wp_ajax_shopwalk_save_manual_key',     [$this, 'ajax_save_manual_key']);
 
         // Enqueue admin JS on our settings tab
@@ -49,6 +51,10 @@ class Shopwalk_WC_Settings {
             $this->render_connect_screen();
             return;
         }
+        // Show dashboard stats at the top — this is the retention hook.
+        $this->dashboard->render();
+        echo '<hr style="margin:24px 0;">';
+        echo '<h3 style="margin-bottom:8px;">' . esc_html__('Plugin Settings', 'shopwalk-ai') . '</h3>';
         woocommerce_admin_fields($this->get_settings());
     }
 

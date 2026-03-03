@@ -33,7 +33,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SHOPWALK_AI_VERSION',    '1.5.0');
+define('SHOPWALK_AI_VERSION',    '1.6.0');
 define('SHOPWALK_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SHOPWALK_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 
