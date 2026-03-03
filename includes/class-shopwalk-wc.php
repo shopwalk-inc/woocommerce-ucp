@@ -56,6 +56,9 @@ class Shopwalk_WC {
         // Auto-updater (checks shopwalk.com for plugin updates)
         Shopwalk_WC_Updater::instance();
 
+        // Register order webhook listeners
+        new Shopwalk_WC_Webhooks();
+
         // Add version header to all Shopwalk REST responses
         add_filter('rest_post_dispatch', function($result, $server, $request) {
             $route = $request->get_route();
@@ -88,12 +91,7 @@ class Shopwalk_WC {
 
             // Orders + Refunds
             $orders = new Shopwalk_WC_Orders();
-            $orders->register_routes($namespace);
-
-            // Webhooks
-            $webhooks = new Shopwalk_WC_Webhooks();
-            $webhooks->register_routes($namespace);
-        }
+            $orders->register_routes($namespace);        }
     }
 
     /**
