@@ -782,7 +782,7 @@ class Shopwalk_WC_Dashboard {
 		$checks = [];
 
 		// PHP >= 8.1
-		$php_ok = version_compare( PHP_VERSION, '8.1', '>=' );
+		$php_ok = version_compare( PHP_VERSION, '8.0', '>=' );
 		$checks[] = [
 			'name'  => __( 'PHP Version', 'shopwalk-ai' ),
 			'ok'    => $php_ok,
