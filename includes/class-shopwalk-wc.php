@@ -49,8 +49,8 @@ class Shopwalk_WC {
 
         // Admin settings + dashboard widget
         if (is_admin()) {
+            // Shopwalk_WC_Settings creates Shopwalk_WC_Dashboard in its constructor.
             Shopwalk_WC_Settings::instance();
-            Shopwalk_WC_Dashboard::instance();
         }
 
         // Auto-updater (checks shopwalk.com for plugin updates)

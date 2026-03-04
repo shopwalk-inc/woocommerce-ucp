@@ -498,15 +498,7 @@ class Shopwalk_WC_Settings {
                 'desc_tip'    => true,
                 'placeholder' => __('Auto (derived from site URL)', 'shopwalk-ai'),
             ],
-            'stripe_secret_key' => [
-                'name'        => __('Stripe Secret Key', 'shopwalk-ai'),
-                'type'        => 'password',
-                'desc'        => __('Optional — only needed if the WC Stripe gateway is not installed. Shopwalk AI uses this key to process Stripe payments during AI checkout sessions.', 'shopwalk-ai'),
-                'id'          => 'shopwalk_wc_stripe_secret_key',
-                'default'     => '',
-                'desc_tip'    => true,
-                'placeholder' => 'sk_live_... or sk_test_...',
-            ],
+
             'api_key' => [
                 'name'     => __('Inbound API Key', 'shopwalk-ai'),
                 'type'     => 'text',
