@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk AI
  * Plugin URI:  https://shopwalk.com/woocommerce
  * Description: AI-enable your WooCommerce store in minutes. Shopwalk AI syncs your products and opens your store to AI-powered discovery, browsing, and checkout.
- * Version:     1.4.0
+ * Version:     1.7.0
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -33,7 +33,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SHOPWALK_AI_VERSION',    '1.6.0');
+define('SHOPWALK_AI_VERSION',    '1.7.0');
 define('SHOPWALK_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SHOPWALK_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -121,6 +121,10 @@ function shopwalk_ai_activate(): void {
     if (class_exists('Shopwalk_WC_Sync')) {
         Shopwalk_WC_Sync::schedule_cron();
     }
+    // Schedule hourly license refresh cron
+    if (!wp_next_scheduled('shopwalk_license_refresh')) {
+        wp_schedule_event(time(), 'hourly', 'shopwalk_license_refresh');
+    }
     // Auto-register this store with Shopwalk — no manual setup required.
     // If the network call fails, a transient flag is set and retried on admin_init.
     shopwalk_ai_auto_register();
@@ -129,35 +133,39 @@ function shopwalk_ai_activate(): void {
  * Attempt to auto-register (or re-register) this store with Shopwalk.
  *
  * Called on activation and retried on admin_init when a previous attempt failed.
- * Idempotent — safe to call multiple times; the API returns the same key for the same site_url.
+ * Idempotent — safe to call multiple times; the API returns the same merchant_id for the same site_url.
+ *
+ * Supports two channels:
+ *  - Pro: define SHOPWALK_REGISTRATION_TOKEN in wp-config.php (included in Pro zip)
+ *  - Free: no token — registers as free (WP.org install)
  *
  * @return bool True if registration succeeded or was already complete.
  */
 function shopwalk_ai_auto_register(): bool {
     // Already registered — nothing to do.
-    if (!empty(get_option('shopwalk_wc_plugin_key', ''))) {
+    if (!empty(get_option('shopwalk_merchant_id', ''))) {
         delete_transient('shopwalk_wc_needs_registration');
         return true;
     }
 
-    $site_url    = home_url();
-    $store_name  = get_bloginfo('name') ?: wp_parse_url($site_url, PHP_URL_HOST);
-    $admin_email = get_option('admin_email', '');
+    $payload = [
+        'site_url'   => home_url(),
+        'wp_version' => get_bloginfo('version'),
+        'wc_version' => defined('WC_VERSION') ? WC_VERSION : '',
+    ];
+
+    // Include registration token for Pro downloads.
+    if (defined('SHOPWALK_REGISTRATION_TOKEN') && !empty(SHOPWALK_REGISTRATION_TOKEN)) {
+        $payload['registration_token'] = SHOPWALK_REGISTRATION_TOKEN;
+    }
 
     $response = wp_remote_post('https://api.shopwalk.com/api/v1/plugin/register', [
         'headers' => ['Content-Type' => 'application/json'],
-        'body'    => wp_json_encode([
-            'site_url'       => $site_url,
-            'store_name'     => $store_name,
-            'admin_email'    => $admin_email,
-            'wc_version'     => defined('WC_VERSION') ? WC_VERSION : '',
-            'plugin_version' => SHOPWALK_AI_VERSION,
-        ]),
+        'body'    => wp_json_encode($payload),
         'timeout' => 20,
     ]);
 
     if (is_wp_error($response)) {
-        // Network failure — schedule a retry on next admin page load.
         set_transient('shopwalk_wc_needs_registration', 1, DAY_IN_SECONDS);
         return false;
     }
@@ -165,21 +173,62 @@ function shopwalk_ai_auto_register(): bool {
     $code = wp_remote_retrieve_response_code($response);
     $body = json_decode(wp_remote_retrieve_body($response), true);
 
-    if ($code !== 200 || empty($body['api_key'])) {
+    if ($code !== 200 || empty($body['merchant_id'])) {
         set_transient('shopwalk_wc_needs_registration', 1, DAY_IN_SECONDS);
         return false;
     }
 
-    // Store credentials and mark as active.
-    update_option('shopwalk_wc_plugin_key', $body['api_key']);
-    update_option('shopwalk_wc_license_status', 'active');
-    if (!empty($body['merchant_id'])) {
-        update_option('shopwalk_wc_merchant_id', $body['merchant_id']);
+    // Store new license model fields.
+    update_option('shopwalk_merchant_id',         $body['merchant_id']);
+    update_option('shopwalk_license_level',        $body['license_level']  ?? 'free');
+    update_option('shopwalk_license_status',       $body['license_status'] ?? 'active');
+    update_option('shopwalk_license_refreshed_at', gmdate('c'));
+
+    // Backward-compat: store API key if returned (used by sync and updater).
+    if (!empty($body['api_key'])) {
+        update_option('shopwalk_wc_plugin_key',    $body['api_key']);
+        update_option('shopwalk_wc_license_status', 'active');
     }
+
     delete_transient('shopwalk_wc_needs_registration');
     flush_rewrite_rules();
     return true;
 }
+
+/**
+ * Check whether this store has an active Pro license.
+ */
+function shopwalk_is_pro(): bool {
+    return get_option('shopwalk_license_level') === 'pro'
+        && get_option('shopwalk_license_status') === 'active';
+}
+
+/**
+ * Hourly WP Cron handler — refreshes license status from the Shopwalk API.
+ */
+function shopwalk_license_refresh_handler(): void {
+    $response = wp_remote_get('https://api.shopwalk.com/api/v1/plugin/license', [
+        'headers' => [
+            'X-SW-Domain'  => home_url(),
+            'Content-Type' => 'application/json',
+        ],
+        'timeout' => 10,
+    ]);
+
+    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+        return;
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (!empty($body['license_level'])) {
+        update_option('shopwalk_license_level',  $body['license_level']);
+    }
+    if (!empty($body['license_status'])) {
+        update_option('shopwalk_license_status', $body['license_status']);
+    }
+    update_option('shopwalk_license_refreshed_at', gmdate('c'));
+}
+add_action('shopwalk_license_refresh', 'shopwalk_license_refresh_handler');
 
 /**
  * On admin_init, silently retry registration if a previous attempt failed.
@@ -199,6 +248,11 @@ function shopwalk_ai_deactivate(): void {
     // Remove the sync queue flush cron
     if (class_exists('Shopwalk_WC_Sync')) {
         Shopwalk_WC_Sync::unschedule_cron();
+    }
+    // Remove the hourly license refresh cron
+    $timestamp = wp_next_scheduled('shopwalk_license_refresh');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'shopwalk_license_refresh');
     }
     // Notify Shopwalk so feeds stop syncing this store immediately.
     // Fire-and-forget — errors are silently ignored to never block deactivation.
