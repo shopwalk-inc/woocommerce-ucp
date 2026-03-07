@@ -13,7 +13,6 @@ class Shopwalk_WC_CDN {
 		// Rewrite image URLs to CDN
 		add_filter( 'wp_get_attachment_url', [ __CLASS__, 'rewrite_url' ] );
 		add_filter( 'wp_get_attachment_image_src', [ __CLASS__, 'rewrite_image_src' ] );
-		add_filter( 'woocommerce_product_get_image_id', [ __CLASS__, 'noop' ] ); // keep but hook below
 	}
 
 	public static function rewrite_url( string $url ): string {
