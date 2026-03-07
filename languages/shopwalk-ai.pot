@@ -1,0 +1,507 @@
+# Copyright (C) 2026 Shopwalk, Inc.
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Shopwalk AI 1.7.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-03-07T00:03:54+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: shopwalk-ai\n"
+
+#. Plugin Name of the plugin
+#: shopwalk-ai.php
+#: shopwalk-ai.php:86
+msgid "Shopwalk AI"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: shopwalk-ai.php
+msgid "https://shopwalk.com/woocommerce"
+msgstr ""
+
+#. Description of the plugin
+#: shopwalk-ai.php
+msgid "AI-enable your WooCommerce store in minutes. Shopwalk AI syncs your products and opens your store to AI-powered discovery, browsing, and checkout."
+msgstr ""
+
+#. Author of the plugin
+#: shopwalk-ai.php
+msgid "Shopwalk, Inc."
+msgstr ""
+
+#. Author URI of the plugin
+#: shopwalk-ai.php
+msgid "https://shopwalk.com"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:127
+msgid "Connect your store first to see dashboard stats."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:213
+#: includes/class-shopwalk-wc-dashboard.php:236
+msgid "Checking…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:216
+msgid "Refresh"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:225
+msgid "Products Indexed"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:227
+#: includes/class-shopwalk-wc-dashboard.php:232
+#: includes/class-shopwalk-wc-dashboard.php:255
+msgid "Loading…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:230
+msgid "AI Agent Requests"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:235
+#: includes/class-shopwalk-wc-dashboard.php:908
+msgid "UCP Endpoint"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:240
+msgid "Plugin Version"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:248
+msgid "Subscription"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:266
+#: includes/class-shopwalk-wc-dashboard.php:488
+msgid "Upgrade to Pro"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:270
+msgid "Update Card / Invoices"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:273
+msgid "Downgrade to Free"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:276
+msgid "Cancel Subscription"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:284
+msgid "Tools"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:287
+msgid "I moved my site"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:290
+msgid "Run Diagnostics"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:305
+msgid "Go Back"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:308
+msgid "Confirm"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:318
+msgid "I Moved My Site"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:319
+msgid "Enter the new URL for this store. This updates your Shopwalk merchant binding so your catalog and license follow the new domain."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:323
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:326
+msgid "Update Domain"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:336
+msgid "Diagnostics"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:338
+#: includes/class-shopwalk-wc-dashboard.php:578
+msgid "Running checks…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:350
+msgid "Never"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:353
+msgid "Just now"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:354
+msgid "m ago"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:355
+msgid "h ago"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:356
+msgid "d ago"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:409
+msgid "Last sync"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:410
+msgid "Not synced yet"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:414
+msgid "Last request"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:415
+msgid "Awaiting first request"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:421
+msgid "Not configured"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:426
+msgid "Connected & Active"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:428
+msgid "UCP Unreachable"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:431
+msgid "Up to date"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:440
+msgid "Could not load billing info."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:449
+msgid "Active"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:450
+msgid "Trialing"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:451
+msgid "Past Due"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:460
+msgid "Next Charge"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:465
+msgid "Payment Method"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:469
+msgid "Trial Ends"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:473
+msgid "Cancels On"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:485
+msgid "Processing…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:492
+msgid "Opening Stripe Checkout…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:494
+msgid "Upgraded! Reloading…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:498
+msgid "Upgrade failed. Please try again."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:506
+msgid "Downgrade to Free?"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:507
+msgid "Your AI shopping assistant will be disabled at the end of your current billing period. Your product catalog stays indexed. You can upgrade again at any time."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:512
+msgid "Downgraded to Free. Reloading…"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:515
+msgid "Downgrade failed."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:525
+msgid "Cancel Subscription?"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:526
+msgid "Your Pro access continues until the end of the current billing period. You can undo this cancellation any time before it takes effect."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:531
+#: includes/class-shopwalk-wc-dashboard.php:785
+msgid "Subscription cancelled."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:534
+msgid "Cancellation failed."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:550
+msgid "Could not open billing portal."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:568
+msgid "Domain updated."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:570
+msgid "Migration failed."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:582
+msgid "Failed to run diagnostics."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:727
+msgid "Upgraded to Pro!"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:758
+msgid "Downgraded to Free."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:817
+msgid "Domain updated successfully."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:856
+msgid "PHP Version"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:859
+msgid "Upgrade PHP to 8.1 or higher in your hosting control panel."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:866
+msgid "WooCommerce Version"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:869
+msgid "Update WooCommerce to version 8.0 or higher."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:875
+msgid "WordPress Version"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:878
+msgid "Update WordPress to version 6.0 or higher."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:886
+msgid "Memory Limit"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:889
+msgid "Increase PHP memory_limit to at least 128M in your php.ini or wp-config.php."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:896
+msgid "Shopwalk API Connection"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:898
+msgid "Connected"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:898
+msgid "Failed"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:899
+msgid "Check your server firewall or proxy settings. The server must be able to reach api.shopwalk.com."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:910
+msgid "Reachable"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:910
+msgid "Unreachable"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:911
+msgid "Ensure pretty permalinks are enabled (Settings → Permalinks) and that .htaccess allows REST API access."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:919
+msgid "License Status"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:922
+msgid "Deactivate and reactivate the plugin to refresh your license, or contact support@shopwalk.com."
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:929
+#: includes/class-shopwalk-wc-settings.php:569
+msgid "Merchant ID"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:931
+msgid "Not set"
+msgstr ""
+
+#: includes/class-shopwalk-wc-dashboard.php:932
+msgid "Deactivate and reactivate the plugin to trigger auto-registration."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:72
+msgid "Shopwalk"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:88
+msgid "Plugin Settings"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:489
+#: includes/class-shopwalk-wc-settings.php:535
+msgid "Test Connection"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:492
+#: includes/class-shopwalk-wc-settings.php:533
+msgid "Sync Products Now"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:532
+msgid "Syncing..."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:534
+msgid "Testing..."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:536
+msgid "Sync complete!"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:537
+msgid "Request failed. Check your Plugin Key."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:538
+msgid "Connecting your store..."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:539
+msgid "Connected! Reloading..."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:540
+msgid "Connection failed. Please try again."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:554
+msgid "Shopwalk Settings"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:556
+msgid "Connect your store to Shopwalk — the AI shopping platform that automatically syncs your products and helps customers discover and buy from you."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:560
+msgid "Plugin Key"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:562
+msgid "Your Shopwalk plugin key. Get one at shopwalk.com/plugin."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:571
+msgid "Override the merchant slug sent to Shopwalk. Leave blank to auto-derive from your site URL. Useful if the auto-derived ID does not match your Shopwalk dashboard."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:575
+msgid "Auto (derived from site URL)"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:579
+msgid "Inbound API Key"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:581
+msgid "Set an API key to secure checkout and order endpoints. Leave blank to allow open access (not recommended for production)."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:587
+msgid "Sync products to Shopwalk"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:589
+msgid "Push product data (name, price, stock, images) to Shopwalk AI so your products appear in AI-powered searches. No customer or order data is ever shared. <a href=\"https://shopwalk.com/privacy\" target=\"_blank\">Privacy Policy</a>"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:594
+msgid "Enable Catalog API"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:596
+msgid "Allow Shopwalk AI to browse your product catalog."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:601
+msgid "Enable Checkout API"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:603
+msgid "Allow Shopwalk AI to create checkout sessions and place orders."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:608
+msgid "Enable Webhooks"
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:610
+msgid "Send order status notifications to Shopwalk."
+msgstr ""
+
+#: includes/class-shopwalk-wc-settings.php:619
+msgid "AI Commerce Status"
+msgstr ""
+
+#: includes/class-shopwalk-wc-sync.php:752
+msgid "Every 5 Minutes (Shopwalk)"
+msgstr ""
+
+#: shopwalk-ai.php:87
+msgid "requires WooCommerce to be installed and active."
+msgstr ""

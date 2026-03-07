@@ -12,38 +12,94 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Shopwalk_WC_Dashboard class.
+ */
 class Shopwalk_WC_Dashboard {
 
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
 	private const DASHBOARD_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/dashboard';
-	private const BILLING_ENDPOINT   = 'https://api.shopwalk.com/api/v1/plugin/billing-info';
-	private const UPGRADE_ENDPOINT   = 'https://api.shopwalk.com/api/v1/plugin/upgrade';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const BILLING_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/billing-info';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const UPGRADE_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/upgrade';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
 	private const DOWNGRADE_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/downgrade';
-	private const CANCEL_ENDPOINT    = 'https://api.shopwalk.com/api/v1/plugin/cancel';
-	private const MIGRATE_ENDPOINT   = 'https://api.shopwalk.com/api/v1/plugin/migrate';
-	private const PORTAL_ENDPOINT    = 'https://api.shopwalk.com/api/v1/plugin/portal-url';
-	private const HEALTH_ENDPOINT    = 'https://api.shopwalk.com/health';
-	private const CACHE_KEY          = 'shopwalk_wc_dashboard_cache';
-	private const CACHE_TTL          = 300; // 5 minutes
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const CANCEL_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/cancel';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const MIGRATE_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/migrate';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const PORTAL_ENDPOINT = 'https://api.shopwalk.com/api/v1/plugin/portal-url';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const HEALTH_ENDPOINT = 'https://api.shopwalk.com/health';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const CACHE_KEY = 'shopwalk_wc_dashboard_cache';
+	/**
+	 * Property.
+	 *
+	 * @var mixed
+	 */
+	private const CACHE_TTL = 300; // 5 minutes.
 
+	/**
+	 * Construct.
+	 */
 	public function __construct() {
-		add_action( 'wp_ajax_shopwalk_fetch_dashboard', [ $this, 'ajax_fetch_dashboard' ] );
-		add_action( 'wp_ajax_shopwalk_fetch_billing',   [ $this, 'ajax_fetch_billing' ] );
-		add_action( 'wp_ajax_shopwalk_upgrade',         [ $this, 'ajax_upgrade' ] );
-		add_action( 'wp_ajax_shopwalk_downgrade',       [ $this, 'ajax_downgrade' ] );
-		add_action( 'wp_ajax_shopwalk_cancel',          [ $this, 'ajax_cancel' ] );
-		add_action( 'wp_ajax_shopwalk_migrate',         [ $this, 'ajax_migrate' ] );
-		add_action( 'wp_ajax_shopwalk_portal_url',      [ $this, 'ajax_portal_url' ] );
-		add_action( 'wp_ajax_shopwalk_run_diagnostics', [ $this, 'ajax_run_diagnostics' ] );
+		add_action( 'wp_ajax_shopwalk_fetch_dashboard', array( $this, 'ajax_fetch_dashboard' ) );
+		add_action( 'wp_ajax_shopwalk_fetch_billing', array( $this, 'ajax_fetch_billing' ) );
+		add_action( 'wp_ajax_shopwalk_upgrade', array( $this, 'ajax_upgrade' ) );
+		add_action( 'wp_ajax_shopwalk_downgrade', array( $this, 'ajax_downgrade' ) );
+		add_action( 'wp_ajax_shopwalk_cancel', array( $this, 'ajax_cancel' ) );
+		add_action( 'wp_ajax_shopwalk_migrate', array( $this, 'ajax_migrate' ) );
+		add_action( 'wp_ajax_shopwalk_portal_url', array( $this, 'ajax_portal_url' ) );
+		add_action( 'wp_ajax_shopwalk_run_diagnostics', array( $this, 'ajax_run_diagnostics' ) );
 	}
 
 	/**
 	 * Headers for domain-authenticated API calls (v1.7.0 license model).
 	 */
 	private function domain_headers(): array {
-		return [
+		return array(
 			'X-SW-Domain'  => home_url(),
 			'Content-Type' => 'application/json',
-		];
+		);
 	}
 
 	/**
@@ -53,7 +109,7 @@ class Shopwalk_WC_Dashboard {
 	private function check_permission(): void {
 		check_ajax_referer( 'shopwalk_dashboard', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( [ 'message' => 'Insufficient permissions.' ], 403 );
+			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ), 403 );
 		}
 	}
 
@@ -80,7 +136,7 @@ class Shopwalk_WC_Dashboard {
 		.sw-dashboard .sw-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 		.sw-dashboard .sw-title { font-size: 22px; font-weight: 700; color: #1d2327; margin: 0; }
 		.sw-dashboard .sw-subtitle { font-size: 13px; color: #646970; margin: 4px 0 0; }
-		/* Stats cards */
+		/** Stats cards */
 		.sw-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 		.sw-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; }
 		.sw-card .sw-card-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #646970; margin-bottom: 8px; }
@@ -90,25 +146,25 @@ class Shopwalk_WC_Dashboard {
 		.sw-card-yellow { border-left: 4px solid #dba617; }
 		.sw-card-red { border-left: 4px solid #d63638; }
 		.sw-card-blue { border-left: 4px solid #2271b1; }
-		/* Status badge */
+		/** Status badge */
 		.sw-status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 		.sw-status-badge.ok { background: #edfaef; color: #1a7335; }
 		.sw-status-badge.error { background: #fcf0f1; color: #8a1f1f; }
 		.sw-status-badge.checking { background: #f0f6fc; color: #1d6fa4; }
 		.sw-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-		/* Sections */
+		/** Sections */
 		.sw-section { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
 		.sw-section h3 { margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #1d2327; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
-		/* Plan badge */
+		/** Plan badge */
 		.sw-plan-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 		.sw-plan-badge.free { background: #f0f0f0; color: #646970; }
 		.sw-plan-badge.pro { background: #1d2327; color: #f0b429; }
-		/* Billing grid */
+		/** Billing grid */
 		.sw-billing-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 		.sw-billing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 16px 0 0; }
 		.sw-billing-item label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #646970; margin-bottom: 4px; }
 		.sw-billing-item span { font-size: 14px; color: #1d2327; font-weight: 500; }
-		/* Buttons */
+		/** Buttons */
 		.sw-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
 		.sw-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; text-decoration: none; transition: background 0.15s, color 0.15s; }
 		.sw-btn-primary { background: #f0b429; color: #1d2327; border-color: #f0b429; }
@@ -118,11 +174,11 @@ class Shopwalk_WC_Dashboard {
 		.sw-btn-danger { background: #fff; color: #d63638; border-color: #d63638; }
 		.sw-btn-danger:hover { background: #d63638; color: #fff; }
 		.sw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-		/* Inline result */
+		/** Inline result */
 		.sw-inline-result { margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px; display: none; }
 		.sw-inline-result.success { background: #edfaef; color: #1a7335; }
 		.sw-inline-result.error { background: #fcf0f1; color: #8a1f1f; }
-		/* Modal */
+		/** Modal */
 		.sw-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100000; align-items: center; justify-content: center; }
 		.sw-modal-overlay.open { display: flex; }
 		.sw-modal { background: #fff; border-radius: 8px; padding: 28px 28px 24px; max-width: 480px; width: 90%; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
@@ -132,7 +188,7 @@ class Shopwalk_WC_Dashboard {
 		.sw-modal input[type="url"] { width: 100%; padding: 8px 12px; border: 1px solid #c3c4c7; border-radius: 4px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box; }
 		.sw-close-btn { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; cursor: pointer; color: #646970; line-height: 1; padding: 4px; }
 		.sw-close-btn:hover { color: #1d2327; }
-		/* Diagnostics */
+		/** Diagnostics */
 		.sw-diag-list { list-style: none; margin: 0; padding: 0; }
 		.sw-diag-list li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
 		.sw-diag-list li:last-child { border-bottom: none; }
@@ -140,7 +196,7 @@ class Shopwalk_WC_Dashboard {
 		.sw-diag-name { font-weight: 600; font-size: 13px; color: #1d2327; }
 		.sw-diag-val { font-size: 12px; color: #646970; }
 		.sw-diag-fix { font-size: 12px; color: #d63638; margin-top: 3px; }
-		/* Misc */
+		/** Misc */
 		.sw-loading { opacity: 0.4; pointer-events: none; }
 		.sw-refresh-btn { float: right; margin-top: -2px; }
 		</style>
@@ -288,7 +344,7 @@ class Shopwalk_WC_Dashboard {
 		(function($) {
 			var nonce = <?php echo wp_json_encode( $nonce ); ?>;
 
-			/* ---- Utilities ---- */
+			/** ---- Utilities ---- */
 
 			function timeAgo(iso) {
 				if (!iso) return '<?php echo esc_js( __( 'Never', 'shopwalk-ai' ) ); ?>';
@@ -318,7 +374,7 @@ class Shopwalk_WC_Dashboard {
 				$('#sw-subscription-result').removeClass('success error').addClass(type).text(msg).show();
 			}
 
-			/* ---- Modal ---- */
+			/** ---- Modal ---- */
 
 			function openModal(id) {
 				$('.sw-modal-overlay').removeClass('open');
@@ -339,7 +395,7 @@ class Shopwalk_WC_Dashboard {
 				}
 			});
 
-			/* ---- Dashboard Stats ---- */
+			/** ---- Dashboard Stats ---- */
 
 			function fetchDashboard() {
 				$('#sw-dashboard').addClass('sw-loading');
@@ -376,7 +432,7 @@ class Shopwalk_WC_Dashboard {
 				});
 			}
 
-			/* ---- Billing ---- */
+			/** ---- Billing ---- */
 
 			function fetchBilling() {
 				$.post(ajaxurl, { action: 'shopwalk_fetch_billing', nonce: nonce }, function(resp) {
@@ -423,7 +479,7 @@ class Shopwalk_WC_Dashboard {
 				}
 			}
 
-			/* ---- Upgrade ---- */
+			/** ---- Upgrade ---- */
 
 			$('#sw-btn-upgrade').on('click', function() {
 				var $btn = $(this).prop('disabled', true).text('<?php echo esc_js( __( 'Processing…', 'shopwalk-ai' ) ); ?>');
@@ -444,7 +500,7 @@ class Shopwalk_WC_Dashboard {
 				});
 			});
 
-			/* ---- Downgrade ---- */
+			/** ---- Downgrade ---- */
 
 			$('#sw-btn-downgrade').on('click', function() {
 				$('#sw-confirm-title').text('<?php echo esc_js( __( 'Downgrade to Free?', 'shopwalk-ai' ) ); ?>');
@@ -463,7 +519,7 @@ class Shopwalk_WC_Dashboard {
 				openModal('sw-modal-confirm');
 			});
 
-			/* ---- Cancel ---- */
+			/** ---- Cancel ---- */
 
 			$('#sw-btn-cancel').on('click', function() {
 				$('#sw-confirm-title').text('<?php echo esc_js( __( 'Cancel Subscription?', 'shopwalk-ai' ) ); ?>');
@@ -482,7 +538,7 @@ class Shopwalk_WC_Dashboard {
 				openModal('sw-modal-confirm');
 			});
 
-			/* ---- Portal ---- */
+			/** ---- Portal ---- */
 
 			$('#sw-btn-portal').on('click', function() {
 				var $btn = $(this).prop('disabled', true);
@@ -496,7 +552,7 @@ class Shopwalk_WC_Dashboard {
 				});
 			});
 
-			/* ---- Migrate ---- */
+			/** ---- Migrate ---- */
 
 			$('#sw-btn-migrate').on('click', function() {
 				$('#sw-migrate-domain').val('');
@@ -516,7 +572,7 @@ class Shopwalk_WC_Dashboard {
 				});
 			});
 
-			/* ---- Diagnostics ---- */
+			/** ---- Diagnostics ---- */
 
 			$('#sw-btn-diagnostics').on('click', function() {
 				$('#sw-diag-list').html('<li><?php echo esc_js( __( 'Running checks…', 'shopwalk-ai' ) ); ?></li>');
@@ -542,13 +598,13 @@ class Shopwalk_WC_Dashboard {
 				});
 			});
 
-			/* ---- Shared POST helper ---- */
+			/** ---- Shared POST helper ---- */
 
 			function doPost(action, extra, cb) {
 				$.post(ajaxurl, $.extend({ action: action, nonce: nonce }, extra), cb);
 			}
 
-			/* ---- Init ---- */
+			/** ---- Init ---- */
 
 			fetchDashboard();
 			fetchBilling();
@@ -562,42 +618,44 @@ class Shopwalk_WC_Dashboard {
 		<?php
 	}
 
-	/* ===== AJAX: Dashboard Stats ===== */
-
+	/** ===== AJAX: Dashboard Stats ===== */
 	public function ajax_fetch_dashboard(): void {
 		check_ajax_referer( 'shopwalk_dashboard', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( [ 'message' => 'Insufficient permissions.' ], 403 );
+			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ), 403 );
 		}
 
 		$plugin_key = get_option( 'shopwalk_wc_plugin_key', '' );
 		if ( empty( $plugin_key ) ) {
-			wp_send_json_error( [ 'message' => 'No plugin key configured.' ], 400 );
+			wp_send_json_error( array( 'message' => 'No plugin key configured.' ), 400 );
 		}
 
 		$cached = get_transient( self::CACHE_KEY );
-		if ( $cached !== false ) {
+		if ( false !== $cached ) {
 			wp_send_json_success( $cached );
 			return;
 		}
 
-		$response = wp_remote_get( self::DASHBOARD_ENDPOINT, [
-			'headers' => [
-				'X-API-Key'    => $plugin_key,
-				'Content-Type' => 'application/json',
-			],
-			'timeout' => 10,
-		] );
+		$response = wp_remote_get(
+			self::DASHBOARD_ENDPOINT,
+			array(
+				'headers' => array(
+					'X-API-Key'    => $plugin_key,
+					'Content-Type' => 'application/json',
+				),
+				'timeout' => 10,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 || empty( $body['dashboard'] ) ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Failed to load dashboard.' ] );
+		if ( 200 !== $code || empty( $body['dashboard'] ) ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Failed to load dashboard.' ) );
 		}
 
 		$data = $body['dashboard'];
@@ -605,264 +663,275 @@ class Shopwalk_WC_Dashboard {
 		wp_send_json_success( $data );
 	}
 
-	/* ===== AJAX: Billing Info ===== */
-
+	/** ===== AJAX: Billing Info ===== */
 	public function ajax_fetch_billing(): void {
 		$this->check_permission();
 
-		$response = wp_remote_get( self::BILLING_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'timeout' => 10,
-		] );
+		$response = wp_remote_get(
+			self::BILLING_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'timeout' => 10,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Failed to load billing info.' ] );
+		if ( 200 !== $code ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Failed to load billing info.' ) );
 		}
 
 		wp_send_json_success( $body );
 	}
 
-	/* ===== AJAX: Upgrade ===== */
-
+	/** ===== AJAX: Upgrade ===== */
 	public function ajax_upgrade(): void {
 		$this->check_permission();
 
-		$plan     = sanitize_text_field( wp_unslash( $_POST['plan'] ?? 'annual' ) );
-		$response = wp_remote_post( self::UPGRADE_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'body'    => wp_json_encode( [ 'plan' => $plan ] ),
-			'timeout' => 15,
-		] );
+		$plan     = sanitize_text_field( wp_unslash( $_POST['plan'] ?? 'annual' ) );  // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$response = wp_remote_post(
+			self::UPGRADE_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'body'    => wp_json_encode( array( 'plan' => $plan ) ),
+				'timeout' => 15,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Upgrade failed.' ] );
+		if ( 200 !== $code ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Upgrade failed.' ) );
 		}
 
 		// No saved card — redirect to Stripe Checkout.
 		if ( ! empty( $body['redirect_url'] ) ) {
-			wp_send_json_success( [ 'redirect_url' => $body['redirect_url'] ] );
+			wp_send_json_success( array( 'redirect_url' => $body['redirect_url'] ) );
 		}
 
 		// Instant activation — update local license cache.
-		update_option( 'shopwalk_license_level',        'pro' );
-		update_option( 'shopwalk_license_status',       'active' );
+		update_option( 'shopwalk_license_level', 'pro' );
+		update_option( 'shopwalk_license_status', 'active' );
 		update_option( 'shopwalk_license_refreshed_at', gmdate( 'c' ) );
 
-		wp_send_json_success( [ 'message' => $body['message'] ?? __( 'Upgraded to Pro!', 'shopwalk-ai' ) ] );
+		wp_send_json_success( array( 'message' => $body['message'] ?? __( 'Upgraded to Pro!', 'shopwalk-ai' ) ) );
 	}
 
-	/* ===== AJAX: Downgrade ===== */
-
+	/** ===== AJAX: Downgrade ===== */
 	public function ajax_downgrade(): void {
 		$this->check_permission();
 
-		$response = wp_remote_post( self::DOWNGRADE_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'body'    => wp_json_encode( [] ),
-			'timeout' => 15,
-		] );
+		$response = wp_remote_post(
+			self::DOWNGRADE_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'body'    => wp_json_encode( array() ),
+				'timeout' => 15,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Downgrade failed.' ] );
+		if ( 200 !== $code ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Downgrade failed.' ) );
 		}
 
-		update_option( 'shopwalk_license_level',        'free' );
-		update_option( 'shopwalk_license_status',       'active' );
+		update_option( 'shopwalk_license_level', 'free' );
+		update_option( 'shopwalk_license_status', 'active' );
 		update_option( 'shopwalk_license_refreshed_at', gmdate( 'c' ) );
 
-		wp_send_json_success( [ 'message' => $body['message'] ?? __( 'Downgraded to Free.', 'shopwalk-ai' ) ] );
+		wp_send_json_success( array( 'message' => $body['message'] ?? __( 'Downgraded to Free.', 'shopwalk-ai' ) ) );
 	}
 
-	/* ===== AJAX: Cancel ===== */
-
+	/** ===== AJAX: Cancel ===== */
 	public function ajax_cancel(): void {
 		$this->check_permission();
 
-		$response = wp_remote_post( self::CANCEL_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'body'    => wp_json_encode( [] ),
-			'timeout' => 15,
-		] );
+		$response = wp_remote_post(
+			self::CANCEL_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'body'    => wp_json_encode( array() ),
+				'timeout' => 15,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Cancellation failed.' ] );
+		if ( 200 !== $code ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Cancellation failed.' ) );
 		}
 
-		wp_send_json_success( [ 'message' => $body['message'] ?? __( 'Subscription cancelled.', 'shopwalk-ai' ) ] );
+		wp_send_json_success( array( 'message' => $body['message'] ?? __( 'Subscription cancelled.', 'shopwalk-ai' ) ) );
 	}
 
-	/* ===== AJAX: Migrate ===== */
-
+	/** ===== AJAX: Migrate ===== */
 	public function ajax_migrate(): void {
 		$this->check_permission();
 
-		$new_domain = esc_url_raw( wp_unslash( $_POST['new_domain'] ?? '' ) );
+		$new_domain = esc_url_raw( wp_unslash( $_POST['new_domain'] ?? '' ) );  // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( empty( $new_domain ) ) {
-			wp_send_json_error( [ 'message' => 'New domain is required.' ] );
+			wp_send_json_error( array( 'message' => 'New domain is required.' ) );
 		}
 
-		$response = wp_remote_post( self::MIGRATE_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'body'    => wp_json_encode( [ 'new_domain' => $new_domain ] ),
-			'timeout' => 15,
-		] );
+		$response = wp_remote_post(
+			self::MIGRATE_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'body'    => wp_json_encode( array( 'new_domain' => $new_domain ) ),
+				'timeout' => 15,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Migration failed.' ] );
+		if ( 200 !== $code ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Migration failed.' ) );
 		}
 
-		wp_send_json_success( [ 'message' => $body['message'] ?? __( 'Domain updated successfully.', 'shopwalk-ai' ) ] );
+		wp_send_json_success( array( 'message' => $body['message'] ?? __( 'Domain updated successfully.', 'shopwalk-ai' ) ) );
 	}
 
-	/* ===== AJAX: Portal URL ===== */
-
+	/** ===== AJAX: Portal URL ===== */
 	public function ajax_portal_url(): void {
 		$this->check_permission();
 
-		$response = wp_remote_get( self::PORTAL_ENDPOINT, [
-			'headers' => $this->domain_headers(),
-			'timeout' => 10,
-		] );
+		$response = wp_remote_get(
+			self::PORTAL_ENDPOINT,
+			array(
+				'headers' => $this->domain_headers(),
+				'timeout' => 10,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( [ 'message' => 'Could not reach Shopwalk API.' ] );
+			wp_send_json_error( array( 'message' => 'Could not reach Shopwalk API.' ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( $code !== 200 || empty( $body['url'] ) ) {
-			wp_send_json_error( [ 'message' => $body['message'] ?? 'Could not get portal URL.' ] );
+		if ( 200 !== $code || empty( $body['url'] ) ) {
+			wp_send_json_error( array( 'message' => $body['message'] ?? 'Could not get portal URL.' ) );
 		}
 
-		wp_send_json_success( [ 'url' => $body['url'] ] );
+		wp_send_json_success( array( 'url' => $body['url'] ) );
 	}
 
-	/* ===== AJAX: Run Diagnostics ===== */
-
+	/** ===== AJAX: Run Diagnostics ===== */
 	public function ajax_run_diagnostics(): void {
 		$this->check_permission();
 
 		global $wp_version;
-		$checks = [];
+		$checks = array();
 
-		// PHP >= 8.1
-		$php_ok = version_compare( PHP_VERSION, '8.0', '>=' );
-		$checks[] = [
+		// PHP >= 8.1.
+		$php_ok   = version_compare( PHP_VERSION, '8.0', '>=' );
+		$checks[] = array(
 			'name'  => __( 'PHP Version', 'shopwalk-ai' ),
 			'ok'    => $php_ok,
 			'value' => PHP_VERSION,
 			'fix'   => $php_ok ? null : __( 'Upgrade PHP to 8.1 or higher in your hosting control panel.', 'shopwalk-ai' ),
-		];
+		);
 
-		// WooCommerce >= 8.0
-		$wc_ver = defined( 'WC_VERSION' ) ? WC_VERSION : '0';
-		$wc_ok  = version_compare( $wc_ver, '8.0', '>=' );
-		$checks[] = [
+		// WooCommerce >= 8.0.
+		$wc_ver   = defined( 'WC_VERSION' ) ? WC_VERSION : '0';
+		$wc_ok    = version_compare( $wc_ver, '8.0', '>=' );
+		$checks[] = array(
 			'name'  => __( 'WooCommerce Version', 'shopwalk-ai' ),
 			'ok'    => $wc_ok,
 			'value' => $wc_ver,
 			'fix'   => $wc_ok ? null : __( 'Update WooCommerce to version 8.0 or higher.', 'shopwalk-ai' ),
-		];
+		);
 
-		// WordPress >= 6.0
-		$wp_ok = version_compare( $wp_version, '6.0', '>=' );
-		$checks[] = [
+		// WordPress >= 6.0.
+		$wp_ok    = version_compare( $wp_version, '6.0', '>=' );
+		$checks[] = array(
 			'name'  => __( 'WordPress Version', 'shopwalk-ai' ),
 			'ok'    => $wp_ok,
 			'value' => $wp_version,
 			'fix'   => $wp_ok ? null : __( 'Update WordPress to version 6.0 or higher.', 'shopwalk-ai' ),
-		];
+		);
 
-		// Memory limit >= 128M
+		// Memory limit >= 128M.
 		$mem_limit = ini_get( 'memory_limit' );
 		$mem_bytes = wp_convert_hr_to_bytes( $mem_limit );
 		$mem_ok    = $mem_bytes < 0 || $mem_bytes >= 128 * MB_IN_BYTES;
-		$checks[] = [
+		$checks[]  = array(
 			'name'  => __( 'Memory Limit', 'shopwalk-ai' ),
 			'ok'    => $mem_ok,
 			'value' => $mem_limit,
 			'fix'   => $mem_ok ? null : __( 'Increase PHP memory_limit to at least 128M in your php.ini or wp-config.php.', 'shopwalk-ai' ),
-		];
+		);
 
-		// API connection (ping /health)
-		$health_resp = wp_remote_get( self::HEALTH_ENDPOINT, [ 'timeout' => 8 ] );
+		// API connection (ping /health).
+		$health_resp = wp_remote_get( self::HEALTH_ENDPOINT, array( 'timeout' => 8 ) );
 		$api_ok      = ! is_wp_error( $health_resp ) && wp_remote_retrieve_response_code( $health_resp ) === 200;
-		$checks[] = [
+		$checks[]    = array(
 			'name'  => __( 'Shopwalk API Connection', 'shopwalk-ai' ),
 			'ok'    => $api_ok,
 			'value' => $api_ok ? __( 'Connected', 'shopwalk-ai' ) : __( 'Failed', 'shopwalk-ai' ),
 			'fix'   => $api_ok ? null : __( 'Check your server firewall or proxy settings. The server must be able to reach api.shopwalk.com.', 'shopwalk-ai' ),
-		];
+		);
 
-		// UCP endpoint
+		// UCP endpoint.
 		$ucp_url  = home_url( '/wp-json/shopwalk-wc/v1' );
-		$ucp_resp = wp_remote_get( $ucp_url, [ 'timeout' => 8 ] );
+		$ucp_resp = wp_remote_get( $ucp_url, array( 'timeout' => 8 ) );
 		$ucp_code = is_wp_error( $ucp_resp ) ? 0 : wp_remote_retrieve_response_code( $ucp_resp );
-		$ucp_ok   = in_array( $ucp_code, [ 200, 401 ], true );
-		$checks[] = [
+		$ucp_ok   = in_array( $ucp_code, array( 200, 401 ), true );
+		$checks[] = array(
 			'name'  => __( 'UCP Endpoint', 'shopwalk-ai' ),
 			'ok'    => $ucp_ok,
 			'value' => $ucp_ok ? __( 'Reachable', 'shopwalk-ai' ) : __( 'Unreachable', 'shopwalk-ai' ),
 			'fix'   => $ucp_ok ? null : __( 'Ensure pretty permalinks are enabled (Settings → Permalinks) and that .htaccess allows REST API access.', 'shopwalk-ai' ),
-		];
+		);
 
-		// License status
+		// License status.
 		$license_status = (string) get_option( 'shopwalk_license_status', '' );
 		$license_level  = (string) get_option( 'shopwalk_license_level', 'free' );
-		$license_ok     = in_array( $license_status, [ 'active', 'trialing' ], true );
-		$checks[] = [
+		$license_ok     = in_array( $license_status, array( 'active', 'trialing' ), true );
+		$checks[]       = array(
 			'name'  => __( 'License Status', 'shopwalk-ai' ),
 			'ok'    => $license_ok,
-			'value' => ucfirst( $license_level ) . ' — ' . ucfirst( $license_status ?: 'unknown' ),
+			'value' => ucfirst( $license_level ) . ' — ' . ucfirst( $license_status ? $license_status : 'unknown' ),
 			'fix'   => $license_ok ? null : __( 'Deactivate and reactivate the plugin to refresh your license, or contact support@shopwalk.com.', 'shopwalk-ai' ),
-		];
+		);
 
-		// Merchant ID set
+		// Merchant ID set.
 		$merchant_id = (string) get_option( 'shopwalk_merchant_id', '' );
 		$mid_ok      = ! empty( $merchant_id );
-		$checks[] = [
+		$checks[]    = array(
 			'name'  => __( 'Merchant ID', 'shopwalk-ai' ),
 			'ok'    => $mid_ok,
 			'value' => $mid_ok ? substr( $merchant_id, 0, 8 ) . '…' : __( 'Not set', 'shopwalk-ai' ),
 			'fix'   => $mid_ok ? null : __( 'Deactivate and reactivate the plugin to trigger auto-registration.', 'shopwalk-ai' ),
-		];
+		);
 
-		wp_send_json_success( [ 'checks' => $checks ] );
+		wp_send_json_success( array( 'checks' => $checks ) );
 	}
 }
