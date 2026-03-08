@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk AI
  * Plugin URI:  https://shopwalk.com/woocommerce
  * Description: AI-enable your WooCommerce store in minutes. Shopwalk AI syncs your products and opens your store to AI-powered discovery, browsing, and checkout.
- * Version:     1.6.0
+ * Version:     1.8.0
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -33,7 +33,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SHOPWALK_AI_VERSION', '1.6.0' );
+define( 'SHOPWALK_AI_VERSION', '1.8.0' );
 define( 'SHOPWALK_AI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SHOPWALK_AI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -94,29 +94,53 @@ function shopwalk_ai_check_woocommerce(): bool {
 
 /**
  * Initialize the plugin.
+ *
+ * Wrapped in try/catch so any fatal error during boot deactivates the plugin
+ * gracefully and shows an admin notice — never kills wp-admin.
  */
 function shopwalk_ai_init(): void {
 	if ( ! shopwalk_ai_check_woocommerce() ) {
 		return;
 	}
 
-	// Load includes.
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-profile.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-products.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-checkout.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-orders.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-webhooks.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-settings.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-auth.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-sync.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-updater.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-dashboard.php';
-	require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-cdn.php';
+	try {
+		// Load includes.
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-profile.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-products.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-checkout.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-orders.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-webhooks.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-settings.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-auth.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-sync.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-updater.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-dashboard.php';
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-cdn.php';
 
-	// Boot.
-	Shopwalk_WC::instance();
-	Shopwalk_WC_CDN::init();
+		// Boot.
+		Shopwalk_WC::instance();
+		Shopwalk_WC_CDN::init();
+	} catch ( \Throwable $e ) {
+		// Log the error and deactivate gracefully — never bring down wp-admin.
+		error_log( 'Shopwalk AI fatal error during init: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+		add_action(
+			'admin_notices',
+			function () use ( $e ) {
+				echo '<div class="notice notice-error"><p>'
+					. '<strong>' . esc_html__( 'Shopwalk AI failed to load', 'shopwalk-ai' ) . '</strong><br>'
+					. esc_html( $e->getMessage() )
+					. '</p></div>';
+			}
+		);
+		// Deactivate the plugin so it doesn't run again on next load.
+		add_action(
+			'admin_init',
+			function () {
+				deactivate_plugins( plugin_basename( SHOPWALK_AI_PLUGIN_DIR . 'shopwalk-ai.php' ) );
+			}
+		);
+	}
 }
 add_action( 'plugins_loaded', 'shopwalk_ai_init' );
 

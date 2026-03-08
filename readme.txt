@@ -4,7 +4,7 @@ Tags: woocommerce, ai, search, ecommerce, product-sync
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.8.0
 WC tested up to: 10.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -153,6 +153,12 @@ Yes. Use the **I moved my site** tool in the Shopwalk dashboard to update your d
 2. Self-service tools — upgrade, downgrade, cancel, migrate domain, and run diagnostics without contacting support.
 
 == Changelog ==
+
+= 1.8.0 =
+* Safety: plugin catches fatal errors on boot, deactivates gracefully — wp-admin never goes down
+* Feature: CDN image serving (feature-flagged off by default)
+* Fix: Shopwalk_WC_Dashboard initialisation moved into Settings class
+* Bump: version constants and stable tag aligned to 1.8.0
 
 = 1.7.0 =
 * NEW: Server-side license model — license level (Free/Pro) is checked from Shopwalk API using domain; no license key stored locally

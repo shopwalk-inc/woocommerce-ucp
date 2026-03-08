@@ -1,0 +1,46 @@
+name: Auto-rebuild plugin zip on shopwalk-api
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  rebuild-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build plugin zip
+        run: |
+          mkdir -p dist
+          cp -r . dist/shopwalk-ai
+          rm -rf dist/shopwalk-ai/.git dist/shopwalk-ai/.github dist/shopwalk-ai/phpcs.xml \
+                 dist/shopwalk-ai/composer.json dist/shopwalk-ai/composer.lock \
+                 dist/shopwalk-ai/phpunit.xml dist/shopwalk-ai/tests dist/shopwalk-ai/dist
+          cd dist && zip -r shopwalk-ai.zip shopwalk-ai/
+
+      - name: Checkout shopwalk-api and open PR
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          git config --global user.email "ci@shopwalk.com"
+          git config --global user.name "Shopwalk CI"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/shopwalk-inc/shopwalk-api.git" shopwalk-api
+          cd shopwalk-api
+
+          BRANCH="auto/plugin-zip-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH" origin/main
+          cp ../dist/shopwalk-ai.zip dist/shopwalk-ai.zip
+
+          VERSION=$(grep "Version:" ../shopwalk-ai.php | head -1 | sed "s/.*Version: *//")
+          git add dist/shopwalk-ai.zip
+          git commit -m "chore: auto-rebuild plugin zip from shopwalk-woocommerce-ucp v${VERSION}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --repo shopwalk-inc/shopwalk-api \
+            --title "chore: auto-rebuild plugin zip v${VERSION}" \
+            --body "Automated PR from shopwalk-woocommerce-ucp merge to main. Plugin version: ${VERSION}" \
+            --base main \
+            --head "$BRANCH"
