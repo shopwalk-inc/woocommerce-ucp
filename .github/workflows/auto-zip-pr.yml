@@ -12,11 +12,17 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          mkdir -p dist
-          cp -r . dist/shopwalk-ai
-          rm -rf dist/shopwalk-ai/.git dist/shopwalk-ai/.github dist/shopwalk-ai/phpcs.xml \
-                 dist/shopwalk-ai/composer.json dist/shopwalk-ai/composer.lock \
-                 dist/shopwalk-ai/phpunit.xml dist/shopwalk-ai/tests dist/shopwalk-ai/dist
+          mkdir -p dist/shopwalk-ai
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='phpcs.xml' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='phpunit.xml' \
+            --exclude='tests' \
+            --exclude='dist' \
+            . dist/shopwalk-ai/
           cd dist && zip -r shopwalk-ai.zip shopwalk-ai/
 
       - name: Checkout shopwalk-api and open PR
