@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk AI
  * Plugin URI:  https://shopwalk.com/woocommerce
  * Description: AI-enable your WooCommerce store in minutes. Shopwalk AI syncs your products and opens your store to AI-powered discovery, browsing, and checkout.
- * Version:     1.7.0
+ * Version:     1.6.0
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
