@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk AI
  * Plugin URI:  https://shopwalk.com/woocommerce
  * Description: AI-enable your WooCommerce store in minutes. Shopwalk AI syncs your products and opens your store to AI-powered discovery, browsing, and checkout.
- * Version:     1.8.0
+ * Version:     1.9.0
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -33,7 +33,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SHOPWALK_AI_VERSION', '1.8.0' );
+define( 'SHOPWALK_AI_VERSION', '1.9.0' );
 define( 'SHOPWALK_AI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SHOPWALK_AI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
