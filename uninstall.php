@@ -15,6 +15,30 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+// ── Purge all store data from Shopwalk before clearing WP options ──────────
+// Deactivation = soft-delete (merchant hidden, restorable).
+// Deletion (this file) = hard purge — merchant, products, and license removed permanently.
+$_sw_plugin_key = get_option( 'shopwalk_wc_plugin_key', '' );
+$_sw_site_url   = get_option( 'siteurl', home_url() );
+
+if ( ! empty( $_sw_plugin_key ) ) {
+	wp_remote_post(
+		'https://api.shopwalk.com/api/v1/plugin/purge',
+		array(
+			'headers'   => array( 'Content-Type' => 'application/json' ),
+			'body'      => wp_json_encode(
+				array(
+					'plugin_key' => $_sw_plugin_key,
+					'site_url'   => $_sw_site_url,
+				)
+			),
+			'timeout'   => 10,
+			'blocking'  => true,
+		)
+	);
+}
+unset( $_sw_plugin_key, $_sw_site_url );
+
 // All plugin options to remove on uninstall.
 $options = array(
 	// Core settings.
