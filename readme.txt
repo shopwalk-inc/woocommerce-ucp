@@ -4,7 +4,7 @@ Tags: woocommerce, ai, search, ecommerce, product-sync
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 WC tested up to: 10.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -153,6 +153,10 @@ Yes. Use the **I moved my site** tool in the Shopwalk dashboard to update your d
 2. Self-service tools — upgrade, downgrade, cancel, migrate domain, and run diagnostics without contacting support.
 
 == Changelog ==
+
+= 1.10.0 =
+* Feature: CDN origin fallback — images load immediately via Cloudflare Worker even before imgcache has processed them
+* CDN URLs now include ?o= param (base64url-encoded original URL) for Worker origin fetch on R2 miss
 
 = 1.9.0 =
 * Feature: CDN image rewriting — product images served from cdn.shopwalk.com (enable in Settings > Advanced)
