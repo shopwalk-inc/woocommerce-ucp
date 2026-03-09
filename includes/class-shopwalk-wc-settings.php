@@ -309,9 +309,7 @@ class Shopwalk_WC_Settings {
 
 		// Whitelist of allowed feature options.
 		$allowed_features = array(
-			'shopwalk_feature_search_enabled',
 			'shopwalk_store_boost_enabled',
-			'shopwalk_feature_ai_descriptions_enabled',
 			'shopwalk_feature_ucp_enabled',
 		);
 
@@ -656,50 +654,26 @@ class Shopwalk_WC_Settings {
 			'features_title'  => array(
 				'name' => __( 'Features', 'shopwalk-ai' ),
 				'type' => 'title',
-				'desc' => __( 'Individual feature toggles. Each feature can be independently enabled or disabled.', 'shopwalk-ai' ),
+				'desc' => __( 'Enable or disable individual features.', 'shopwalk-ai' ),
 				'id'   => 'shopwalk_wc_features_title',
-			),
-			'feature_search' => array(
-				'name'    => __( 'Semantic Search', 'shopwalk-ai' ),
-				'type'    => 'checkbox',
-				'desc'    => __( 'AI-powered search overlay on product pages.', 'shopwalk-ai' ),
-				'id'      => 'shopwalk_feature_search_enabled',
-				'default' => '1',
 			),
 			'feature_store_boost_toggle' => array(
 				'name'    => __( 'Store Boost', 'shopwalk-ai' ),
 				'type'    => 'checkbox',
-				'desc'    => __( 'Serve product images via CDN.', 'shopwalk-ai' ),
+				'desc'    => __( 'Serve product images via the Shopwalk CDN for faster page loads.', 'shopwalk-ai' ),
 				'id'      => 'shopwalk_store_boost_enabled',
-				'default' => '1',
-			),
-			'feature_ai_descriptions' => array(
-				'name'    => __( 'AI Descriptions', 'shopwalk-ai' ),
-				'type'    => 'checkbox',
-				'desc'    => __( 'AI-assisted product copy improvement in the admin.', 'shopwalk-ai' ),
-				'id'      => 'shopwalk_feature_ai_descriptions_enabled',
 				'default' => '1',
 			),
 			'feature_ucp' => array(
 				'name'    => __( 'UCP Discovery', 'shopwalk-ai' ),
 				'type'    => 'checkbox',
-				'desc'    => __( 'AI browsing & checkout API.', 'shopwalk-ai' ),
+				'desc'    => __( 'AI browsing & checkout API — makes your store discoverable to AI agents.', 'shopwalk-ai' ),
 				'id'      => 'shopwalk_feature_ucp_enabled',
 				'default' => '1',
 			),
 			'features_end'    => array(
 				'type' => 'sectionend',
 				'id'   => 'shopwalk_wc_features_end',
-			),
-			'search_gaps_title' => array(
-				'name' => __( 'Search Intelligence', 'shopwalk-ai' ),
-				'type' => 'title',
-				'desc' => Shopwalk_WC_Search_Gaps::render(),
-				'id'   => 'shopwalk_wc_search_gaps_title',
-			),
-			'search_gaps_end' => array(
-				'type' => 'sectionend',
-				'id'   => 'shopwalk_wc_search_gaps_end',
 			),
 			'ai_status_title' => array(
 				'name' => __( 'AI Commerce Status', 'shopwalk-ai' ),

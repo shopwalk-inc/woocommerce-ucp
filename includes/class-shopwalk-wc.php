@@ -78,12 +78,6 @@ class Shopwalk_WC {
 		// Register order webhook listeners.
 		new Shopwalk_WC_Webhooks();
 
-		// Semantic search overlay + heartbeat.
-		new Shopwalk_WC_Search();
-
-		// AI product description improvement.
-		new Shopwalk_WC_AI_Assist();
-
 		// Add version header to all Shopwalk REST responses.
 		add_filter(
 			'rest_post_dispatch',

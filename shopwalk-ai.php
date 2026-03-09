@@ -117,9 +117,6 @@ function shopwalk_ai_init(): void {
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-updater.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-dashboard.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-cdn.php';
-		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-search.php';
-		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-ai-assist.php';
-		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-search-gaps.php';
 
 		// Boot.
 		Shopwalk_WC::instance();
