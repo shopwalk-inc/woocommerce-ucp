@@ -115,7 +115,17 @@ class Shopwalk_WC_Profile {
 		}
 
 		$jwk['kid'] = 'key-1';
-		return array( $jwk );
+		$keys        = array( $jwk );
+
+		// Include AP2 merchant signing key if available.
+		if ( class_exists( 'Shopwalk_AP2' ) ) {
+			$ap2_jwk = Shopwalk_AP2::get_public_jwk();
+			if ( is_array( $ap2_jwk ) ) {
+				$keys[] = $ap2_jwk;
+			}
+		}
+
+		return $keys;
 	}
 
 	/**

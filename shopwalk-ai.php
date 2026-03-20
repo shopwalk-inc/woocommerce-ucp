@@ -105,6 +105,7 @@ function shopwalk_ai_init(): void {
 
 	try {
 		// Load includes.
+		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-ap2.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-profile.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc-products.php';
@@ -165,6 +166,9 @@ add_filter(
  */
 function shopwalk_ai_activate(): void {
 	flush_rewrite_rules();
+	// Generate AP2 merchant EC keypair on first activation.
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-ap2.php';
+	Shopwalk_AP2::maybe_generate_keys();
 	// Schedule the sync queue flush cron (every 5 min).
 	if ( class_exists( 'Shopwalk_WC_Sync' ) ) {
 		Shopwalk_WC_Sync::schedule_cron();

@@ -451,6 +451,53 @@ class Shopwalk_WC_Checkout {
 		// ── Resolve payment credential ───────────────────────────────────────.
 		// UCP path: payment.instruments[0].credential.token.
 		$body        = $request->get_json_params() ?? array();
+
+		// ── AP2 token verification ───────────────────────────────────────────.
+		// If the buyer presents an AP2 mandate token, verify it with Shopwalk.
+		// A verified AP2 token means Shopwalk handles payment — skip Stripe charge.
+		$ap2_token = isset( $body['ap2']['token'] ) ? $body['ap2']['token'] : null;
+		if ( $ap2_token && class_exists( 'Shopwalk_AP2' ) ) {
+			$session_id   = $order->get_meta( '_shopwalk_session_id' );
+			$verification = Shopwalk_AP2::verify_token( $ap2_token, $session_id );
+			if ( ! $verification['authorized'] ) {
+				return new WP_REST_Response(
+					array(
+						'status'   => 'requires_escalation',
+						'ucp'      => array( 'status' => 'error' ),
+						'messages' => array(
+							array(
+								'code'    => 'mandate_required',
+								'message' => 'AP2 token verification failed',
+								'path'    => '$.ap2.token',
+							),
+						),
+					),
+					402
+				);
+			}
+			// AP2 payment authorized by Shopwalk — finalise order without Stripe.
+			$order->set_payment_method( 'shopwalk_ap2' );
+			$order->set_payment_method_title( 'Shopwalk AP2' );
+			$order->update_meta_data( '_shopwalk_ap2_token', sanitize_text_field( $ap2_token ) );
+			$order->set_status( 'processing' );
+			$order->update_meta_data( '_shopwalk_status', 'completed' );
+			$order->save();
+
+			wc_reduce_stock_levels( $order->get_id() );
+			do_action( 'woocommerce_checkout_order_processed', $order->get_id(), array(), $order );
+
+			return new WP_REST_Response(
+				array(
+					'status' => 'completed',
+					'order'  => array(
+						'id'            => 'ord_' . $order->get_id(),
+						'permalink_url' => $order->get_view_order_url(),
+					),
+				),
+				200
+			);
+		}
+
 		$instruments = $body['payment']['instruments'] ?? array();
 		$instrument  = $instruments[0] ?? array();
 		$credential  = $instrument['credential'] ?? array();
@@ -620,6 +667,17 @@ class Shopwalk_WC_Checkout {
 		$coupon_codes = $order->get_coupon_codes();
 		if ( ! empty( $coupon_codes ) ) {
 			$session['promotions'] = array_map( static fn( $code ) => array( 'code' => $code ), $coupon_codes );
+		}
+
+		// AP2 — attach merchant_authorization when session is ready_for_complete.
+		if ( 'ready_for_complete' === $status && class_exists( 'Shopwalk_AP2' ) ) {
+			$checkout_body = wp_json_encode( $session );
+			$merchant_auth = Shopwalk_AP2::merchant_authorization( $checkout_body );
+			if ( $merchant_auth ) {
+				$session['ap2'] = array(
+					'merchant_authorization' => $merchant_auth,
+				);
+			}
 		}
 
 		return $session;
