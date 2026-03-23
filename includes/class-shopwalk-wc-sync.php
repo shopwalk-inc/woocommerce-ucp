@@ -134,6 +134,9 @@ class Shopwalk_WC_Sync {
 	 * Get the Shopwalk plugin key from settings (unified key).
 	 */
 	protected function get_api_key(): string {
+		if ( defined( 'SHOPWALK_AI_PREFILLED_LICENSE' ) && ! empty( SHOPWALK_AI_PREFILLED_LICENSE ) ) {
+			return SHOPWALK_AI_PREFILLED_LICENSE;
+		}
 		return get_option( 'shopwalk_wc_plugin_key', '' );
 	}
 

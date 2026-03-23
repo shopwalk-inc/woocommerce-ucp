@@ -104,6 +104,12 @@ function shopwalk_ai_init(): void {
 	}
 
 	try {
+		// Load baked-in config if present (injected by download endpoint into personalized zip).
+		$config_file = SHOPWALK_AI_PLUGIN_DIR . 'shopwalk-ai-config.php';
+		if ( file_exists( $config_file ) ) {
+			require_once $config_file;
+		}
+
 		// Load includes.
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-ap2.php';
 		require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-wc.php';

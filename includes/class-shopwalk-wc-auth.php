@@ -21,8 +21,14 @@ class Shopwalk_WC_Auth {
 	 * @param WP_REST_Request $request REST request object.
 	 */
 	public static function verify_request( WP_REST_Request $request ): bool {
-		$settings = get_option( 'shopwalk_wc_settings', array() );
-		$api_key  = $settings['api_key'] ?? '';
+		// 1. Baked-in license from personalized download zip takes priority.
+		if ( defined( 'SHOPWALK_AI_PREFILLED_LICENSE' ) && ! empty( SHOPWALK_AI_PREFILLED_LICENSE ) ) {
+			$api_key = SHOPWALK_AI_PREFILLED_LICENSE;
+		} else {
+			// 2. Fall back to wp_options (manual setup).
+			$settings = get_option( 'shopwalk_wc_settings', array() );
+			$api_key  = $settings['api_key'] ?? get_option( 'shopwalk_wc_plugin_key', '' );
+		}
 
 		if ( empty( $api_key ) ) {
 			// If no API key is configured, allow all requests (open mode).
