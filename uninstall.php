@@ -20,11 +20,15 @@ $options = array(
 	'shopwalk_synced_count',
 	'shopwalk_sync_queue',
 	'shopwalk_notice_dismissed',
+	'shopwalk_ucp_discovery_enabled',
+	'shopwalk_ucp_reachable',
+	'shopwalk_ucp_checked_at',
 );
 
 foreach ( $options as $option ) {
 	delete_option( $option );
 }
 
-// Clear scheduled cron.
+// Clear scheduled crons.
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
+wp_clear_scheduled_hook( 'shopwalk_ucp_recheck' );

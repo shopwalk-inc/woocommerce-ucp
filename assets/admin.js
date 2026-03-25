@@ -11,6 +11,44 @@
 			.show();
 	}
 
+	// ── UCP Discovery (free state) ───────────────────────────────────────────
+
+	$('#sw-enable-ucp-btn').on('click', function () {
+		var $btn = $(this).prop('disabled', true).text('Enabling…');
+		$('#sw-ucp-result').hide();
+
+		$.post(s.ajaxUrl, {
+			action: 'shopwalk_enable_ucp_discovery',
+			nonce: s.nonce
+		}, function (resp) {
+			$btn.prop('disabled', false);
+			if (resp.success) {
+				// Reload to show updated state
+				location.reload();
+			} else {
+				showResult($('#sw-ucp-result'), 'error', (resp.data && resp.data.message) || 'Failed to enable UCP Discovery.');
+				$btn.text('Enable UCP Discovery');
+			}
+		});
+	});
+
+	$('#sw-test-ucp-btn').on('click', function () {
+		var $btn = $(this).prop('disabled', true).text('Testing…');
+		$('#sw-ucp-result').hide();
+
+		$.post(s.ajaxUrl, {
+			action: 'shopwalk_test_ucp',
+			nonce: s.nonce
+		}, function (resp) {
+			$btn.prop('disabled', false).text('Test Now');
+			if (resp.success) {
+				location.reload();
+			} else {
+				showResult($('#sw-ucp-result'), 'error', 'Test failed. Please try again.');
+			}
+		});
+	});
+
 	// ── License activation (free state) ──────────────────────────────────────
 
 	$('#sw-activate-btn').on('click', function () {

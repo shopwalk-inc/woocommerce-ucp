@@ -46,6 +46,15 @@ class Shopwalk_WC_Settings {
 
 		// AJAX: deactivate license.
 		add_action( 'wp_ajax_shopwalk_deactivate_license', array( $this, 'ajax_deactivate_license' ) );
+
+		// AJAX: enable UCP discovery + run probe.
+		add_action( 'wp_ajax_shopwalk_enable_ucp_discovery', array( $this, 'ajax_enable_ucp_discovery' ) );
+
+		// AJAX: run UCP probe manually.
+		add_action( 'wp_ajax_shopwalk_test_ucp', array( $this, 'ajax_test_ucp' ) );
+
+		// Cron: periodic UCP re-check (once per day).
+		add_action( 'shopwalk_ucp_recheck', array( $this, 'run_ucp_probe' ) );
 	}
 
 	/**
@@ -128,9 +137,13 @@ class Shopwalk_WC_Settings {
 	 * @return void
 	 */
 	private function render_free(): void {
-		$product_count = wp_count_posts( 'product' )->publish ?? 0;
-		$ucp_base      = get_site_url() . '/wp-json/shopwalk/v1';
-		$signup_url    = add_query_arg( 'store_url', rawurlencode( get_site_url() ), SHOPWALK_SIGNUP_URL );
+		$product_count   = wp_count_posts( 'product' )->publish ?? 0;
+		$ucp_base        = get_site_url() . '/wp-json/shopwalk/v1';
+		$signup_url      = add_query_arg( 'store_url', rawurlencode( get_site_url() ), SHOPWALK_SIGNUP_URL );
+		$ucp_enabled     = (bool) get_option( 'shopwalk_ucp_discovery_enabled', false );
+		$ucp_reachable   = get_option( 'shopwalk_ucp_reachable', null );
+		$ucp_checked_at  = get_option( 'shopwalk_ucp_checked_at', '' );
+		$nonce           = wp_create_nonce( 'shopwalk_dashboard' );
 		?>
 		<h2><?php esc_html_e( 'Shopwalk', 'shopwalk-ai' ); ?></h2>
 
@@ -163,6 +176,63 @@ class Shopwalk_WC_Settings {
 						);
 						?>
 					</p>
+				</td>
+			</tr>
+			<tr>
+				<th><?php esc_html_e( 'UCP Reachability', 'shopwalk-ai' ); ?></th>
+				<td>
+					<?php if ( ! $ucp_enabled ) : ?>
+						<span class="sw-badge sw-badge--inactive"><?php esc_html_e( 'Not checked', 'shopwalk-ai' ); ?></span>
+						<p class="description">
+							<?php esc_html_e( 'Enable UCP Discovery to let Shopwalk verify AI agents can reach your store from outside your network.', 'shopwalk-ai' ); ?>
+						</p>
+						<button type="button" class="button button-secondary" id="sw-enable-ucp-btn"
+							data-nonce="<?php echo esc_attr( $nonce ); ?>">
+							<?php esc_html_e( 'Enable UCP Discovery', 'shopwalk-ai' ); ?>
+						</button>
+						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
+
+					<?php elseif ( null === $ucp_reachable ) : ?>
+						<span class="sw-badge sw-badge--inactive"><?php esc_html_e( 'Checking…', 'shopwalk-ai' ); ?></span>
+						<button type="button" class="button" id="sw-test-ucp-btn"
+							data-nonce="<?php echo esc_attr( $nonce ); ?>">
+							<?php esc_html_e( 'Test Now', 'shopwalk-ai' ); ?>
+						</button>
+						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
+
+					<?php elseif ( $ucp_reachable ) : ?>
+						<span class="sw-badge sw-badge--active">✅ <?php esc_html_e( 'Open — AI agents can reach your store', 'shopwalk-ai' ); ?></span>
+						<?php if ( $ucp_checked_at ) : ?>
+							<p class="description"><?php printf( esc_html__( 'Last checked: %s', 'shopwalk-ai' ), esc_html( human_time_diff( strtotime( $ucp_checked_at ) ) . ' ' . __( 'ago', 'shopwalk-ai' ) ) ); ?></p>
+						<?php endif; ?>
+						<button type="button" class="button" id="sw-test-ucp-btn"
+							data-nonce="<?php echo esc_attr( $nonce ); ?>">
+							<?php esc_html_e( 'Test Now', 'shopwalk-ai' ); ?>
+						</button>
+						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
+
+					<?php else : ?>
+						<span class="sw-badge" style="background:#fcf0f1;color:#8a1f1f;">⚠️ <?php esc_html_e( 'Blocked by hosting provider', 'shopwalk-ai' ); ?></span>
+						<div style="margin-top:12px;padding:14px;background:#fcf0f1;border:1px solid #f5c6cb;border-radius:4px;">
+							<p style="margin:0 0 8px;font-weight:600;color:#8a1f1f;">
+								<?php esc_html_e( "Shopwalk's servers cannot reach your store's AI endpoints.", 'shopwalk-ai' ); ?>
+							</p>
+							<p style="margin:0 0 12px;font-size:13px;color:#6c1717;">
+								<?php esc_html_e( 'AI agents routing through Shopwalk will not be able to discover or query your store. Contact your hosting provider and ask them to whitelist Shopwalk (shopwalk.com) for your UCP endpoints.', 'shopwalk-ai' ); ?>
+							</p>
+							<a href="https://shopwalk.com/docs/ucp-hosting" target="_blank" rel="noopener noreferrer" class="button button-secondary">
+								<?php esc_html_e( 'Learn more ↗', 'shopwalk-ai' ); ?>
+							</a>
+						</div>
+						<?php if ( $ucp_checked_at ) : ?>
+							<p class="description" style="margin-top:8px;"><?php printf( esc_html__( 'Last checked: %s', 'shopwalk-ai' ), esc_html( human_time_diff( strtotime( $ucp_checked_at ) ) . ' ' . __( 'ago', 'shopwalk-ai' ) ) ); ?></p>
+						<?php endif; ?>
+						<button type="button" class="button" id="sw-test-ucp-btn"
+							data-nonce="<?php echo esc_attr( $nonce ); ?>" style="margin-top:8px;">
+							<?php esc_html_e( 'Test Again', 'shopwalk-ai' ); ?>
+						</button>
+						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr>
@@ -281,6 +351,84 @@ class Shopwalk_WC_Settings {
 		$this->clear_license_options();
 
 		wp_send_json_success( array( 'message' => __( 'License deactivated.', 'shopwalk-ai' ) ) );
+	}
+
+	/**
+	 * AJAX: enable UCP discovery and run initial probe.
+	 *
+	 * @return void
+	 */
+	public function ajax_enable_ucp_discovery(): void {
+		check_ajax_referer( 'shopwalk_dashboard', 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
+		}
+
+		update_option( 'shopwalk_ucp_discovery_enabled', true );
+
+		// Schedule daily re-check.
+		if ( ! wp_next_scheduled( 'shopwalk_ucp_recheck' ) ) {
+			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'shopwalk_ucp_recheck' );
+		}
+
+		// Run probe immediately.
+		$result = $this->run_ucp_probe();
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * AJAX: manually re-run the UCP probe.
+	 *
+	 * @return void
+	 */
+	public function ajax_test_ucp(): void {
+		check_ajax_referer( 'shopwalk_dashboard', 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
+		}
+
+		$result = $this->run_ucp_probe();
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Run the UCP probe via Shopwalk API.
+	 * Shopwalk's servers attempt to reach this store's UCP endpoint from outside.
+	 *
+	 * @return array{ reachable: bool, checked_at: string, reason?: string }
+	 */
+	public function run_ucp_probe(): array {
+		$response = wp_remote_post(
+			SHOPWALK_API_BASE . '/public/ucp/probe',
+			array(
+				'timeout' => 15,
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode( array( 'store_url' => get_site_url() ) ),
+			)
+		);
+
+		$checked_at = gmdate( 'c' );
+
+		if ( is_wp_error( $response ) ) {
+			// Can't reach Shopwalk API — don't update status
+			return array(
+				'reachable'  => null,
+				'checked_at' => $checked_at,
+				'error'      => __( 'Could not reach Shopwalk API.', 'shopwalk-ai' ),
+			);
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$reachable = (bool) ( $body['reachable'] ?? false );
+
+		update_option( 'shopwalk_ucp_reachable', $reachable );
+		update_option( 'shopwalk_ucp_checked_at', $checked_at );
+
+		return array(
+			'reachable'  => $reachable,
+			'checked_at' => $checked_at,
+			'reason'     => $body['reason'] ?? '',
+		);
 	}
 
 	/**
