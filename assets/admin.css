@@ -1,0 +1,52 @@
+/* Shopwalk WP Admin Styles */
+
+.sw-wrap { max-width: 800px; }
+
+.sw-table th { width: 200px; }
+
+.sw-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 600;
+}
+.sw-badge--active { background: #edfaef; color: #1a7335; }
+.sw-badge--inactive { background: #f0f0f1; color: #646970; }
+
+.sw-endpoints { margin: 8px 0; padding: 0; list-style: none; }
+.sw-endpoints li { margin-bottom: 4px; font-size: 13px; }
+.sw-endpoints code { font-size: 11px; word-break: break-all; }
+
+.sw-connect-box { margin-top: 12px; padding: 16px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; }
+.sw-connect-btn { font-size: 14px !important; padding: 6px 16px !important; height: auto !important; }
+
+.sw-license-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.sw-license-row input { max-width: 340px; }
+
+.sw-divider { margin: 16px 0; border-top: 1px solid #dcdcde; border-bottom: none; }
+
+.sw-portal-box { margin: 12px 0; padding: 16px; background: #f0f6fc; border: 1px solid #c3d9f0; border-radius: 4px; }
+.sw-portal-btn { font-size: 14px !important; }
+
+.sw-danger { color: #d63638 !important; border-color: #d63638 !important; }
+.sw-danger:hover { background: #d63638 !important; color: #fff !important; }
+
+.sw-result {
+	padding: 8px 12px;
+	border-radius: 4px;
+	font-size: 13px;
+}
+.sw-result--success { background: #edfaef; color: #1a7335; }
+.sw-result--error { background: #fcf0f1; color: #8a1f1f; }
+
+/* Diagnostics */
+.sw-diag-list { list-style: none; margin: 0; padding: 0; border: 1px solid #dcdcde; border-radius: 4px; }
+.sw-diag-list li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f0f0f1; }
+.sw-diag-list li:last-child { border-bottom: none; }
+.sw-diag-icon { font-size: 16px; flex-shrink: 0; }
+.sw-diag-name { font-weight: 600; font-size: 13px; }
+.sw-diag-val { font-size: 12px; color: #646970; }
+.sw-diag-fix { font-size: 12px; color: #d63638; margin-top: 2px; }

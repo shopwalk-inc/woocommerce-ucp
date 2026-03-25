@@ -1,10 +1,8 @@
 <?php
 /**
- * Main plugin class — singleton orchestrator.
+ * Main plugin class — initializes subsystems based on license state.
  *
- * @package ShopwalkAI
- * @license GPL-2.0-or-later
- * @copyright Copyright (c) 2024-2026 Shopwalk, Inc.
+ * @package Shopwalk
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -15,16 +13,16 @@ defined( 'ABSPATH' ) || exit;
 class Shopwalk_WC {
 
 	/**
-	 * Instance.
+	 * Singleton instance.
 	 *
-	 * @var Shopwalk_WC
+	 * @var self|null
 	 */
-	private static ?Shopwalk_WC $instance = null;
+	private static ?self $instance = null;
 
 	/**
 	 * Get or create the singleton instance.
 	 *
-	 * @return self Singleton instance.
+	 * @return self
 	 */
 	public static function instance(): self {
 		if ( null === self::$instance ) {
@@ -34,127 +32,93 @@ class Shopwalk_WC {
 	}
 
 	/**
-	 * Construct.
+	 * Constructor.
 	 */
 	private function __construct() {
-		$this->init_hooks();
-	}
+		// Always active — UCP endpoints require NO license, NO account, NO API calls.
+		Shopwalk_WC_UCP::instance();
 
-	/**
-	 * Cloning is forbidden.
-	 */
-	public function __clone() {
-		wc_doing_it_wrong( __FUNCTION__, 'Cloning is forbidden.', '1.0.0' );
-	}
+		// Always active — settings page shows UCP status + connect link or licensed dashboard.
+		Shopwalk_WC_Settings::instance();
 
-	/**
-	 * Unserializing is forbidden.
-	 */
-	public function __wakeup() {
-		wc_doing_it_wrong( __FUNCTION__, 'Unserializing is forbidden.', '1.0.0' );
-	}
-
-	/**
-	 * Init Hooks.
-	 */
-	private function init_hooks(): void {
-		// Register REST API routes.
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
-
-		// Register /.well-known/ucp rewrite.
-		add_action( 'init', array( $this, 'register_well_known' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'template_redirect', array( $this, 'handle_well_known' ) );
-
-		// Admin settings + dashboard widget.
-		if ( is_admin() ) {
-			// Shopwalk_WC_Settings creates Shopwalk_WC_Dashboard in its constructor.
-			Shopwalk_WC_Settings::instance();
+		// Licensed only — sync and full dashboard require a valid license key.
+		// NO API calls are made unless a license key is installed.
+		if ( $this->is_licensed() ) {
+			Shopwalk_WC_Sync::instance();
+			Shopwalk_WC_Dashboard::instance();
 		}
 
-		// Auto-updater (checks shopwalk.com for plugin updates).
-		Shopwalk_WC_Updater::instance();
+		// Admin notices.
+		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 
-		// Register order webhook listeners.
-		new Shopwalk_WC_Webhooks();
-
-		// Add version header to all Shopwalk REST responses.
-		add_filter(
-			'rest_post_dispatch',
-			function ( $result, $server, $request ) {
-				$route = $request->get_route();
-				if ( strpos( $route, '/shopwalk-wc/' ) !== false || strpos( $route, '/shopwalk/' ) !== false ) {
-					$result->header( 'X-Shopwalk-WC-Version', SHOPWALK_AI_VERSION );
-					$result->header( 'X-UCP-Version', '1.0' );
-				}
-				return $result;
-			},
-			10,
-			3
-		);
+		// AJAX: dismiss the connect notice.
+		add_action( 'wp_ajax_shopwalk_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 	}
 
 	/**
-	 * Register REST API routes.
+	 * Check if the plugin is licensed (license key installed and valid format).
 	 *
-	 * Routes are registered under two namespaces:
-	 *   - shopwalk-wc/v1  (legacy — preserves backward compatibility)
-	 *   - shopwalk/v1     (UCP-standard path)
+	 * @return bool
 	 */
-	public function register_routes(): void {
-		$namespaces = array( 'shopwalk-wc/v1', 'shopwalk/v1' );
-
-		foreach ( $namespaces as $namespace ) {
-			// Products / Catalog + Availability.
-			$products = new Shopwalk_WC_Products();
-			$products->register_routes( $namespace );
-
-			// Checkout Sessions.
-			$checkout = new Shopwalk_WC_Checkout();
-			$checkout->register_routes( $namespace );
-
-			// Orders + Refunds.
-			$orders = new Shopwalk_WC_Orders();
-			$orders->register_routes( $namespace );        }
+	public function is_licensed(): bool {
+		$key = get_option( 'shopwalk_license_key', '' );
+		return ! empty( $key ) && str_starts_with( (string) $key, 'sw_lic_' );
 	}
 
 	/**
-	 * Register the /.well-known/ucp rewrite rule.
-	 */
-	public function register_well_known(): void {
-		add_rewrite_rule(
-			'^\.well-known/ucp/?$',
-			'index.php?shopwalk_wc_well_known=1',
-			'top'
-		);
-	}
-
-	/**
-	 * Add Query Vars.
+	 * Show admin notice when not licensed.
 	 *
-	 * @param array $vars Parameter.
-	 *
-	 * @return array Result.
+	 * @return void
 	 */
-	public function add_query_vars( array $vars ): array {
-		$vars[] = 'shopwalk_wc_well_known';
-		return $vars;
-	}
-
-	/**
-	 * Serve the Business Profile at /.well-known/ucp
-	 */
-	public function handle_well_known(): void {
-		if ( ! get_query_var( 'shopwalk_wc_well_known' ) ) {
+	public function admin_notices(): void {
+		if ( $this->is_licensed() ) {
 			return;
 		}
+		if ( get_option( 'shopwalk_notice_dismissed' ) ) {
+			return;
+		}
+		// Only show on WooCommerce and Shopwalk pages.
+		$screen = get_current_screen();
+		if ( ! $screen || ! in_array( $screen->id, array( 'woocommerce_page_wc-settings', 'plugins' ), true ) ) {
+			return;
+		}
+		$settings_url = admin_url( 'admin.php?page=wc-settings&tab=shopwalk' );
+		?>
+		<div class="notice notice-info is-dismissible" id="shopwalk-connect-notice">
+			<p>
+				<strong><?php esc_html_e( 'Shopwalk', 'shopwalk-ai' ); ?></strong>
+				<?php esc_html_e( ' — Your store speaks AI. Connect to the Shopwalk network and get discovered by AI shoppers.', 'shopwalk-ai' ); ?>
+				<a href="<?php echo esc_url( $settings_url ); ?>">
+					<?php esc_html_e( 'Connect your store →', 'shopwalk-ai' ); ?>
+				</a>
+			</p>
+		</div>
+		<script>
+		(function() {
+			var notice = document.getElementById('shopwalk-connect-notice');
+			if (!notice) return;
+			notice.addEventListener('click', function(e) {
+				if (e.target.classList.contains('notice-dismiss')) {
+					fetch(ajaxurl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						body: 'action=shopwalk_dismiss_notice&nonce=<?php echo esc_js( wp_create_nonce( 'shopwalk_dismiss' ) ); ?>'
+					});
+				}
+			});
+		}());
+		</script>
+		<?php
+	}
 
-		$profile = Shopwalk_WC_Profile::get_business_profile();
-
-		header( 'Content-Type: application/json; charset=utf-8' );
-		header( 'Cache-Control: public, max-age=60' );
-		header( 'Access-Control-Allow-Origin: *' );
-		echo wp_json_encode( $profile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-		exit;
+	/**
+	 * AJAX: dismiss the connect notice.
+	 *
+	 * @return void
+	 */
+	public function ajax_dismiss_notice(): void {
+		check_ajax_referer( 'shopwalk_dismiss', 'nonce' );
+		update_option( 'shopwalk_notice_dismissed', true );
+		wp_send_json_success();
 	}
 }
