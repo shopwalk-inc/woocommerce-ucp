@@ -214,15 +214,20 @@ class Shopwalk_WC_Settings {
 					<?php else : ?>
 						<span class="sw-badge" style="background:#fcf0f1;color:#8a1f1f;">⚠️ <?php esc_html_e( 'Blocked by hosting provider', 'shopwalk-ai' ); ?></span>
 						<div style="margin-top:12px;padding:14px;background:#fcf0f1;border:1px solid #f5c6cb;border-radius:4px;">
-							<p style="margin:0 0 8px;font-weight:600;color:#8a1f1f;">
-								<?php esc_html_e( "Shopwalk's servers cannot reach your store's AI endpoints.", 'shopwalk-ai' ); ?>
+							<p style="margin:0 0 8px;font-weight:600;color:#8a1f1f;font-size:15px;">
+								⚠️ <?php esc_html_e( 'AI Shopping is blocked on your hosting account.', 'shopwalk-ai' ); ?>
 							</p>
 							<p style="margin:0 0 12px;font-size:13px;color:#6c1717;">
-								<?php esc_html_e( 'AI agents routing through Shopwalk will not be able to discover or query your store. Contact your hosting provider and ask them to whitelist Shopwalk (shopwalk.com) for your UCP endpoints.', 'shopwalk-ai' ); ?>
+								<?php esc_html_e( 'AI shoppers cannot find or browse your store. Contact your hosting provider's support and ask them to enable Shopwalk AI Shopping access for your account.', 'shopwalk-ai' ); ?>
 							</p>
-							<a href="https://shopwalk.com/docs/ucp-hosting" target="_blank" rel="noopener noreferrer" class="button button-secondary">
-								<?php esc_html_e( 'Learn more ↗', 'shopwalk-ai' ); ?>
-							</a>
+							<div style="display:flex;gap:10px;flex-wrap:wrap;">
+								<a href="https://shopwalk.com/hosting" target="_blank" rel="noopener noreferrer" class="button button-secondary">
+									<?php esc_html_e( 'Find an AI-ready host ↗', 'shopwalk-ai' ); ?>
+								</a>
+								<a href="https://shopwalk.com/docs/ucp-unblock" target="_blank" rel="noopener noreferrer" class="button">
+									<?php esc_html_e( 'How to fix this ↗', 'shopwalk-ai' ); ?>
+								</a>
+							</div>
 						</div>
 						<?php if ( $ucp_checked_at ) : ?>
 							<p class="description" style="margin-top:8px;"><?php printf( esc_html__( 'Last checked: %s', 'shopwalk-ai' ), esc_html( human_time_diff( strtotime( $ucp_checked_at ) ) . ' ' . __( 'ago', 'shopwalk-ai' ) ) ); ?></p>
