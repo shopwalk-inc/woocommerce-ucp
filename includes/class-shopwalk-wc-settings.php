@@ -143,6 +143,9 @@ class Shopwalk_WC_Settings {
 		$ucp_enabled     = (bool) get_option( 'shopwalk_ucp_discovery_enabled', false );
 		$ucp_reachable   = get_option( 'shopwalk_ucp_reachable', null );
 		$ucp_checked_at  = get_option( 'shopwalk_ucp_checked_at', '' );
+		$ucp_host_name   = (string) get_option( 'shopwalk_ucp_host_name', '' );
+		$ucp_host_phone  = (string) get_option( 'shopwalk_ucp_host_phone', '' );
+		$ucp_host_support = (string) get_option( 'shopwalk_ucp_host_support', '' );
 		$nonce           = wp_create_nonce( 'shopwalk_dashboard' );
 		?>
 		<h2><?php esc_html_e( 'Shopwalk', 'shopwalk-ai' ); ?></h2>
@@ -179,16 +182,16 @@ class Shopwalk_WC_Settings {
 				</td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'UCP Reachability', 'shopwalk-ai' ); ?></th>
+				<th><?php esc_html_e( 'AI Shopping', 'shopwalk-ai' ); ?></th>
 				<td>
 					<?php if ( ! $ucp_enabled ) : ?>
-						<span class="sw-badge sw-badge--inactive"><?php esc_html_e( 'Not checked', 'shopwalk-ai' ); ?></span>
+						<span class="sw-badge sw-badge--inactive"><?php esc_html_e( 'Not enabled', 'shopwalk-ai' ); ?></span>
 						<p class="description">
-							<?php esc_html_e( 'Enable UCP Discovery to let Shopwalk verify AI agents can reach your store from outside your network.', 'shopwalk-ai' ); ?>
+							<?php esc_html_e( 'Enable AI Shopping to let Shopwalk verify AI agents can reach your store.', 'shopwalk-ai' ); ?>
 						</p>
 						<button type="button" class="button button-secondary" id="sw-enable-ucp-btn"
 							data-nonce="<?php echo esc_attr( $nonce ); ?>">
-							<?php esc_html_e( 'Enable UCP Discovery', 'shopwalk-ai' ); ?>
+							<?php esc_html_e( 'Enable AI Shopping', 'shopwalk-ai' ); ?>
 						</button>
 						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
 
@@ -201,7 +204,7 @@ class Shopwalk_WC_Settings {
 						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
 
 					<?php elseif ( $ucp_reachable ) : ?>
-						<span class="sw-badge sw-badge--active">✅ <?php esc_html_e( 'Open — AI agents can reach your store', 'shopwalk-ai' ); ?></span>
+						<span class="sw-badge sw-badge--active">✅ <?php esc_html_e( '✅ AI Shopping enabled', 'shopwalk-ai' ); ?></span>
 						<?php if ( $ucp_checked_at ) : ?>
 							<p class="description"><?php printf( esc_html__( 'Last checked: %s', 'shopwalk-ai' ), esc_html( human_time_diff( strtotime( $ucp_checked_at ) ) . ' ' . __( 'ago', 'shopwalk-ai' ) ) ); ?></p>
 						<?php endif; ?>
@@ -212,19 +215,31 @@ class Shopwalk_WC_Settings {
 						<div id="sw-ucp-result" class="sw-result" style="display:none;margin-top:8px;"></div>
 
 					<?php else : ?>
-						<span class="sw-badge" style="background:#fcf0f1;color:#8a1f1f;">⚠️ <?php esc_html_e( 'Blocked by hosting provider', 'shopwalk-ai' ); ?></span>
-						<div style="margin-top:12px;padding:14px;background:#fcf0f1;border:1px solid #f5c6cb;border-radius:4px;">
-							<p style="margin:0 0 8px;font-weight:600;color:#8a1f1f;font-size:15px;">
-								⚠️ <?php esc_html_e( 'AI Shopping is blocked on your hosting account.', 'shopwalk-ai' ); ?>
+						<?php
+						$host_label = ! empty( $ucp_host_name ) ? $ucp_host_name : __( 'your hosting provider', 'shopwalk-ai' );
+						?>
+						<span class="sw-badge" style="background:#fcf0f1;color:#8a1f1f;">
+							⚠️ <?php printf( esc_html__( 'AI Shopping blocked by %s', 'shopwalk-ai' ), esc_html( $host_label ) ); ?>
+						</span>
+						<div style="margin-top:12px;padding:16px;background:#fcf0f1;border:1px solid #f5c6cb;border-radius:4px;">
+							<p style="margin:0 0 8px;font-weight:700;color:#8a1f1f;font-size:15px;">
+								<?php printf( esc_html__( 'AI Shopping is blocked by %s', 'shopwalk-ai' ), esc_html( $host_label ) ); ?>
 							</p>
-							<p style="margin:0 0 12px;font-size:13px;color:#6c1717;">
-								<?php esc_html_e( 'AI shoppers cannot find or browse your store. Contact your hosting provider's support and ask them to enable Shopwalk AI Shopping access for your account.', 'shopwalk-ai' ); ?>
+							<p style="margin:0 0 12px;font-size:13px;color:#6c1717;line-height:1.5;">
+								<?php esc_html_e( 'AI shoppers cannot find or browse your store. Call your hosting provider and ask them to enable AI Shopping (Shopwalk) for your account.', 'shopwalk-ai' ); ?>
 							</p>
+							<?php if ( ! empty( $ucp_host_phone ) ) : ?>
+								<p style="margin:0 0 14px;font-size:16px;font-weight:700;color:#8a1f1f;">
+									📞 <a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $ucp_host_phone ) ); ?>" style="color:#8a1f1f;text-decoration:none;">
+										<?php echo esc_html( $ucp_host_name . ' support: ' . $ucp_host_phone ); ?>
+									</a>
+								</p>
+							<?php endif; ?>
 							<div style="display:flex;gap:10px;flex-wrap:wrap;">
 								<a href="https://shopwalk.com/hosting" target="_blank" rel="noopener noreferrer" class="button button-secondary">
 									<?php esc_html_e( 'Find an AI-ready host ↗', 'shopwalk-ai' ); ?>
 								</a>
-								<a href="https://shopwalk.com/docs/ucp-unblock" target="_blank" rel="noopener noreferrer" class="button">
+								<a href="https://shopwalk.com/docs/ai-shopping-blocked" target="_blank" rel="noopener noreferrer" class="button">
 									<?php esc_html_e( 'How to fix this ↗', 'shopwalk-ai' ); ?>
 								</a>
 							</div>
@@ -428,11 +443,17 @@ class Shopwalk_WC_Settings {
 
 		update_option( 'shopwalk_ucp_reachable', $reachable );
 		update_option( 'shopwalk_ucp_checked_at', $checked_at );
+		update_option( 'shopwalk_ucp_host_name', sanitize_text_field( $body['host_name'] ?? '' ) );
+		update_option( 'shopwalk_ucp_host_phone', sanitize_text_field( $body['host_phone'] ?? '' ) );
+		update_option( 'shopwalk_ucp_host_support', esc_url_raw( $body['host_support'] ?? '' ) );
 
 		return array(
-			'reachable'  => $reachable,
-			'checked_at' => $checked_at,
-			'reason'     => $body['reason'] ?? '',
+			'reachable'    => $reachable,
+			'checked_at'   => $checked_at,
+			'reason'       => $body['reason'] ?? '',
+			'host_name'    => $body['host_name'] ?? '',
+			'host_phone'   => $body['host_phone'] ?? '',
+			'host_support' => $body['host_support'] ?? '',
 		);
 	}
 

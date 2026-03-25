@@ -23,6 +23,9 @@ $options = array(
 	'shopwalk_ucp_discovery_enabled',
 	'shopwalk_ucp_reachable',
 	'shopwalk_ucp_checked_at',
+	'shopwalk_ucp_host_name',
+	'shopwalk_ucp_host_phone',
+	'shopwalk_ucp_host_support',
 );
 
 foreach ( $options as $option ) {
