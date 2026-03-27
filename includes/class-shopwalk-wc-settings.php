@@ -260,13 +260,13 @@ class Shopwalk_WC_Settings {
 							</a>
 						</p>
 						<p class="description">
-							<?php esc_html_e( 'Get discovered by AI shoppers. Free to connect. Shopwalk takes 5% on completed Shopwalk purchases only.', 'shopwalk-ai' ); ?>
+							<?php esc_html_e( 'Get discovered by AI shoppers. Free to connect.', 'shopwalk-ai' ); ?>
 						</p>
 					</div>
 
 					<hr class="sw-divider" />
 
-					<p><strong><?php esc_html_e( 'Already have a license key?', 'shopwalk-ai' ); ?></strong></p>
+					<p><strong><?php esc_html_e( 'Already have an account? Sign in at shopwalk.com/partners', 'shopwalk-ai' ); ?></strong></p>
 					<div class="sw-license-row">
 						<input
 							type="text"

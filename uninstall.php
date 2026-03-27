@@ -1,6 +1,10 @@
 <?php
 /**
- * Uninstall Shopwalk — clean up all plugin data.
+ * Uninstall Shopwalk.
+ *
+ * Deactivating or deleting the plugin stops catalog sync only.
+ * Your Shopwalk account and store data are preserved on Shopwalk's servers.
+ * Reinstall and sign in at shopwalk.com/partners to reconnect at any time.
  *
  * @package Shopwalk
  */
@@ -10,7 +14,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// Delete all plugin options.
+// Remove local plugin options — these are just cached state, not account data.
+// The Shopwalk account and indexed product data are preserved server-side.
 $options = array(
 	'shopwalk_license_key',
 	'shopwalk_site_domain',
