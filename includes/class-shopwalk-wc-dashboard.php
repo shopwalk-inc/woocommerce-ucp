@@ -219,6 +219,87 @@ class Shopwalk_WC_Dashboard {
 			</tr>
 
 
+			<!-- AI Preview (shown when synced) -->
+			<?php if ( $synced_count > 0 ) : ?>
+			<tr>
+				<th style="vertical-align:top;padding-top:16px;"><?php esc_html_e( 'How AI sees you', 'shopwalk-ai' ); ?></th>
+				<td>
+					<p class="description" style="margin-bottom:12px;">
+						<?php esc_html_e( 'This is what AI says about your store when someone asks about it.', 'shopwalk-ai' ); ?>
+					</p>
+					<?php
+					$store_name        = get_bloginfo( 'name' );
+					$store_desc        = wp_strip_all_tags( get_bloginfo( 'description' ) );
+					$store_url         = get_site_url();
+					$domain            = preg_replace( '#^https?://#', '', $store_url );
+					$product_count_fmt = number_format( $synced_count );
+					$currency          = get_woocommerce_currency();
+
+					if ( empty( $store_desc ) ) {
+						$store_desc = 'an independent online store';
+					}
+
+					$ai_message = sprintf(
+						/* translators: %1$s: store name, %2$s: description, %3$s: product count, %4$s: currency */
+						__( 'I found %1$s — %2$s They carry %3$s products, priced in %4$s. Would you like me to search their catalog?', 'shopwalk-ai' ),
+						esc_html( $store_name ),
+						esc_html( mb_strimwidth( $store_desc, 0, 140, '…' ) ) . ' ',
+						esc_html( $product_count_fmt ),
+						esc_html( $currency )
+					);
+					?>
+					<div class="sw-ai-chat-preview" style="border-radius:12px;overflow:hidden;border:1px solid #1e293b;max-width:560px;">
+						<!-- Window chrome -->
+						<div style="background:#0f172a;padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #1e293b;">
+							<span style="width:10px;height:10px;border-radius:50%;background:#ff5f57;display:inline-block;"></span>
+							<span style="width:10px;height:10px;border-radius:50%;background:#ffbd2e;display:inline-block;"></span>
+							<span style="width:10px;height:10px;border-radius:50%;background:#28c840;display:inline-block;"></span>
+							<span style="font-size:11px;color:#475569;font-family:monospace;margin:0 auto;">shopwalk — AI commerce</span>
+						</div>
+						<!-- Chat -->
+						<div style="background:#0f172a;padding:16px;display:flex;flex-direction:column;gap:12px;">
+							<!-- User prompt -->
+							<div style="display:flex;justify-content:flex-end;gap:8px;align-items:flex-end;">
+								<div style="background:#1e293b;border-radius:12px 12px 2px 12px;padding:8px 14px;max-width:280px;">
+									<p style="margin:0;font-size:13px;color:#94a3b8;">
+										<?php printf( esc_html__( 'What can you tell me about %s?', 'shopwalk-ai' ), esc_html( $domain ) ); ?>
+									</p>
+								</div>
+								<div style="width:28px;height:28px;border-radius:50%;background:#334155;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#94a3b8;">You</div>
+							</div>
+							<!-- AI response -->
+							<div style="display:flex;gap:8px;align-items:flex-start;">
+								<div style="width:28px;height:28px;border-radius:50%;background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#0ea5e9;font-weight:700;">✦</div>
+								<div style="background:#1e293b;border-radius:2px 12px 12px 12px;padding:10px 14px;flex:1;" id="sw-ai-preview-box">
+									<p style="margin:0;font-size:13px;color:#e2e8f0;line-height:1.6;" id="sw-ai-preview-text"></p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<script>
+					(function() {
+						var msg = <?php echo wp_json_encode( $ai_message ); ?>;
+						var el = document.getElementById('sw-ai-preview-text');
+						if (!el) return;
+						var i = 0;
+						var delay = 400;
+						setTimeout(function() {
+							var iv = setInterval(function() {
+								el.textContent = msg.slice(0, i + 1);
+								i++;
+								if (i >= msg.length) {
+									clearInterval(iv);
+								}
+							}, 16);
+						}, delay);
+					})();
+					</script>
+				</td>
+			</tr>
+			<?php endif; ?>
+
+
 			<!-- What happens now (shown when synced) -->
 			<?php if ( $synced_count > 0 ) : ?>
 			<tr>
