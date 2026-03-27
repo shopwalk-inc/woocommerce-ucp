@@ -144,7 +144,7 @@ class Shopwalk_WC_Settings {
 		$ucp_reachable   = get_option( 'shopwalk_ucp_reachable', null );
 		$ucp_checked_at  = get_option( 'shopwalk_ucp_checked_at', '' );
 		$ucp_host_name   = (string) get_option( 'shopwalk_ucp_host_name', '' );
-		$ucp_host_phone  = (string) get_option( 'shopwalk_ucp_host_phone', '' );
+
 		$ucp_host_support = (string) get_option( 'shopwalk_ucp_host_support', '' );
 		$nonce           = wp_create_nonce( 'shopwalk_dashboard' );
 		?>
@@ -228,18 +228,12 @@ class Shopwalk_WC_Settings {
 							<p style="margin:0 0 12px;font-size:13px;color:#6c1717;line-height:1.5;">
 								<?php esc_html_e( 'AI shoppers cannot find or browse your store. Call your hosting provider and ask them to enable AI Shopping (Shopwalk) for your account.', 'shopwalk-ai' ); ?>
 							</p>
-							<?php if ( ! empty( $ucp_host_phone ) ) : ?>
-								<p style="margin:0 0 14px;font-size:16px;font-weight:700;color:#8a1f1f;">
-									📞 <a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $ucp_host_phone ) ); ?>" style="color:#8a1f1f;text-decoration:none;">
-										<?php echo esc_html( $ucp_host_name . ' support: ' . $ucp_host_phone ); ?>
-									</a>
-								</p>
-							<?php endif; ?>
+
 							<div style="display:flex;gap:10px;flex-wrap:wrap;">
 								<a href="https://shopwalk.com/hosting" target="_blank" rel="noopener noreferrer" class="button button-secondary">
 									<?php esc_html_e( 'Find an AI-ready host ↗', 'shopwalk-ai' ); ?>
 								</a>
-								<a href="https://shopwalk.com/docs/ai-shopping-blocked" target="_blank" rel="noopener noreferrer" class="button">
+								<a href="https://shopwalk.com/check" target="_blank" rel="noopener noreferrer" class="button">
 									<?php esc_html_e( 'How to fix this ↗', 'shopwalk-ai' ); ?>
 								</a>
 							</div>
@@ -444,7 +438,7 @@ class Shopwalk_WC_Settings {
 		update_option( 'shopwalk_ucp_reachable', $reachable );
 		update_option( 'shopwalk_ucp_checked_at', $checked_at );
 		update_option( 'shopwalk_ucp_host_name', sanitize_text_field( $body['host_name'] ?? '' ) );
-		update_option( 'shopwalk_ucp_host_phone', sanitize_text_field( $body['host_phone'] ?? '' ) );
+
 		update_option( 'shopwalk_ucp_host_support', esc_url_raw( $body['host_support'] ?? '' ) );
 
 		return array(
@@ -452,7 +446,7 @@ class Shopwalk_WC_Settings {
 			'checked_at'   => $checked_at,
 			'reason'       => $body['reason'] ?? '',
 			'host_name'    => $body['host_name'] ?? '',
-			'host_phone'   => $body['host_phone'] ?? '',
+
 			'host_support' => $body['host_support'] ?? '',
 		);
 	}
