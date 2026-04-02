@@ -124,3 +124,4 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 Major rewrite. If you were using the previous version, your existing Shopwalk account is still active — sign in at shopwalk.com/partners to reconnect your store.
 
 
+ 
