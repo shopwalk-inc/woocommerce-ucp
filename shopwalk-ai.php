@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk
  * Plugin URI:  https://shopwalk.com/woocommerce
  * Description: Make your WooCommerce store discoverable by AI shopping agents. Free UCP implementation — no account required.
- * Version:     2.0.7
+ * Version:     2.0.8
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -28,7 +28,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SHOPWALK_VERSION', '2.0.7' );
+define( 'SHOPWALK_VERSION', '2.0.8' );
 define( 'SHOPWALK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SHOPWALK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SHOPWALK_API_BASE', 'https://api.shopwalk.com/api/v1' );
