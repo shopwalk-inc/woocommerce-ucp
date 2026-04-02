@@ -36,6 +36,7 @@ class Shopwalk_WC_Dashboard {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_notices', array( $this, 'upgrade_notice' ) );
 		add_action( 'wp_ajax_shopwalk_open_portal', array( $this, 'ajax_open_portal' ) );
 		add_action( 'wp_ajax_shopwalk_run_diagnostics', array( $this, 'ajax_run_diagnostics' ) );
 	}
@@ -54,6 +55,62 @@ class Shopwalk_WC_Dashboard {
 			array( $this, 'render' ),
 			'dashicons-store',
 			56
+		);
+	}
+
+	/**
+	 * Show an admin notice when a newer plugin version is available.
+	 * Checks once daily via a transient to avoid excessive API calls.
+	 *
+	 * @return void
+	 */
+	public function upgrade_notice(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || ! in_array( $screen->id, array( 'toplevel_page_shopwalk', 'plugins' ), true ) ) {
+			return;
+		}
+
+		$latest = get_transient( 'shopwalk_latest_version' );
+		if ( false === $latest ) {
+			$key = get_option( 'shopwalk_license_key', '' );
+			if ( empty( $key ) ) {
+				return;
+			}
+			$response = wp_remote_get(
+				SHOPWALK_API_BASE . '/plugin/version',
+				array(
+					'timeout' => 5,
+					'headers' => array(
+						'X-SW-License-Key' => $key,
+						'X-SW-Domain'      => wp_parse_url( get_site_url(), PHP_URL_HOST ) ?? '',
+					),
+				)
+			);
+			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+				set_transient( 'shopwalk_latest_version', SHOPWALK_VERSION, DAY_IN_SECONDS );
+				return;
+			}
+			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			$latest = is_array( $body ) ? ( $body['version'] ?? SHOPWALK_VERSION ) : SHOPWALK_VERSION;
+			set_transient( 'shopwalk_latest_version', $latest, DAY_IN_SECONDS );
+		}
+
+		if ( version_compare( SHOPWALK_VERSION, $latest, '>=' ) ) {
+			return;
+		}
+
+		$portal_url = SHOPWALK_PARTNERS_URL . '/plugin';
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s <a href="%s" target="_blank">%s</a></p></div>',
+			esc_html__( 'Shopwalk update available:', 'shopwalk-ai' ),
+			/* translators: %1$s: current version, %2$s: latest version */
+			sprintf(
+				esc_html__( 'You are running v%1$s. Version %2$s is available.', 'shopwalk-ai' ),
+				esc_html( SHOPWALK_VERSION ),
+				esc_html( $latest )
+			),
+			esc_url( $portal_url ),
+			esc_html__( 'Download from Partner Portal', 'shopwalk-ai' )
 		);
 	}
 
