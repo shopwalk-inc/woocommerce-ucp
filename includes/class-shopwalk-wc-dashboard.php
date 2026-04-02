@@ -207,12 +207,12 @@ class Shopwalk_WC_Dashboard {
 				<td>
 					<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:16px 20px;">
 						<p style="margin:0 0 10px;font-size:13px;color:#374151;line-height:1.6;">
-							<?php esc_html_e( 'AI doesn't visit your website. It queries Shopwalk for products and your store's answers come back instantly — no page loads, no browsing.', 'shopwalk-ai' ); ?>
+							<?php esc_html_e( 'AI does not visit your website. It queries Shopwalk for products and your store answers come back instantly - no page loads, no browsing.', 'shopwalk-ai' ); ?>
 						</p>
 						<ul style="margin:0;padding:0 0 0 18px;font-size:13px;color:#374151;line-height:2;">
 							<li><?php esc_html_e( '"Find waterproof hiking boots under $100" → your products', 'shopwalk-ai' ); ?></li>
 							<li><?php esc_html_e( '"Is size 10 in stock?" → live inventory answer', 'shopwalk-ai' ); ?></li>
-							<li><?php esc_html_e( '"What's the return policy?" → your store info', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( '"What is the return policy?" → your store info', 'shopwalk-ai' ); ?></li>
 						</ul>
 					</div>
 				</td>
