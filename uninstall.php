@@ -40,3 +40,16 @@ foreach ( $options as $option ) {
 // Clear scheduled crons.
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 wp_clear_scheduled_hook( 'shopwalk_ucp_recheck' );
+
+// Remove /.well-known/ucp.php and .htaccess created on activation.
+$well_known_dir = ABSPATH . '.well-known';
+if ( file_exists( $well_known_dir . '/ucp.php' ) ) {
+	unlink( $well_known_dir . '/ucp.php' );
+}
+$htaccess = $well_known_dir . '/.htaccess';
+if ( file_exists( $htaccess ) && false !== strpos( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) {
+	unlink( $htaccess );
+}
+
+// Clear version check transient.
+delete_transient( 'shopwalk_latest_version' );

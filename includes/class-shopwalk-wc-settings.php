@@ -513,6 +513,7 @@ class Shopwalk_WC_Settings {
 				),
 				'body'    => wp_json_encode(
 					array(
+						'plugin_key'          => $key,
 						'site_url'            => $site_url,
 						'site_domain'         => $domain,
 						'plugin_version'      => SHOPWALK_VERSION,
