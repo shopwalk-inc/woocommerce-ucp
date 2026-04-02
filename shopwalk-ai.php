@@ -83,3 +83,17 @@ function shopwalk_deactivate(): void {
 	wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 }
 register_deactivation_hook( __FILE__, 'shopwalk_deactivate' );
+
+/**
+ * Add action links on the Plugins list page (Dashboard, Settings).
+ *
+ * @param array $links Existing plugin action links.
+ * @return array Modified links.
+ */
+function shopwalk_plugin_action_links( array $links ): array {
+	$dashboard_link = '<a href="' . esc_url( admin_url( 'admin.php?page=shopwalk' ) ) . '">' . esc_html__( 'Dashboard', 'shopwalk-ai' ) . '</a>';
+	$settings_link  = '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=shopwalk' ) ) . '">' . esc_html__( 'Settings', 'shopwalk-ai' ) . '</a>';
+	array_unshift( $links, $dashboard_link, $settings_link );
+	return $links;
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'shopwalk_plugin_action_links' );
