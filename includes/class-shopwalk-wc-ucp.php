@@ -95,11 +95,11 @@ class Shopwalk_WC_UCP {
 					),
 					'min_price' => array(
 						'default'           => '',
-						'sanitize_callback' => 'floatval',
+						'sanitize_callback' => static function( $val ) { return (float) $val; },
 					),
 					'max_price' => array(
 						'default'           => '',
-						'sanitize_callback' => 'floatval',
+						'sanitize_callback' => static function( $val ) { return (float) $val; },
 					),
 					'orderby'  => array(
 						'default'           => 'date',
@@ -341,7 +341,7 @@ class Shopwalk_WC_UCP {
 			)
 		);
 
-		$is_licensed  = str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_lic_' );
+		$is_licensed  = str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_lic_' ) || str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_site_' );
 		$partner_id   = get_option( 'shopwalk_partner_id', null );
 
 		return new WP_REST_Response(

@@ -298,7 +298,7 @@ class Shopwalk_WC_Settings {
 							type="text"
 							id="sw-license-key"
 							class="regular-text"
-							placeholder="sw_lic_..."
+							placeholder="sw_site_..."
 							autocomplete="off"
 						/>
 						<button type="button" class="button button-secondary" id="sw-activate-btn">
@@ -346,7 +346,7 @@ class Shopwalk_WC_Settings {
 			wp_send_json_error( array( 'message' => __( 'License key is required.', 'shopwalk-ai' ) ) );
 		}
 
-		if ( ! str_starts_with( $key, 'sw_lic_' ) ) {
+		if ( ! str_starts_with( $key, 'sw_lic_' ) || str_starts_with( $key, 'sw_site_' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid license key format.', 'shopwalk-ai' ) ) );
 		}
 
@@ -589,6 +589,6 @@ class Shopwalk_WC_Settings {
 	 * @return bool
 	 */
 	private function is_licensed(): bool {
-		return str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_lic_' );
+		return str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_lic_' ) || str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_site_' );
 	}
 }

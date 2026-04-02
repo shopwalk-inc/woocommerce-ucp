@@ -57,7 +57,7 @@ class Shopwalk_WC {
 	 */
 	public function is_licensed(): bool {
 		$key = get_option( 'shopwalk_license_key', '' );
-		return ! empty( $key ) && str_starts_with( (string) $key, 'sw_lic_' );
+		return ! empty( $key ) && str_starts_with( (string) $key, 'sw_lic_' ) || str_starts_with( (string) $key, 'sw_site_' );
 	}
 
 	/**

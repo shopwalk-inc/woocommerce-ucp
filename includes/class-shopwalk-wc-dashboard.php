@@ -486,7 +486,7 @@ class Shopwalk_WC_Dashboard {
 
 		// License key present.
 		$lic_key  = (string) get_option( 'shopwalk_license_key', '' );
-		$lic_ok   = str_starts_with( $lic_key, 'sw_lic_' );
+		$lic_ok   = str_starts_with( $lic_key, 'sw_lic_' ) || str_starts_with( $lic_key, 'sw_site_' );
 		$checks[] = array(
 			'name'  => __( 'License Key', 'shopwalk-ai' ),
 			'ok'    => $lic_ok,
