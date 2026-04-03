@@ -36,9 +36,52 @@ class Shopwalk_WC_Dashboard {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'upgrade_notice' ) );
 		add_action( 'wp_ajax_shopwalk_open_portal', array( $this, 'ajax_open_portal' ) );
 		add_action( 'wp_ajax_shopwalk_run_diagnostics', array( $this, 'ajax_run_diagnostics' ) );
+		add_action( 'wp_ajax_shopwalk_deactivate_license', array( $this, 'ajax_deactivate_license' ) );
+	}
+
+	/**
+	 * Enqueue admin.js + admin.css on the Shopwalk dashboard page.
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_assets( string $hook ): void {
+		if ( 'toplevel_page_shopwalk' !== $hook ) {
+			return;
+		}
+		wp_enqueue_style(
+			'shopwalk-admin',
+			SHOPWALK_PLUGIN_URL . 'assets/admin.css',
+			array(),
+			SHOPWALK_VERSION
+		);
+		wp_enqueue_script(
+			'shopwalk-admin',
+			SHOPWALK_PLUGIN_URL . 'assets/admin.js',
+			array( 'jquery' ),
+			SHOPWALK_VERSION,
+			true
+		);
+		wp_localize_script(
+			'shopwalk-admin',
+			'shopwalkAdmin',
+			array(
+				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+				'nonce'      => wp_create_nonce( 'shopwalk_dashboard' ),
+				'isLicensed' => true,
+				'strings'    => array(
+					'activating'   => __( 'Activating…', 'shopwalk-ai' ),
+					'deactivating' => __( 'Deactivating…', 'shopwalk-ai' ),
+					'syncing'      => __( 'Syncing…', 'shopwalk-ai' ),
+					'syncDone'     => __( 'Sync complete.', 'shopwalk-ai' ),
+					'confirm'      => __( 'Deactivate Shopwalk license?', 'shopwalk-ai' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -552,6 +595,52 @@ class Shopwalk_WC_Dashboard {
 		);
 
 		wp_send_json_success( array( 'checks' => $checks ) );
+	}
+
+	/**
+	 * AJAX: deactivate the license on this site.
+	 * Clears local options but preserves the Shopwalk account server-side.
+	 *
+	 * @return void
+	 */
+	public function ajax_deactivate_license(): void {
+		check_ajax_referer( 'shopwalk_dashboard', 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
+		}
+
+		// Notify Shopwalk API (best-effort).
+		$key    = get_option( 'shopwalk_license_key', '' );
+		$domain = get_option( 'shopwalk_site_domain', '' );
+		if ( ! empty( $key ) && ! empty( $domain ) ) {
+			wp_remote_post(
+				SHOPWALK_API_BASE . '/plugin/deactivate',
+				array(
+					'timeout' => 10,
+					'headers' => array(
+						'Content-Type'     => 'application/json',
+						'X-SW-License-Key' => $key,
+						'X-SW-Domain'      => $domain,
+					),
+				)
+			);
+		}
+
+		// Clear local state.
+		$options = array(
+			'shopwalk_license_key',
+			'shopwalk_site_domain',
+			'shopwalk_partner_id',
+			'shopwalk_activated_at',
+			'shopwalk_last_sync_at',
+			'shopwalk_synced_count',
+			'shopwalk_sync_queue',
+		);
+		foreach ( $options as $opt ) {
+			delete_option( $opt );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'License deactivated.', 'shopwalk-ai' ) ) );
 	}
 
 	/**
