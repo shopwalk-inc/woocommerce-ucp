@@ -15,3 +15,6 @@ node_modules/
 .env
 .env.*
 shopwalk-ai.zip
+
+# License config injected at download time — contains partner key
+shopwalk-ai-config.php

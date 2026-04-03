@@ -341,8 +341,8 @@ class Shopwalk_WC_UCP {
 			)
 		);
 
-		$is_licensed  = str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_lic_' ) || str_starts_with( (string) get_option( 'shopwalk_license_key', '' ), 'sw_site_' );
-		$partner_id   = get_option( 'shopwalk_partner_id', null );
+		$key          = (string) get_option( 'shopwalk_license_key', '' );
+		$is_licensed  = ! empty( $key ) && ( str_starts_with( $key, 'sw_lic_' ) || str_starts_with( $key, 'sw_site_' ) );
 
 		return new WP_REST_Response(
 			array(
@@ -353,11 +353,9 @@ class Shopwalk_WC_UCP {
 				'currency_symbol'    => get_woocommerce_currency_symbol(),
 				'language'           => get_bloginfo( 'language' ),
 				'platform'           => 'woocommerce',
-				'platform_version'   => defined( 'WC_VERSION' ) ? WC_VERSION : '',
 				'product_count'      => (int) $product_counts->total,
 				'in_stock_count'     => (int) $in_stock_count->total,
 				'shopwalk_connected' => $is_licensed,
-				'shopwalk_partner_id' => $is_licensed ? $partner_id : null,
 				'ucp_version'        => '1.0',
 				'plugin_version'     => SHOPWALK_VERSION,
 			),
@@ -420,6 +418,14 @@ class Shopwalk_WC_UCP {
 			);
 		}
 
+		if ( count( $line_items ) > 50 ) {
+			return new WP_Error(
+				'too_many_items',
+				__( 'Maximum 50 line items per checkout session.', 'shopwalk-ai' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$order = wc_create_order( array( 'status' => 'pending' ) );
 		if ( is_wp_error( $order ) ) {
 			return new WP_Error(
@@ -431,7 +437,7 @@ class Shopwalk_WC_UCP {
 
 		foreach ( $line_items as $item ) {
 			$product_id = isset( $item['item']['id'] ) ? absint( $item['item']['id'] ) : 0;
-			$quantity   = isset( $item['quantity'] ) ? max( 1, absint( $item['quantity'] ) ) : 1;
+			$quantity   = isset( $item['quantity'] ) ? min( 100, max( 1, absint( $item['quantity'] ) ) ) : 1;
 			$product    = wc_get_product( $product_id );
 
 			if ( ! $product ) {

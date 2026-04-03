@@ -57,7 +57,7 @@ class Shopwalk_WC {
 	 */
 	public function is_licensed(): bool {
 		$key = get_option( 'shopwalk_license_key', '' );
-		return ! empty( $key ) && str_starts_with( (string) $key, 'sw_lic_' ) || str_starts_with( (string) $key, 'sw_site_' );
+		return ! empty( $key ) && ( str_starts_with( (string) $key, 'sw_lic_' ) || str_starts_with( (string) $key, 'sw_site_' ) );
 	}
 
 	/**
@@ -113,6 +113,9 @@ class Shopwalk_WC {
 	 */
 	public function ajax_dismiss_notice(): void {
 		check_ajax_referer( 'shopwalk_dismiss', 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
+		}
 		update_option( 'shopwalk_notice_dismissed', true );
 		wp_send_json_success();
 	}

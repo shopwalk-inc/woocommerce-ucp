@@ -346,7 +346,7 @@ class Shopwalk_WC_Settings {
 			wp_send_json_error( array( 'message' => __( 'License key is required.', 'shopwalk-ai' ) ) );
 		}
 
-		if ( ! str_starts_with( $key, 'sw_lic_' ) || str_starts_with( $key, 'sw_site_' ) ) {
+		if ( ! str_starts_with( $key, 'sw_lic_' ) && ! str_starts_with( $key, 'sw_site_' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid license key format.', 'shopwalk-ai' ) ) );
 		}
 
