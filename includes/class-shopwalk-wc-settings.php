@@ -137,10 +137,26 @@ class Shopwalk_WC_Settings {
 	 * @return void
 	 */
 	private function render_free(): void {
+		// Auto-activate license if returned from Shopwalk signup callback.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['sw_license'] ) && ! empty( $_GET['sw_license'] ) ) {
+			$auto_key = sanitize_text_field( wp_unslash( $_GET['sw_license'] ) );
+			if ( str_starts_with( $auto_key, 'sw_lic_' ) || str_starts_with( $auto_key, 'sw_site_' ) ) {
+				$result = $this->activate_license( $auto_key );
+				if ( $result['success'] ) {
+					// Reload without the query param to show the licensed dashboard.
+					wp_safe_redirect( admin_url( 'admin.php?page=wc-settings&tab=shopwalk' ) );
+					exit;
+				}
+			}
+		}
+
 		$product_count   = wp_count_posts( 'product' )->publish ?? 0;
 		$ucp_base        = get_site_url() . '/wp-json/shopwalk/v1';
 		// Build signup URL prefilled with everything we know about this store.
-		$signup_url = add_query_arg(
+		// callback_url tells Shopwalk where to redirect after signup with the license key.
+		$callback_url = admin_url( 'admin.php?page=wc-settings&tab=shopwalk' );
+		$signup_url   = add_query_arg(
 			array(
 				'store_url'     => rawurlencode( get_site_url() ),
 				'store_name'    => rawurlencode( get_bloginfo( 'name' ) ),
@@ -149,6 +165,7 @@ class Shopwalk_WC_Settings {
 				'plugin_version'=> rawurlencode( SHOPWALK_VERSION ),
 				'wc_version'    => rawurlencode( defined( 'WC_VERSION' ) ? WC_VERSION : '' ),
 				'platform'      => 'woocommerce',
+				'callback_url'  => rawurlencode( $callback_url ),
 			),
 			SHOPWALK_SIGNUP_URL
 		);
