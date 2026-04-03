@@ -115,19 +115,9 @@ class Shopwalk_WC_Dashboard {
 
 		$latest = get_transient( 'shopwalk_latest_version' );
 		if ( false === $latest ) {
-			$key = get_option( 'shopwalk_license_key', '' );
-			if ( empty( $key ) ) {
-				return;
-			}
 			$response = wp_remote_get(
-				SHOPWALK_API_BASE . '/plugin/version',
-				array(
-					'timeout' => 5,
-					'headers' => array(
-						'X-SW-License-Key' => $key,
-						'X-SW-Domain'      => wp_parse_url( get_site_url(), PHP_URL_HOST ) ?? '',
-					),
-				)
+				SHOPWALK_API_BASE . '/plugin/pro/version',
+				array( 'timeout' => 5 )
 			);
 			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 				set_transient( 'shopwalk_latest_version', SHOPWALK_VERSION, DAY_IN_SECONDS );
