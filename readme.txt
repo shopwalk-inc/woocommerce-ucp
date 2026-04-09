@@ -1,127 +1,120 @@
-=== Shopwalk ===
+=== Shopwalk AI — UCP Adapter for WooCommerce ===
 Contributors: shopwalkinc
-Tags: woocommerce, ai, ucp, shopping, commerce, ai-shopping
+Tags: woocommerce, ai, ucp, agent, commerce, oauth
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 2.0.19
+Stable tag: 3.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Make your WooCommerce store discoverable by AI shopping agents. Free — no account required.
+Make any WooCommerce store fully purchasable by UCP-compliant AI shopping agents. Free, standalone, no account required.
 
 == Description ==
 
-Shopwalk makes your WooCommerce store accessible to AI shopping assistants like Claude, ChatGPT, and others — for free, with no account required.
+This plugin makes any WooCommerce store **fully purchasable by AI shopping agents** that speak the [Universal Commerce Protocol (UCP)](https://ucp.dev). Install it and your store can be discovered, browsed, and transacted by Claude, ChatGPT, Anthropic, custom agents, and any other UCP-compliant client — with **no account, no signup, no external service required**.
 
-**Free features (no account required):**
+Optional Shopwalk integration is layered on top for merchants who want real-time push sync to the Shopwalk network and Premier listing on shopwalk.com.
 
-* **Full UCP implementation** — AI agents can query your store directly via standard REST endpoints
-* Products endpoint: `/wp-json/shopwalk/v1/products` — paginated product catalog with full data
-* Store endpoint: `/wp-json/shopwalk/v1/store` — store metadata and capabilities
-* Single product: `/wp-json/shopwalk/v1/products/{id}` — full product detail with variations
-* Categories: `/wp-json/shopwalk/v1/categories` — product category tree
+= What you get out of the box (no account needed) =
 
-**With a free Shopwalk account:**
+* **Full UCP REST surface** under `/wp-json/ucp/v1/`
+  * `oauth/authorize`, `oauth/token`, `oauth/revoke`, `oauth/userinfo` — OAuth 2.0 server for buyer identity
+  * `checkout-sessions` — full session lifecycle (create, update, complete, cancel)
+  * `orders`, `orders/{id}`, `orders/{id}/events` — order retrieval for the OAuth-authenticated buyer
+  * `webhooks/subscriptions` — outbound order event subscriptions
+* **OAuth 2.0 server** with authorization_code + refresh_token grants, bound to WordPress user accounts (which are also WooCommerce customers)
+* **Outbound webhook delivery** with HMAC signing, exponential backoff retry, and dead-letter on permanent failure
+* **WC payment gateway "Pay via UCP"** registered automatically
+* **Discovery doc** at `/.well-known/ucp` and OAuth metadata at `/.well-known/oauth-authorization-server` (RFC 8414) — both served via static PHP shims so they work on Apache shared hosts that rewrite the URI before WordPress sees it
+* **Self-test diagnostic** runner with one-click checks from the dashboard
+* **WordPress + WooCommerce native** — uses dbDelta, WP-Cron, and standard hooks. No custom infrastructure.
 
-* Appear in Shopwalk AI shopping results across the Shopwalk network
-* Real-time catalog sync — products updated automatically as you add or change them
-* Partner analytics dashboard at shopwalk.com/partners
+= With an optional Shopwalk account =
 
-= How it works =
+* Real-time push sync of products to the Shopwalk network
+* Premier placement on shopwalk.com
+* Analytics dashboard at shopwalk.com/partners
+* Faster index updates than the UCP pull path alone provides
 
-1. Install the plugin — your UCP endpoints are immediately active
-2. AI agents can discover and query your store directly
-3. Optionally connect to Shopwalk to appear in AI shopping results across the network
+When the Shopwalk integration is **not** connected, the plugin makes **zero outbound HTTP calls** to Shopwalk. Tier 1 (UCP) and Tier 2 (Shopwalk integration) are strictly separated.
 
-= Why Shopwalk? =
+= Standards compliance =
 
-AI shopping is the future of commerce. Your customers are using AI assistants to find and buy products. Shopwalk makes sure your store shows up when they search.
-
-The plugin is free. Connecting your store to the Shopwalk network is free.
-
-= Works on shared hosting =
-
-The catalog sync works via outbound push from your server to Shopwalk. It does not require Shopwalk to connect inbound to your server, so it works on all shared hosting including Bluehost, SiteGround, and others.
+This plugin implements the UCP spec from [ucp.dev](https://ucp.dev) exactly. It does not invent its own protocol. Any UCP-compliant agent (today: Shopwalk; tomorrow: any other agent built on the open standard) can transact against this plugin out of the box.
 
 == Installation ==
 
-1. Upload the `shopwalk-ai` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "Shopwalk"**
+1. Upload the `shopwalk-ai` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "Shopwalk AI"**
 2. Activate the plugin
-3. Go to **WooCommerce → Settings → Shopwalk**
-4. Your UCP endpoints are immediately active — no account needed
-5. Click **"Connect your Store to Shopwalk — Free"** to join the Shopwalk network and get discovered by AI shoppers
+3. Visit **Shopwalk AI** in the WP Admin sidebar
+4. Click **"Run self-test"** to verify your environment supports the UCP layer
+5. (Optional) Click **"Connect to Shopwalk"** if you also want to sync to the Shopwalk network
 
 == Frequently Asked Questions ==
 
-= Does this work without creating a Shopwalk account? =
+= Does the plugin work without a Shopwalk account? =
 
-Yes. The UCP product, store, and category endpoints work immediately after install with no account required. AI agents can query your store directly.
-
-= What data is sent to Shopwalk? =
-
-Nothing is sent to Shopwalk until you connect your store. Once connected, your product catalog (names, descriptions, prices, image URLs, availability) is sent to Shopwalk to enable AI shopping discovery.
-
-= Does this work on Bluehost or shared hosting? =
-
-Yes. The catalog sync pushes data outbound from your WordPress server to Shopwalk. It does not require Shopwalk to connect inbound to your server, so it works on all shared hosting.
+Yes. The entire UCP REST surface (OAuth, checkout, orders, webhooks) works immediately after activation with no account, no signup, and no outbound HTTP traffic to Shopwalk. Any UCP-compliant agent on the public internet can transact against your store.
 
 = What is UCP? =
 
-UCP (Universal Commerce Protocol) is an open standard that lets AI agents discover, browse, and interact with any store that implements it. Installing this plugin makes your WooCommerce store UCP-compliant.
+UCP (Universal Commerce Protocol) is an open standard that lets AI agents discover, browse, transact, and receive order updates from any store that implements it. The spec is at [ucp.dev](https://ucp.dev). This plugin is the WooCommerce-side implementation.
 
-= Is Shopwalk free? =
+= Does this work on Bluehost or shared hosting? =
 
-Yes. Connecting your store to the Shopwalk network is free.
+Yes. The discovery doc is served via a static `.well-known/ucp.php` shim with an `.htaccess` rewrite, which works on Apache shared hosts that rewrite the URI before WordPress sees it. The webhook delivery worker uses WP-Cron, which works on every WordPress install.
 
-= What happens if I deactivate or delete the plugin? =
+= What data does the plugin send to Shopwalk? =
 
-Deactivating or deleting the plugin stops catalog sync — no more product updates will be sent to Shopwalk. Your store data and Shopwalk account remain intact. You can reconnect at any time by reinstalling the plugin and signing in at shopwalk.com/partners. If you connect again with the same email address, you'll be taken directly to your existing account.
+**Nothing — until you opt in.** The Tier 1 UCP layer is completely standalone and makes zero outbound HTTP calls to Shopwalk. If you click "Connect to Shopwalk" and enter a license key, the Tier 2 module activates and starts pushing product updates to api.shopwalk.com over an authenticated HTTPS channel.
+
+= What WooCommerce version is required? =
+
+WooCommerce 8.0 or later. WordPress 6.0 or later. PHP 8.0 or later.
+
+= How do I uninstall cleanly? =
+
+Deactivating the plugin stops the WP-Cron jobs and removes the static `.well-known` files. Deleting the plugin (via WP Admin → Plugins → Delete) drops every `wp_ucp_*` table, deletes every `shopwalk_*` WP option, and removes all scheduled crons. Your WooCommerce data is untouched.
 
 == External Services ==
 
-This plugin optionally connects to the Shopwalk service (https://shopwalk.com) when the store owner connects their store account.
-
-When connected, this plugin sends the following data to Shopwalk's servers at api.shopwalk.com:
+When the optional Shopwalk integration is connected (a license key is entered in the dashboard), this plugin sends product data to Shopwalk's servers at `api.shopwalk.com` over authenticated HTTPS:
 
 * Product names, descriptions, short descriptions, and SKUs
 * Product prices and regular/sale prices
-* Product images (URLs only — images are not uploaded)
-* Product availability (in stock / out of stock) and stock quantity
-* Product categories and tags
+* Product image URLs (images themselves are not uploaded)
+* Product availability and stock quantity
+* Product categories
 * Product page URLs
-* Store metadata (name, URL, currency, WooCommerce version)
 
-This data is used to make the store discoverable through Shopwalk's AI shopping platform.
-
-**No data is sent to Shopwalk when the plugin is installed without connecting a store account.**
+This data is used to index the store on the Shopwalk AI shopping network. **No data is sent to Shopwalk when the plugin is installed without an active license.**
 
 Shopwalk Terms of Service: https://shopwalk.com/terms
 Shopwalk Privacy Policy: https://shopwalk.com/privacy
 
-== Screenshots ==
-
-1. Free plugin settings page — UCP status and connect CTA
-2. Connected dashboard — sync status and Partners Portal link
-
 == Changelog ==
 
+= 3.0.0 =
+**Complete rewrite as a UCP-compliant adapter.** The plugin's primary identity is now "the UCP adapter for WooCommerce." Shopwalk integration is one of several features layered on top.
+
+* New file structure: `includes/{core,shopwalk,admin}/` with strict tier separation
+* Namespace migration: all routes moved from `/wp-json/shopwalk/v1/` to `/wp-json/ucp/v1/`
+* OAuth 2.0 server added (authorize, token, revoke, userinfo) with bcrypt-hashed token storage
+* Order endpoints added (`/orders`, `/orders/{id}`, `/orders/{id}/events`)
+* Outbound webhook delivery system added (subscriptions, queue, WP-Cron worker, HMAC signing, exponential backoff retry)
+* WooCommerce payment gateway "Pay via UCP" registered automatically
+* Discovery doc at `/.well-known/ucp` + OAuth metadata at `/.well-known/oauth-authorization-server`
+* WP Admin dashboard rebuilt with two-section layout (UCP status + Shopwalk CTA/status)
+* Self-test diagnostic with 8 automated checks
+* Catalog endpoints removed — `shopwalk-feeds` reads `/wp-json/wc/v3/products` (standard WooCommerce REST API) directly, no plugin required
+* Database: 5 new `wp_ucp_*` tables (oauth_clients, oauth_tokens, checkout_sessions, webhook_subscriptions, webhook_queue)
+
 = 2.0.0 =
-* Complete rewrite — clean, focused UCP implementation
 * Two-state plugin: free (UCP only) and connected (Shopwalk network)
 * Free state: zero API calls, zero data sent to Shopwalk
-* Connected state: outbound catalog sync, Partners Portal magic link
-* Removed all Pro subscription features (checkout, orders, CDN, billing)
-* Full WP.org compliance
-* Minimal WP Admin dashboard
-
-= 1.13.0 =
-* Previous release
 
 == Upgrade Notice ==
 
-= 2.0.0 =
-Major rewrite. If you were using the previous version, your existing Shopwalk account is still active — sign in at shopwalk.com/partners to reconnect your store.
-
-
- 
+= 3.0.0 =
+Complete rewrite. The plugin is now a vendor-neutral UCP adapter. All routes have moved from `/wp-json/shopwalk/v1/` to `/wp-json/ucp/v1/`. If you were calling the old endpoints directly, update your client.

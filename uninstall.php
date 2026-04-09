@@ -1,10 +1,15 @@
 <?php
 /**
- * Uninstall Shopwalk.
+ * Uninstall Shopwalk AI — UCP Adapter.
  *
- * Deactivating or deleting the plugin stops catalog sync only.
- * Your Shopwalk account and store data are preserved on Shopwalk's servers.
- * Reinstall and sign in at shopwalk.com/partners to reconnect at any time.
+ * Removes the plugin's local state cleanly:
+ *  - All wp_ucp_* tables (oauth_clients, oauth_tokens, checkout_sessions,
+ *    webhook_subscriptions, webhook_queue)
+ *  - All shopwalk_* WP options (license, partner_id, sync queue, store
+ *    signing secret, etc.)
+ *  - Scheduled WP-Cron jobs (session cleanup, webhook flush, sync flush)
+ *  - The static /.well-known/ucp.php and oauth-authorization-server.php
+ *    files written on activation
  *
  * @package Shopwalk
  */
@@ -14,42 +19,55 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// Remove local plugin options — these are just cached state, not account data.
-// The Shopwalk account and indexed product data are preserved server-side.
+// ── Drop UCP tables ─────────────────────────────────────────────────────────
+global $wpdb;
+$tables = array(
+	'webhook_queue',
+	'webhook_subscriptions',
+	'checkout_sessions',
+	'oauth_tokens',
+	'oauth_clients',
+);
+foreach ( $tables as $name ) {
+	$table = $wpdb->prefix . 'ucp_' . $name;
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+}
+
+// ── Delete WP options ───────────────────────────────────────────────────────
 $options = array(
 	'shopwalk_license_key',
-	'shopwalk_site_domain',
 	'shopwalk_partner_id',
-	'shopwalk_activated_at',
-	'shopwalk_last_sync_at',
-	'shopwalk_synced_count',
 	'shopwalk_sync_queue',
+	'shopwalk_synced_count',
+	'shopwalk_last_sync_at',
 	'shopwalk_notice_dismissed',
-	'shopwalk_ucp_discovery_enabled',
-	'shopwalk_ucp_reachable',
-	'shopwalk_ucp_checked_at',
-	'shopwalk_ucp_host_name',
-	'shopwalk_ucp_host_phone',
-	'shopwalk_ucp_host_support',
+	'shopwalk_ucp_gateway_enabled',
+	'shopwalk_ucp_store_signing_secret',
 );
-
 foreach ( $options as $option ) {
 	delete_option( $option );
 }
 
-// Clear scheduled crons.
+// ── Clear scheduled crons ───────────────────────────────────────────────────
+wp_clear_scheduled_hook( 'shopwalk_ucp_session_cleanup' );
+wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
-wp_clear_scheduled_hook( 'shopwalk_ucp_recheck' );
 
-// Remove /.well-known/ucp.php and .htaccess created on activation.
+// ── Remove /.well-known/ files ─────────────────────────────────────────────
 $well_known_dir = ABSPATH . '.well-known';
-if ( file_exists( $well_known_dir . '/ucp.php' ) ) {
-	unlink( $well_known_dir . '/ucp.php' );
+foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
+	$path = $well_known_dir . '/' . $file;
+	if ( file_exists( $path ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+		@unlink( $path );
+	}
 }
 $htaccess = $well_known_dir . '/.htaccess';
 if ( file_exists( $htaccess ) && false !== strpos( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) {
-	unlink( $htaccess );
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+	@unlink( $htaccess );
 }
 
-// Clear version check transient.
+// Clear transients.
 delete_transient( 'shopwalk_latest_version' );

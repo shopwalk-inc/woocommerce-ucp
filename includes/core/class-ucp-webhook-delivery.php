@@ -1,0 +1,282 @@
+<?php
+/**
+ * UCP Webhook Delivery — outbound webhook publisher.
+ *
+ * Two halves:
+ *  1. Event capture — WC order status hooks enqueue UCP events into
+ *     wp_ucp_webhook_queue with one queue row per (event, subscription)
+ *     pair.
+ *  2. Delivery worker — WP-Cron job (`shopwalk_ucp_webhook_flush`) runs
+ *     every minute, pops pending rows, signs the payload with the
+ *     subscription's HMAC secret, POSTs to the agent's callback URL,
+ *     and retries with exponential backoff on 5xx.
+ *
+ * @package Shopwalk
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * UCP_Webhook_Delivery — event capture + delivery worker.
+ */
+final class UCP_Webhook_Delivery {
+
+	/**
+	 * Max delivery attempts before giving up.
+	 */
+	private const MAX_ATTEMPTS = 5;
+
+	/**
+	 * Max queue rows to process per cron tick.
+	 */
+	private const BATCH_SIZE = 50;
+
+	/**
+	 * Wire up event capture + the cron handler.
+	 *
+	 * @return void
+	 */
+	public static function bootstrap(): void {
+		// WC order status → UCP event mapping.
+		add_action( 'woocommerce_new_order', array( __CLASS__, 'on_order_created' ), 10, 1 );
+		add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'on_order_processing' ), 10, 2 );
+		add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'on_order_delivered' ), 10, 2 );
+		add_action( 'woocommerce_order_status_cancelled', array( __CLASS__, 'on_order_canceled' ), 10, 2 );
+		add_action( 'woocommerce_order_refunded', array( __CLASS__, 'on_order_refunded' ), 10, 2 );
+
+		// Cron worker.
+		add_action( 'shopwalk_ucp_webhook_flush', array( __CLASS__, 'flush_queue' ) );
+	}
+
+	// ── Event capture (WC hooks → enqueue) ───────────────────────────────
+
+	/**
+	 * @param int $order_id WC order id.
+	 * @return void
+	 */
+	public static function on_order_created( int $order_id ): void {
+		self::enqueue_event_for_order( 'order.created', $order_id );
+	}
+
+	/**
+	 * @param int      $order_id WC order id.
+	 * @param WC_Order $order    The order object.
+	 * @return void
+	 */
+	public static function on_order_processing( int $order_id, $order ): void {
+		unset( $order );
+		self::enqueue_event_for_order( 'order.processing', $order_id );
+	}
+
+	/**
+	 * @param int      $order_id WC order id.
+	 * @param WC_Order $order    The order object.
+	 * @return void
+	 */
+	public static function on_order_delivered( int $order_id, $order ): void {
+		unset( $order );
+		self::enqueue_event_for_order( 'order.delivered', $order_id );
+	}
+
+	/**
+	 * @param int      $order_id WC order id.
+	 * @param WC_Order $order    The order object.
+	 * @return void
+	 */
+	public static function on_order_canceled( int $order_id, $order ): void {
+		unset( $order );
+		self::enqueue_event_for_order( 'order.canceled', $order_id );
+	}
+
+	/**
+	 * @param int $order_id WC order id.
+	 * @param int $refund_id WC refund id.
+	 * @return void
+	 */
+	public static function on_order_refunded( int $order_id, int $refund_id ): void {
+		unset( $refund_id );
+		self::enqueue_event_for_order( 'order.refunded', $order_id );
+	}
+
+	/**
+	 * Build a UCP order event payload and fan it out to every subscription
+	 * interested in this event type.
+	 *
+	 * @param string $event_type e.g. "order.created".
+	 * @param int    $order_id   WC order id.
+	 * @return void
+	 */
+	private static function enqueue_event_for_order( string $event_type, int $order_id ): void {
+		$subs = UCP_Webhook_Subscriptions::find_by_event( $event_type );
+		if ( count( $subs ) === 0 ) {
+			return;
+		}
+		$payload = wp_json_encode(
+			array(
+				'event'      => $event_type,
+				'order_id'   => $order_id,
+				'occurred_at' => gmdate( 'c' ),
+			)
+		);
+		$now = current_time( 'mysql', true );
+
+		global $wpdb;
+		foreach ( $subs as $sub ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				UCP_Storage::table( 'webhook_queue' ),
+				array(
+					'subscription_id' => (string) $sub['id'],
+					'event_type'      => $event_type,
+					'payload'         => $payload,
+					'attempts'        => 0,
+					'next_attempt_at' => $now,
+					'created_at'      => $now,
+				)
+			);
+		}
+	}
+
+	// ── Delivery worker (WP-Cron) ────────────────────────────────────────
+
+	/**
+	 * Pull pending rows and POST them. Runs every minute via WP-Cron.
+	 *
+	 * @return void
+	 */
+	public static function flush_queue(): void {
+		global $wpdb;
+		$queue = UCP_Storage::table( 'webhook_queue' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$queue}
+				 WHERE delivered_at IS NULL AND failed_at IS NULL AND next_attempt_at <= %s
+				 ORDER BY id ASC LIMIT %d",
+				current_time( 'mysql', true ),
+				self::BATCH_SIZE
+			),
+			ARRAY_A
+		);
+		foreach ( (array) $rows as $row ) {
+			self::deliver_one( $row );
+		}
+	}
+
+	/**
+	 * Attempt a single delivery. Updates the queue row with the result.
+	 *
+	 * @param array $row Queue row.
+	 * @return void
+	 */
+	private static function deliver_one( array $row ): void {
+		global $wpdb;
+		$queue = UCP_Storage::table( 'webhook_queue' );
+
+		$sub = UCP_Webhook_Subscriptions::find( (string) $row['subscription_id'] );
+		if ( ! $sub ) {
+			// Subscription gone — drop the row.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array( 'failed_at' => current_time( 'mysql', true ), 'last_error' => 'subscription deleted' ),
+				array( 'id' => (int) $row['id'] )
+			);
+			return;
+		}
+
+		$payload   = (string) $row['payload'];
+		$signature = UCP_Signing::sign( $payload, (string) $sub['secret'] );
+
+		$response = wp_remote_post(
+			(string) $sub['callback_url'],
+			array(
+				'timeout' => 15,
+				'headers' => array(
+					'Content-Type'      => 'application/json',
+					'User-Agent'        => 'shopwalk-ai-plugin/' . SHOPWALK_AI_VERSION . ' (UCP)',
+					'X-UCP-Event'       => (string) $row['event_type'],
+					'X-UCP-Subscription' => (string) $sub['id'],
+					'Request-Signature' => $signature,
+				),
+				'body'    => $payload,
+			)
+		);
+
+		$attempts = (int) $row['attempts'] + 1;
+		if ( is_wp_error( $response ) ) {
+			self::record_failure( (int) $row['id'], $attempts, $response->get_error_message() );
+			return;
+		}
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status >= 200 && $status < 300 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array(
+					'delivered_at' => current_time( 'mysql', true ),
+					'attempts'     => $attempts,
+				),
+				array( 'id' => (int) $row['id'] )
+			);
+			return;
+		}
+		if ( $status >= 400 && $status < 500 ) {
+			// 4xx — give up immediately, no retry (the agent has given an unrecoverable error).
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array(
+					'failed_at'  => current_time( 'mysql', true ),
+					'attempts'   => $attempts,
+					'last_error' => 'HTTP ' . $status,
+				),
+				array( 'id' => (int) $row['id'] )
+			);
+			return;
+		}
+		// 5xx — schedule a retry.
+		self::record_failure( (int) $row['id'], $attempts, 'HTTP ' . $status );
+	}
+
+	/**
+	 * Record a transient failure and schedule the next retry, or move
+	 * the row to permanent failure if MAX_ATTEMPTS has been reached.
+	 *
+	 * @param int    $row_id   Queue row id.
+	 * @param int    $attempts Updated attempts count.
+	 * @param string $error    Error message to persist.
+	 * @return void
+	 */
+	private static function record_failure( int $row_id, int $attempts, string $error ): void {
+		global $wpdb;
+		$queue = UCP_Storage::table( 'webhook_queue' );
+		if ( $attempts >= self::MAX_ATTEMPTS ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array(
+					'failed_at'  => current_time( 'mysql', true ),
+					'attempts'   => $attempts,
+					'last_error' => $error,
+				),
+				array( 'id' => $row_id )
+			);
+			return;
+		}
+		// Exponential backoff: 1m, 2m, 4m, 8m, 16m.
+		$delay = pow( 2, $attempts - 1 ) * 60;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$queue,
+			array(
+				'attempts'        => $attempts,
+				'next_attempt_at' => gmdate( 'Y-m-d H:i:s', time() + $delay ),
+				'last_error'      => $error,
+			),
+			array( 'id' => $row_id )
+		);
+	}
+}
