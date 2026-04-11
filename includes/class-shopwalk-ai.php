@@ -85,6 +85,7 @@ final class Shopwalk_AI {
 		require_once $dir . 'class-ucp-payment-gateway.php';
 		require_once $dir . 'class-ucp-self-test.php';
 		require_once $dir . 'class-ucp-sync-trigger.php';
+		require_once $dir . 'class-ucp-cli.php';
 
 		// Bootstrap registers all REST routes under /wp-json/ucp/v1/.
 		require_once $dir . 'class-ucp-bootstrap.php';

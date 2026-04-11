@@ -127,6 +127,36 @@ final class UCP_OAuth_Clients {
 	}
 
 	/**
+	 * Rotate a client's secret. Generates a new secret and replaces the hash.
+	 * The old secret is immediately invalid.
+	 *
+	 * @param string $client_id The opaque client identifier.
+	 * @return array{client_secret:string}|WP_Error
+	 */
+	public static function rotate_secret( string $client_id ) {
+		global $wpdb;
+		$table = UCP_Storage::table( 'oauth_clients' );
+
+		$row = self::find( $client_id );
+		if ( ! $row ) {
+			return new WP_Error( 'not_found', "Client '{$client_id}' not found" );
+		}
+
+		$new_secret = self::generate_secret();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$table,
+			array(
+				'client_secret' => password_hash( $new_secret, PASSWORD_BCRYPT ),
+				'updated_at'    => current_time( 'mysql', true ),
+			),
+			array( 'client_id' => $client_id )
+		);
+
+		return array( 'client_secret' => $new_secret );
+	}
+
+	/**
 	 * Whether the given redirect URI is registered for this client.
 	 *
 	 * @param array  $client Client row from find().

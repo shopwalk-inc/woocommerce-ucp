@@ -126,13 +126,25 @@ final class UCP_OAuth_Server {
 			return new WP_REST_Response( array( 'login_required' => true, 'login_url' => $login_url ), 401 );
 		}
 
+		// PKCE — store code_challenge if provided (RFC 7636).
+		$code_challenge        = (string) $request->get_param( 'code_challenge' );
+		$code_challenge_method = (string) $request->get_param( 'code_challenge_method' );
+		if ( $code_challenge !== '' && $code_challenge_method === '' ) {
+			$code_challenge_method = 'plain'; // RFC 7636 §4.3 default
+		}
+		if ( $code_challenge_method !== '' && $code_challenge_method !== 'S256' && $code_challenge_method !== 'plain' ) {
+			return new WP_Error( 'invalid_request', 'code_challenge_method must be S256 or plain', array( 'status' => 400 ) );
+		}
+
 		// Mint an authorization_code (10 min TTL).
 		$code = self::issue_token(
 			'authorization_code',
 			$client_id,
 			$user_id,
 			$scope !== '' ? explode( ' ', $scope ) : array( 'ucp:checkout', 'ucp:orders' ),
-			self::CODE_TTL
+			self::CODE_TTL,
+			$code_challenge,
+			$code_challenge_method
 		);
 
 		// Redirect back to the agent with code + state in the query string.
@@ -187,6 +199,27 @@ final class UCP_OAuth_Server {
 		if ( ! $row || $row['client_id'] !== $client_id ) {
 			return new WP_Error( 'invalid_grant', 'Invalid or expired authorization code', array( 'status' => 400 ) );
 		}
+
+		// PKCE verification (RFC 7636) — if a code_challenge was stored,
+		// the token request MUST include a matching code_verifier.
+		$stored_challenge = $row['code_challenge'] ?? '';
+		$stored_method    = $row['code_challenge_method'] ?? '';
+		if ( $stored_challenge !== '' ) {
+			$code_verifier = (string) $request->get_param( 'code_verifier' );
+			if ( $code_verifier === '' ) {
+				return new WP_Error( 'invalid_grant', 'code_verifier required (PKCE)', array( 'status' => 400 ) );
+			}
+			if ( $stored_method === 'S256' ) {
+				$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' );
+			} else {
+				$computed = $code_verifier; // plain
+			}
+			if ( ! hash_equals( $stored_challenge, $computed ) ) {
+				self::revoke_token( (int) $row['id'] );
+				return new WP_Error( 'invalid_grant', 'PKCE verification failed', array( 'status' => 400 ) );
+			}
+		}
+
 		// One-time use — revoke the code immediately.
 		self::revoke_token( (int) $row['id'] );
 
@@ -301,7 +334,7 @@ final class UCP_OAuth_Server {
 	 * @param int    $ttl       TTL in seconds.
 	 * @return array{plaintext:string, hash:string}
 	 */
-	public static function issue_token( string $type, string $client_id, int $user_id, array $scopes, int $ttl ): array {
+	public static function issue_token( string $type, string $client_id, int $user_id, array $scopes, int $ttl, string $code_challenge = '', string $code_challenge_method = '' ): array {
 		global $wpdb;
 		$table = UCP_Storage::table( 'oauth_tokens' );
 
@@ -320,19 +353,23 @@ final class UCP_OAuth_Server {
 		$now     = current_time( 'mysql', true );
 		$expires = gmdate( 'Y-m-d H:i:s', time() + $ttl );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->insert(
-			$table,
-			array(
-				'token_type' => $type,
-				'token_hash' => $hash,
-				'client_id'  => $client_id,
-				'user_id'    => $user_id,
-				'scopes'     => wp_json_encode( $scopes ),
-				'expires_at' => $expires,
-				'created_at' => $now,
-			)
+		$row = array(
+			'token_type' => $type,
+			'token_hash' => $hash,
+			'client_id'  => $client_id,
+			'user_id'    => $user_id,
+			'scopes'     => wp_json_encode( $scopes ),
+			'expires_at' => $expires,
+			'created_at' => $now,
 		);
+		// PKCE: store challenge alongside the authorization code
+		if ( $code_challenge !== '' ) {
+			$row['code_challenge']        = $code_challenge;
+			$row['code_challenge_method'] = $code_challenge_method;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->insert( $table, $row );
 		return array( 'plaintext' => $plaintext, 'hash' => $hash );
 	}
 

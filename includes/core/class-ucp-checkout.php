@@ -430,8 +430,90 @@ final class UCP_Checkout {
 		$order->update_meta_data( '_ucp_session_id', (string) $row['id'] );
 		$order->update_meta_data( '_ucp_client_id', (string) $row['client_id'] );
 		$order->calculate_totals();
-		$order->update_status( 'processing', 'UCP checkout completed by agent.' );
+
+		// Process payment if Stripe PaymentMethod ID is provided
+		$payment = json_decode( (string) $row['payment'], true );
+		$stripe_pm_id = $payment['stripe_payment_method_id'] ?? '';
+
+		if ( $stripe_pm_id !== '' ) {
+			$stripe_result = self::process_stripe_payment( $order, $stripe_pm_id, $payment );
+			if ( is_wp_error( $stripe_result ) ) {
+				$order->update_status( 'failed', 'Stripe payment failed: ' . $stripe_result->get_error_message() );
+				return $stripe_result;
+			}
+			$order->update_meta_data( '_stripe_payment_intent_id', $stripe_result['payment_intent_id'] );
+			$order->update_meta_data( '_stripe_charge_captured', 'no' ); // Manual capture
+			$order->payment_complete( $stripe_result['payment_intent_id'] );
+			$order->add_order_note( 'Payment authorized via Stripe (manual capture). PI: ' . $stripe_result['payment_intent_id'] );
+		} else {
+			$order->update_status( 'processing', 'UCP checkout completed by agent.' );
+		}
+
 		return $order;
+	}
+
+	/**
+	 * Process a Stripe payment using a PaymentMethod ID.
+	 * Creates a PaymentIntent with manual capture (authorize only).
+	 * The store captures after fulfillment.
+	 *
+	 * @param WC_Order $order        The WooCommerce order.
+	 * @param string   $pm_id        Stripe PaymentMethod ID (pm_...).
+	 * @param array    $payment_data Full payment object from the session.
+	 * @return array{payment_intent_id:string}|WP_Error
+	 */
+	private static function process_stripe_payment( $order, string $pm_id, array $payment_data ) {
+		$secret_key = get_option( 'shopwalk_stripe_secret_key', '' );
+		if ( $secret_key === '' ) {
+			return new WP_Error( 'stripe_not_configured', 'Stripe secret key not configured', array( 'status' => 503 ) );
+		}
+
+		$amount   = (int) round( $order->get_total() * 100 ); // cents
+		$currency = strtolower( $order->get_currency() );
+
+		$body = array(
+			'amount'               => $amount,
+			'currency'             => $currency,
+			'payment_method'       => $pm_id,
+			'capture_method'       => 'manual', // Authorize only — capture after fulfillment
+			'confirm'              => 'true',
+			'description'          => 'Order #' . $order->get_id() . ' via Shopwalk UCP',
+			'metadata[order_id]'   => (string) $order->get_id(),
+			'metadata[source]'     => 'shopwalk_ucp',
+		);
+
+		// Attach customer if provided
+		$stripe_customer = $payment_data['stripe_customer_id'] ?? '';
+		if ( $stripe_customer !== '' ) {
+			$body['customer'] = $stripe_customer;
+		}
+
+		$response = wp_remote_post( 'https://api.stripe.com/v1/payment_intents', array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $secret_key,
+				'Content-Type'  => 'application/x-www-form-urlencoded',
+			),
+			'body'    => $body,
+			'timeout' => 30,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'stripe_error', 'Stripe API unreachable: ' . $response->get_error_message(), array( 'status' => 502 ) );
+		}
+
+		$status = wp_remote_retrieve_response_code( $response );
+		$result = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status >= 400 || ! is_array( $result ) || empty( $result['id'] ) ) {
+			$error_msg = $result['error']['message'] ?? 'Unknown Stripe error';
+			return new WP_Error( 'stripe_declined', $error_msg, array( 'status' => 402 ) );
+		}
+
+		if ( $result['status'] !== 'requires_capture' && $result['status'] !== 'succeeded' ) {
+			return new WP_Error( 'stripe_requires_action', 'Payment requires additional action (3D Secure)', array( 'status' => 402 ) );
+		}
+
+		return array( 'payment_intent_id' => $result['id'] );
 	}
 
 	/**

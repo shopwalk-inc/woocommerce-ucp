@@ -69,15 +69,17 @@ final class UCP_Storage {
 
 		dbDelta(
 			"CREATE TABLE {$tokens} (
-				id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-				token_type      VARCHAR(20) NOT NULL,
-				token_hash      VARCHAR(128) NOT NULL,
-				client_id       VARCHAR(64) NOT NULL,
-				user_id         BIGINT UNSIGNED NOT NULL,
-				scopes          TEXT NOT NULL,
-				expires_at      DATETIME NOT NULL,
-				revoked_at      DATETIME NULL,
-				created_at      DATETIME NOT NULL,
+				id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				token_type             VARCHAR(20) NOT NULL,
+				token_hash             VARCHAR(128) NOT NULL,
+				client_id              VARCHAR(64) NOT NULL,
+				user_id                BIGINT UNSIGNED NOT NULL,
+				scopes                 TEXT NOT NULL,
+				code_challenge         VARCHAR(128),
+				code_challenge_method  VARCHAR(10),
+				expires_at             DATETIME NOT NULL,
+				revoked_at             DATETIME NULL,
+				created_at             DATETIME NOT NULL,
 				PRIMARY KEY  (id),
 				UNIQUE KEY token_hash (token_hash),
 				KEY client_user (client_id, user_id)
