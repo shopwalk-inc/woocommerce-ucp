@@ -111,6 +111,18 @@ final class Shopwalk_AI {
 		Shopwalk_Sync::instance();
 		Shopwalk_Connector::instance();
 		new Shopwalk_Updater();
+
+		// Auto-activate prefilled license if pending (set during plugin activation
+		// hook when Shopwalk_License wasn't loaded yet).
+		if ( get_option( 'shopwalk_license_needs_activation' ) === '1' ) {
+			$key = Shopwalk_License::key();
+			if ( $key !== '' ) {
+				$result = Shopwalk_License::activate( $key );
+				if ( $result['ok'] ?? false ) {
+					delete_option( 'shopwalk_license_needs_activation' );
+				}
+			}
+		}
 	}
 
 	/**
@@ -185,17 +197,15 @@ final class Shopwalk_AI {
 		}
 
 		// Auto-populate license key from optional bundled config file.
+		// Store the key now; activation against shopwalk-api happens on
+		// plugins_loaded (see init_instance) when Shopwalk_License is available.
 		if ( file_exists( SHOPWALK_AI_PLUGIN_DIR . 'shopwalk-ai-config.php' ) ) {
 			require_once SHOPWALK_AI_PLUGIN_DIR . 'shopwalk-ai-config.php';
 		}
 		if ( defined( 'SHOPWALK_AI_PREFILLED_LICENSE' ) && ! get_option( 'shopwalk_license_key' ) ) {
-			// Auto-activate the bundled license key against shopwalk-api.
-			// This registers the store, stores the partner_id, and triggers first sync.
-			if ( class_exists( 'Shopwalk_License' ) ) {
-				Shopwalk_License::activate( SHOPWALK_AI_PREFILLED_LICENSE );
-			} else {
-				update_option( 'shopwalk_license_key', SHOPWALK_AI_PREFILLED_LICENSE );
-			}
+			update_option( 'shopwalk_license_key', SHOPWALK_AI_PREFILLED_LICENSE );
+			// Flag that activation is pending — handled on next page load.
+			update_option( 'shopwalk_license_needs_activation', '1' );
 		}
 	}
 
