@@ -38,6 +38,14 @@ final class Shopwalk_Sync {
 	private const QUEUE_OPTION = 'shopwalk_sync_queue';
 
 	/**
+	 * Current sync type — "full" or "incremental".
+	 * Set by full_sync() or push_to_queue() so flush() can tell the API.
+	 *
+	 * @var string
+	 */
+	private string $current_sync_type = 'incremental';
+
+	/**
 	 * Max queue size — no cap. Every product change is synced.
 	 * shopwalk-sync handles delta detection so unchanged products
 	 * are skipped downstream.
@@ -216,8 +224,9 @@ final class Shopwalk_Sync {
 				),
 				'body'    => wp_json_encode(
 					array(
-						'site_url' => $site_url,
-						'products' => $products,
+						'site_url'  => $site_url,
+						'sync_type' => $this->current_sync_type,
+						'products'  => $products,
 					)
 				),
 			)
@@ -231,6 +240,7 @@ final class Shopwalk_Sync {
 	 * @return int Number of products queued.
 	 */
 	public function full_sync(): int {
+		$this->current_sync_type = 'full';
 		$pids  = get_posts(
 			array(
 				'post_type'      => 'product',
