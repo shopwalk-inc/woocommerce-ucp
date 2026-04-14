@@ -189,7 +189,13 @@ final class Shopwalk_AI {
 			require_once SHOPWALK_AI_PLUGIN_DIR . 'shopwalk-ai-config.php';
 		}
 		if ( defined( 'SHOPWALK_AI_PREFILLED_LICENSE' ) && ! get_option( 'shopwalk_license_key' ) ) {
-			update_option( 'shopwalk_license_key', SHOPWALK_AI_PREFILLED_LICENSE );
+			// Auto-activate the bundled license key against shopwalk-api.
+			// This registers the store, stores the partner_id, and triggers first sync.
+			if ( class_exists( 'Shopwalk_License' ) ) {
+				Shopwalk_License::activate( SHOPWALK_AI_PREFILLED_LICENSE );
+			} else {
+				update_option( 'shopwalk_license_key', SHOPWALK_AI_PREFILLED_LICENSE );
+			}
 		}
 	}
 

@@ -22,11 +22,20 @@ final class Shopwalk_Dashboard_Panel {
 	 * @return void
 	 */
 	public static function render(): void {
-		$pid    = Shopwalk_License::partner_id();
-		$queued = count( (array) get_option( 'shopwalk_sync_queue', array() ) );
+		$pid        = Shopwalk_License::partner_id();
+		$licenseKey = Shopwalk_License::key();
+		$queued     = count( (array) get_option( 'shopwalk_sync_queue', array() ) );
+		$syncState  = (array) get_option( 'shopwalk_sync_state', array() );
+		$lastSync   = ! empty( $syncState['completed_at'] ) ? human_time_diff( (int) $syncState['completed_at'] ) . ' ago' : 'Never';
 		?>
 		<div class="ucp-card">
 			<h2><?php esc_html_e( 'Shopwalk', 'shopwalk-ai' ); ?> <span class="status-pill ok">✅ Connected</span></h2>
+			<?php if ( $licenseKey !== '' ) : ?>
+				<p>
+					<strong><?php esc_html_e( 'License Key:', 'shopwalk-ai' ); ?></strong>
+					<code><?php echo esc_html( $licenseKey ); ?></code>
+				</p>
+			<?php endif; ?>
 			<?php if ( $pid !== '' ) : ?>
 				<p>
 					<strong><?php esc_html_e( 'Partner ID:', 'shopwalk-ai' ); ?></strong>
@@ -36,6 +45,9 @@ final class Shopwalk_Dashboard_Panel {
 			<p>
 				<?php esc_html_e( 'Sync queue:', 'shopwalk-ai' ); ?>
 				<?php echo (int) $queued; ?> / 500
+				&nbsp;·&nbsp;
+				<?php esc_html_e( 'Last sync:', 'shopwalk-ai' ); ?>
+				<?php echo esc_html( $lastSync ); ?>
 			</p>
 			<p>
 				<a class="button" href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/dashboard' ); ?>" target="_blank" rel="noopener">
