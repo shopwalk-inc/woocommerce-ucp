@@ -21,7 +21,7 @@ final class Shopwalk_Updater {
 	 * API endpoint that returns { version, download_url, changelog }.
 	 * Uses the public plugin version endpoint (license-authenticated).
 	 */
-	private const VERSION_ENDPOINT = SHOPWALK_API_BASE . '/plugin/pro/version';
+	private const VERSION_ENDPOINT = SHOPWALK_API_BASE . '/plugin/version';
 
 	/**
 	 * Cache key for the version check (avoid hammering the API).
