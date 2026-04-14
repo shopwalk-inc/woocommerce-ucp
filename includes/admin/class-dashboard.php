@@ -288,7 +288,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 			postAjax('shopwalk_full_sync', { nonce: s.nonces.full_sync }).then(function (resp) {
 				if (resp && resp.success) {
 					syncBtn.textContent = (resp.data && resp.data.message) || 'Done!';
-					startCooldown(3600);
+					setTimeout(function() { syncBtn.textContent = 'Sync now'; }, 3000);
 				} else {
 					var cd = resp && resp.data && resp.data.cooldown_remaining;
 					if (cd) {
