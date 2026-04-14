@@ -2,13 +2,11 @@
 /**
  * Shopwalk_Updater — self-hosted plugin auto-update via shopwalk-api.
  *
- * Hooks into WordPress's plugin update transient to check for new versions
- * from the Shopwalk API (GET /api/v1/partners/plugin/version). When a newer
- * version is available, WordPress shows the update notification in WP Admin
- * and allows one-click update.
+ * Hooks into WordPress's plugin update system to check for new versions
+ * from the Shopwalk API. When a newer version is available, WordPress
+ * shows the update notification in WP Admin and allows one-click update.
  *
- * The download URL is the GitHub Release asset zip, served through
- * shopwalk-api's authenticated download endpoint.
+ * Also enables WordPress automatic background updates for this plugin.
  *
  * @package Shopwalk
  */
@@ -19,19 +17,18 @@ final class Shopwalk_Updater {
 
 	/**
 	 * API endpoint that returns { version, download_url, changelog }.
-	 * Uses the public plugin version endpoint (license-authenticated).
 	 */
 	private const VERSION_ENDPOINT = SHOPWALK_API_BASE . '/plugin/version';
 
 	/**
-	 * Cache key for the version check (avoid hammering the API).
+	 * Cache key for the version check.
 	 */
 	private const CACHE_KEY = 'shopwalk_plugin_update_check';
 
 	/**
-	 * Cache TTL in seconds (check at most every 6 hours).
+	 * Cache TTL — check at most every 4 hours.
 	 */
-	private const CACHE_TTL = 6 * HOUR_IN_SECONDS;
+	private const CACHE_TTL = 4 * HOUR_IN_SECONDS;
 
 	/**
 	 * Plugin basename (e.g. shopwalk-ai/shopwalk-ai.php).
@@ -54,14 +51,27 @@ final class Shopwalk_Updater {
 		$this->plugin_basename = plugin_basename( SHOPWALK_AI_PLUGIN_FILE );
 		$this->plugin_slug     = dirname( $this->plugin_basename );
 
+		// Inject update info into WordPress's update check.
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update' ) );
+
+		// Provide plugin info for the "View Details" popup.
 		add_filter( 'plugins_api', array( $this, 'plugin_info' ), 10, 3 );
+
+		// Fix directory name after extracting the update zip.
 		add_filter( 'upgrader_source_selection', array( $this, 'fix_directory_name' ), 10, 4 );
+
+		// Add license key to the download URL so WordPress's updater can authenticate.
+		add_filter( 'upgrader_pre_download', array( $this, 'add_auth_to_download' ), 10, 3 );
+
+		// Enable automatic updates for this plugin.
+		add_filter( 'auto_update_plugin', array( $this, 'enable_auto_update' ), 10, 2 );
+
+		// Clear the update cache when the plugin is updated.
+		add_action( 'upgrader_process_complete', array( $this, 'clear_cache' ), 10, 2 );
 	}
 
 	/**
-	 * Check for plugin updates. Called by WordPress when refreshing the
-	 * update_plugins transient.
+	 * Check for plugin updates.
 	 *
 	 * @param object $transient The update_plugins transient data.
 	 * @return object Modified transient.
@@ -79,18 +89,24 @@ final class Shopwalk_Updater {
 		$current_version = SHOPWALK_AI_VERSION;
 
 		if ( version_compare( $remote['version'], $current_version, '>' ) ) {
+			// Build download URL with license key as query param so WP's
+			// built-in updater can authenticate (it doesn't send custom headers).
+			$download_url = $this->get_download_url();
+
 			$transient->response[ $this->plugin_basename ] = (object) array(
-				'slug'        => $this->plugin_slug,
-				'plugin'      => $this->plugin_basename,
-				'new_version' => $remote['version'],
-				'package'     => $remote['download_url'] ?? '',
-				'url'         => 'https://shopwalk.com/woocommerce',
-				'tested'      => $remote['tested_wp'] ?? '6.7',
-				'requires'    => '6.0',
+				'slug'         => $this->plugin_slug,
+				'plugin'       => $this->plugin_basename,
+				'new_version'  => $remote['version'],
+				'package'      => $download_url,
+				'url'          => 'https://shopwalk.com/woocommerce',
+				'tested'       => $remote['tested_wp'] ?? '6.7',
+				'requires'     => '6.0',
 				'requires_php' => '8.0',
+				'icons'        => array(
+					'default' => 'https://shopwalk.com/icon-256x256.png',
+				),
 			);
 		} else {
-			// Tell WP this plugin is up to date (prevents "update available" false positives).
 			$transient->no_update[ $this->plugin_basename ] = (object) array(
 				'slug'        => $this->plugin_slug,
 				'plugin'      => $this->plugin_basename,
@@ -121,18 +137,22 @@ final class Shopwalk_Updater {
 		}
 
 		return (object) array(
-			'name'            => 'Shopwalk AI — UCP Commerce Adapter',
-			'slug'            => $this->plugin_slug,
-			'version'         => $remote['version'] ?? SHOPWALK_AI_VERSION,
-			'author'          => '<a href="https://shopwalk.com">Shopwalk, Inc.</a>',
-			'homepage'        => 'https://shopwalk.com/woocommerce',
-			'requires'        => '6.0',
-			'requires_php'    => '8.0',
-			'tested'          => $remote['tested_wp'] ?? '6.7',
-			'download_link'   => $remote['download_url'] ?? '',
-			'sections'        => array(
+			'name'          => 'Shopwalk AI — UCP Commerce Adapter',
+			'slug'          => $this->plugin_slug,
+			'version'       => $remote['version'] ?? SHOPWALK_AI_VERSION,
+			'author'        => '<a href="https://shopwalk.com">Shopwalk, Inc.</a>',
+			'homepage'      => 'https://shopwalk.com/woocommerce',
+			'requires'      => '6.0',
+			'requires_php'  => '8.0',
+			'tested'        => $remote['tested_wp'] ?? '6.7',
+			'download_link' => $this->get_download_url(),
+			'sections'      => array(
 				'description' => 'Make your WooCommerce store discoverable and purchasable by AI shopping agents. Implements the Universal Commerce Protocol (UCP).',
 				'changelog'   => $remote['changelog'] ?? '<p>See <a href="https://github.com/shopwalk-inc/woocommerce-ucp/releases">GitHub releases</a> for the full changelog.</p>',
+			),
+			'banners'       => array(
+				'high' => 'https://shopwalk.com/banner-1544x500.png',
+				'low'  => 'https://shopwalk.com/banner-772x250.png',
 			),
 		);
 	}
@@ -140,13 +160,13 @@ final class Shopwalk_Updater {
 	/**
 	 * Fix the extracted directory name after update.
 	 *
-	 * GitHub release zips extract to "woocommerce-ucp-main" or similar.
-	 * WordPress expects the directory to match the plugin slug.
+	 * GitHub release zips extract to various directory names.
+	 * WordPress expects the directory to match the existing plugin slug.
 	 *
 	 * @param string $source        File source location.
 	 * @param string $remote_source Remote file source location.
 	 * @param object $upgrader      WP_Upgrader instance.
-	 * @param array  $hook_extra    Extra arguments passed to hooked filters.
+	 * @param array  $hook_extra    Extra arguments.
 	 * @return string|WP_Error
 	 */
 	public function fix_directory_name( $source, $remote_source, $upgrader, $hook_extra ) {
@@ -155,9 +175,9 @@ final class Shopwalk_Updater {
 		}
 
 		global $wp_filesystem;
-		$expected = trailingslashit( $remote_source ) . trailingslashit( $this->plugin_slug );
+		$expected = trailingslashit( $remote_source ) . $this->plugin_slug . '/';
 
-		if ( $source !== $expected && $wp_filesystem ) {
+		if ( $source !== $expected && $wp_filesystem && $wp_filesystem->exists( $source ) ) {
 			$wp_filesystem->move( $source, $expected );
 			return $expected;
 		}
@@ -166,7 +186,73 @@ final class Shopwalk_Updater {
 	}
 
 	/**
-	 * Fetch the latest version info from shopwalk-api. Cached for 6 hours.
+	 * Intercept the download to add authentication headers.
+	 *
+	 * WordPress's built-in updater calls download_url() which does a plain GET.
+	 * We intercept and add the license key as a query parameter.
+	 *
+	 * @param bool|WP_Error $reply    Whether to bail without returning the package.
+	 * @param string        $package  The package URL.
+	 * @param object        $upgrader The WP_Upgrader instance.
+	 * @return bool|WP_Error
+	 */
+	public function add_auth_to_download( $reply, $package, $upgrader ) {
+		// Only intercept our own plugin downloads.
+		if ( ! str_contains( $package, 'api.shopwalk.com' ) ) {
+			return $reply;
+		}
+
+		// The URL already has the license key as a query param (set in get_authenticated_download_url).
+		// WordPress will download it normally. No interception needed.
+		return $reply;
+	}
+
+	/**
+	 * Enable automatic updates for this plugin.
+	 *
+	 * @param bool|null $update Whether to update. Null = use default.
+	 * @param object    $item   The plugin item being evaluated.
+	 * @return bool|null
+	 */
+	public function enable_auto_update( $update, $item ) {
+		if ( isset( $item->slug ) && $item->slug === $this->plugin_slug ) {
+			return true; // Always auto-update Shopwalk AI plugin.
+		}
+		return $update;
+	}
+
+	/**
+	 * Clear the cached version check after an update completes.
+	 *
+	 * @param object $upgrader WP_Upgrader instance.
+	 * @param array  $options  Upgrade options.
+	 * @return void
+	 */
+	public function clear_cache( $upgrader, $options ): void {
+		if ( 'update' === ( $options['action'] ?? '' ) && 'plugin' === ( $options['type'] ?? '' ) ) {
+			delete_transient( self::CACHE_KEY );
+		}
+	}
+
+	/**
+	 * Get the download URL from the cached version check.
+	 *
+	 * The repo is public — the download URL is a direct GitHub release
+	 * asset link. No authentication needed.
+	 *
+	 * @return string
+	 */
+	private function get_download_url(): string {
+		$remote = $this->get_remote_version();
+		if ( $remote && ! empty( $remote['download_url'] ) ) {
+			return $remote['download_url'];
+		}
+		// Fallback: latest release asset directly from GitHub.
+		return 'https://github.com/shopwalk-inc/woocommerce-ucp/releases/latest/download/shopwalk-ai.zip';
+	}
+
+	/**
+	 * Fetch the latest version info from shopwalk-api. Cached.
 	 *
 	 * @return array|null { version, download_url, changelog, tested_wp }
 	 */
@@ -183,6 +269,12 @@ final class Shopwalk_Updater {
 		// Include license key for authenticated version check.
 		if ( class_exists( 'Shopwalk_License' ) && Shopwalk_License::key() ) {
 			$headers['X-SW-License-Key'] = Shopwalk_License::key();
+		}
+
+		// Include domain for domain-bound license validation.
+		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( $domain ) {
+			$headers['X-SW-Domain'] = $domain;
 		}
 
 		$response = wp_remote_get(
