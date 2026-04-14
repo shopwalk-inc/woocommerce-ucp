@@ -96,12 +96,19 @@ final class Shopwalk_Connector {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
 		}
-		$queued = Shopwalk_Sync::instance()->full_sync();
+		$sync   = Shopwalk_Sync::instance();
+		$queued = $sync->full_sync();
+
+		// Flush immediately — don't wait for WP-Cron (may never fire on low-traffic sites).
+		while ( count( (array) get_option( 'shopwalk_sync_queue', array() ) ) > 0 ) {
+			$sync->flush();
+		}
+
 		wp_send_json_success(
 			array(
 				'message' => sprintf(
-					/* translators: %d: number of products queued */
-					__( '%d products queued for sync.', 'shopwalk-ai' ),
+					/* translators: %d: number of products synced */
+					__( '%d products synced.', 'shopwalk-ai' ),
 					$queued
 				),
 				'queued'  => $queued,
