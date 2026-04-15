@@ -236,10 +236,18 @@ final class Shopwalk_AI_Admin_Dashboard {
 
 				<?php if ( $tier === 'free' ) : ?>
 					<div class="sw-upgrade-cta">
-						<p><strong>⬆️ <?php esc_html_e( 'Upgrade to Pro', 'shopwalk-ai' ); ?></strong></p>
-						<p class="sw-muted"><?php esc_html_e( '$19/mo annual · $29/mo monthly — Analytics, brand voice, knowledge base, gap analysis', 'shopwalk-ai' ); ?></p>
+						<p><strong><?php esc_html_e( 'Upgrade to Pro', 'shopwalk-ai' ); ?></strong></p>
+						<p class="sw-muted"><?php esc_html_e( 'Take control of how AI represents your brand:', 'shopwalk-ai' ); ?></p>
+						<ul style="margin:4px 0 12px 16px;font-size:13px;color:#6b7280;">
+							<li><?php esc_html_e( 'Analytics — see how AI agents find and recommend your products', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( 'Brand Voice — control how AI describes your store and products', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( 'Knowledge Base — teach AI about your shipping, returns, and policies', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( 'Gap Analysis — discover what shoppers search for that you don\'t carry', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( 'Priority Support — phone + email support', 'shopwalk-ai' ); ?></li>
+						</ul>
+						<p class="sw-muted" style="margin-bottom:12px;"><?php esc_html_e( '$19/mo billed annually · $29/mo billed monthly', 'shopwalk-ai' ); ?></p>
 						<p>
-							<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/subscribe' ); ?>" class="button button-primary" target="_blank" rel="noopener">
+							<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/upgrade' ); ?>" class="button button-primary" target="_blank" rel="noopener">
 								<?php esc_html_e( 'Upgrade to Pro →', 'shopwalk-ai' ); ?>
 							</a>
 						</p>
