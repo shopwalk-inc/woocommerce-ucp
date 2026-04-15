@@ -109,13 +109,13 @@ final class Shopwalk_AI_Admin_Dashboard {
 		<?php
 	}
 
-	// ── UCP Tool ───────────────────────────────────────────────────────────
+	// ── UCP ────────────────────────────────────────────────────────────────
 
 	private function render_ucp_tool( string $tier ): void {
 		$product_count = wp_count_posts( 'product' )->publish ?? 0;
 		?>
 		<div class="sw-card">
-			<h2><?php esc_html_e( 'UCP Tool', 'shopwalk-ai' ); ?></h2>
+			<h2><?php esc_html_e( 'UCP', 'shopwalk-ai' ); ?></h2>
 
 			<div id="sw-ucp-results">
 				<p class="sw-muted"><?php esc_html_e( 'Click "Test Connectivity" to check your UCP endpoints.', 'shopwalk-ai' ); ?></p>
@@ -137,12 +137,12 @@ final class Shopwalk_AI_Admin_Dashboard {
 		<?php
 	}
 
-	// ── Sync Tool ──────────────────────────────────────────────────────────
+	// ── Sync ───────────────────────────────────────────────────────────────
 
 	private function render_sync_tool( string $tier ): void {
 		?>
 		<div class="sw-card">
-			<h2><?php esc_html_e( 'Sync Status', 'shopwalk-ai' ); ?></h2>
+			<h2><?php esc_html_e( 'Sync', 'shopwalk-ai' ); ?></h2>
 
 			<div id="sw-sync-info">
 				<p class="sw-muted">Loading sync status...</p>
@@ -157,7 +157,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 		<?php
 	}
 
-	// ── License Tool ───────────────────────────────────────────────────────
+	// ── License ────────────────────────────────────────────────────────────
 
 	private function render_license_tool( string $tier ): void {
 		$license_key = class_exists( 'Shopwalk_License' ) ? Shopwalk_License::key() : '';
@@ -168,7 +168,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 		?>
 		<div class="sw-card">
 			<h2>
-				<?php esc_html_e( 'License Tool', 'shopwalk-ai' ); ?>
+				<?php esc_html_e( 'License', 'shopwalk-ai' ); ?>
 				<?php if ( $tier === 'pro' ) : ?>
 					<span class="sw-badge sw-badge-pro">PRO</span>
 				<?php elseif ( $tier === 'free' ) : ?>
