@@ -552,27 +552,119 @@ JS;
 	public function ajax_self_test(): void {
 		check_ajax_referer( 'shopwalk_self_test', 'nonce' );
 		$checks = array();
-		$base   = home_url();
 
-		$endpoints = array(
-			'Store Info'  => '/wp-json/ucp/v1/store',
-			'Products'    => '/wp-json/ucp/v1/products?per_page=1',
-			'Categories'  => '/wp-json/ucp/v1/categories',
-			'Discovery'   => '/.well-known/ucp',
+		// 1. WooCommerce active
+		$wc_active = class_exists( 'WooCommerce' );
+		$checks[]  = array(
+			'check'   => 'WooCommerce',
+			'status'  => $wc_active ? 'pass' : 'fail',
+			'message' => $wc_active ? 'v' . WC()->version : 'Not active',
 		);
 
-		foreach ( $endpoints as $name => $path ) {
-			$start = microtime( true );
-			$resp  = wp_remote_get( $base . $path, array( 'timeout' => 5, 'sslverify' => false ) );
-			$ms    = round( ( microtime( true ) - $start ) * 1000 );
-			$code  = is_wp_error( $resp ) ? 0 : wp_remote_retrieve_response_code( $resp );
+		// 2. Permalinks (REST API requires non-Plain)
+		$permalink = get_option( 'permalink_structure', '' );
+		$checks[]  = array(
+			'check'   => 'Permalinks',
+			'status'  => ! empty( $permalink ) ? 'pass' : 'fail',
+			'message' => ! empty( $permalink ) ? $permalink : 'Plain — REST API will not work',
+		);
 
-			$checks[] = array(
-				'check'   => $name,
-				'status'  => $code === 200 ? 'pass' : 'fail',
-				'message' => $code === 200 ? $ms . 'ms' : 'HTTP ' . $code,
-			);
+		// 3. REST API enabled
+		$rest_url  = get_rest_url();
+		$rest_ok   = ! empty( $rest_url );
+		$checks[]  = array(
+			'check'   => 'REST API',
+			'status'  => $rest_ok ? 'pass' : 'fail',
+			'message' => $rest_ok ? 'Enabled' : 'Disabled — check for plugins blocking REST API',
+		);
+
+		// 4. License key
+		$license = get_option( 'shopwalk_license_key', '' );
+		$checks[] = array(
+			'check'   => 'License key',
+			'status'  => ! empty( $license ) ? 'pass' : 'fail',
+			'message' => ! empty( $license ) ? substr( $license, 0, 8 ) . '...' : 'Not set',
+		);
+
+		// 5. Product count
+		$product_counts = wp_count_posts( 'product' );
+		$total          = (int) ( $product_counts->publish ?? 0 );
+		$checks[]       = array(
+			'check'   => 'Published products',
+			'status'  => $total > 0 ? 'pass' : 'warn',
+			'message' => number_format( $total ),
+		);
+
+		// 6. PHP version
+		$php_ok   = version_compare( PHP_VERSION, '7.4', '>=' );
+		$checks[] = array(
+			'check'   => 'PHP version',
+			'status'  => $php_ok ? 'pass' : 'warn',
+			'message' => PHP_VERSION,
+		);
+
+		// 7. PHP extensions
+		$required_exts = array( 'json', 'curl', 'openssl', 'mbstring' );
+		$missing_exts  = array();
+		foreach ( $required_exts as $ext ) {
+			if ( ! extension_loaded( $ext ) ) {
+				$missing_exts[] = $ext;
+			}
 		}
+		$checks[] = array(
+			'check'   => 'PHP extensions',
+			'status'  => empty( $missing_exts ) ? 'pass' : 'fail',
+			'message' => empty( $missing_exts ) ? implode( ', ', $required_exts ) : 'Missing: ' . implode( ', ', $missing_exts ),
+		);
+
+		// 8. Memory limit
+		$mem_limit = ini_get( 'memory_limit' );
+		$mem_bytes = wp_convert_hr_to_bytes( $mem_limit );
+		$mem_ok    = $mem_bytes >= 128 * 1024 * 1024;
+		$checks[]  = array(
+			'check'   => 'Memory limit',
+			'status'  => $mem_ok ? 'pass' : 'warn',
+			'message' => $mem_limit . ( $mem_ok ? '' : ' — recommend 128M+' ),
+		);
+
+		// 9. WP Cron (needed for scheduled sync)
+		$cron_disabled = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
+		$checks[]      = array(
+			'check'   => 'WP Cron',
+			'status'  => ! $cron_disabled ? 'pass' : 'warn',
+			'message' => $cron_disabled ? 'Disabled — scheduled sync requires cron' : 'Enabled',
+		);
+
+		// 10. SSL certificate
+		$is_ssl   = is_ssl();
+		$checks[] = array(
+			'check'   => 'SSL/HTTPS',
+			'status'  => $is_ssl ? 'pass' : 'warn',
+			'message' => $is_ssl ? 'Active' : 'Not HTTPS — recommended for API security',
+		);
+
+		// 11. .htaccess REST API blocking (Apache only)
+		if ( function_exists( 'apache_get_modules' ) || stripos( $_SERVER['SERVER_SOFTWARE'] ?? '', 'apache' ) !== false ) {
+			$htaccess = ABSPATH . '.htaccess';
+			if ( file_exists( $htaccess ) ) {
+				$content     = file_get_contents( $htaccess );
+				$blocks_json = preg_match( '/RewriteRule.*wp-json.*\[F\]|Deny.*wp-json/i', $content );
+				$checks[]    = array(
+					'check'   => '.htaccess',
+					'status'  => $blocks_json ? 'fail' : 'pass',
+					'message' => $blocks_json ? 'May block /wp-json/ — check rewrite rules' : 'OK',
+				);
+			}
+		}
+
+		// 12. Loopback test (can WP reach itself)
+		$loop_resp = wp_remote_get( rest_url( 'ucp/v1/store' ), array( 'timeout' => 5, 'sslverify' => false ) );
+		$loop_code = is_wp_error( $loop_resp ) ? 0 : wp_remote_retrieve_response_code( $loop_resp );
+		$checks[]  = array(
+			'check'   => 'Loopback',
+			'status'  => $loop_code === 200 ? 'pass' : 'fail',
+			'message' => $loop_code === 200 ? 'WordPress can reach its own REST API' : 'Failed — loopback blocked (HTTP ' . $loop_code . ')',
+		);
 
 		wp_send_json_success( array( 'checks' => $checks ) );
 	}
