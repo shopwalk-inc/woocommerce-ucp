@@ -177,7 +177,19 @@ final class Shopwalk_AI_Admin_Dashboard {
 			</h2>
 
 			<?php if ( $tier === 'unlicensed' ) : ?>
-				<p><?php esc_html_e( 'No license active. Enter a license key to connect to Shopwalk.', 'shopwalk-ai' ); ?></p>
+				<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;margin-bottom:16px;">
+					<p style="font-size:15px;font-weight:600;margin:0 0 8px;">Connect your store to Shopwalk</p>
+					<p class="sw-muted" style="margin:0 0 12px;">
+						Make your products discoverable by AI shopping agents. Shopwalk connects your WooCommerce store
+						to the AI commerce network — your products appear in search results across Claude, ChatGPT, and
+						other AI agents. 5% commission only on AI purchases made through Shopwalk.
+					</p>
+					<a href="<?php echo esc_url( SHOPWALK_SIGNUP_URL ); ?>" class="button button-primary" target="_blank" rel="noopener">
+						<?php esc_html_e( 'Sign up at shopwalk.com', 'shopwalk-ai' ); ?>
+					</a>
+				</div>
+
+				<h3><?php esc_html_e( 'Already have a license?', 'shopwalk-ai' ); ?></h3>
 				<p>
 					<input type="text" id="sw-license-input" class="regular-text" placeholder="sw_site_..." value="" />
 					<button type="button" class="button button-primary" id="sw-activate-btn">
@@ -185,11 +197,6 @@ final class Shopwalk_AI_Admin_Dashboard {
 					</button>
 				</p>
 				<p id="sw-activate-status"></p>
-				<p>
-					<a href="<?php echo esc_url( SHOPWALK_SIGNUP_URL ); ?>" target="_blank" rel="noopener">
-						<?php esc_html_e( "Don't have one? Get a free license →", 'shopwalk-ai' ); ?>
-					</a>
-				</p>
 
 			<?php else : ?>
 				<table class="sw-details">
