@@ -224,9 +224,10 @@ final class Shopwalk_Sync {
 				),
 				'body'    => wp_json_encode(
 					array(
-						'site_url'  => $site_url,
-						'sync_type' => $this->current_sync_type,
-						'products'  => $products,
+						'site_url'       => $site_url,
+						'sync_type'      => $this->current_sync_type,
+						'products'       => $products,
+						'total_products' => (int) ( wp_count_posts( 'product' )->publish ?? 0 ),
 					)
 				),
 			)
