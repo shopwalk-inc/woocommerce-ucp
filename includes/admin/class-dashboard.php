@@ -735,7 +735,7 @@ JS;
 		}
 
 		$api_url  = defined( 'SHOPWALK_API_URL' ) ? SHOPWALK_API_URL : 'https://api.shopwalk.com';
-		$response = wp_remote_get( $api_url . '/api/v1/plugin/pro/status', array(
+		$response = wp_remote_get( $api_url . '/api/v1/plugin/status', array(
 			'headers' => array(
 				'X-SW-License-Key' => $license_key,
 				'X-SW-Domain'      => home_url(),
