@@ -191,6 +191,31 @@ final class Shopwalk_Sync {
 			if ( ! $product ) {
 				continue;
 			}
+			// Build images array
+			$images = array();
+			$image_id = $product->get_image_id();
+			if ( $image_id ) {
+				$url = wp_get_attachment_url( $image_id );
+				if ( $url ) {
+					$images[] = array( 'url' => $url, 'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: '', 'position' => 0 );
+				}
+			}
+			foreach ( $product->get_gallery_image_ids() as $pos => $gid ) {
+				$url = wp_get_attachment_url( $gid );
+				if ( $url ) {
+					$images[] = array( 'url' => $url, 'alt' => '', 'position' => $pos + 1 );
+				}
+			}
+
+			// Build categories array
+			$categories = array();
+			$terms = get_the_terms( $pid, 'product_cat' );
+			if ( $terms && ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$categories[] = $term->name;
+				}
+			}
+
 			$products[] = array(
 				'external_id'      => (string) $pid,
 				'name'             => (string) $product->get_name(),
@@ -202,6 +227,8 @@ final class Shopwalk_Sync {
 				'currency'         => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD',
 				'in_stock'         => (bool) $product->is_in_stock(),
 				'source_url'       => (string) get_permalink( $pid ),
+				'categories'       => $categories,
+				'images'           => $images,
 				'op'               => 'upsert',
 			);
 		}
