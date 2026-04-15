@@ -92,6 +92,10 @@ final class Shopwalk_AI {
 		require_once $dir . 'class-ucp-webhook-subscriptions.php';
 		require_once $dir . 'class-ucp-webhook-delivery.php';
 
+		// Store + products endpoints.
+		require_once $dir . 'class-ucp-store.php';
+		require_once $dir . 'class-ucp-products.php';
+
 		// Discovery + payment gateway + self-test.
 		require_once $dir . 'class-ucp-discovery.php';
 		require_once $dir . 'class-ucp-payment-gateway.php';

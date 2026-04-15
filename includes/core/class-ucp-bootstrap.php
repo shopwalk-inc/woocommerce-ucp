@@ -60,6 +60,8 @@ final class UCP_Bootstrap {
 	 */
 	public function register_routes(): void {
 		UCP_Discovery::register_routes();
+		UCP_Store::register_routes();
+		UCP_Products::register_routes();
 		UCP_OAuth_Server::register_routes();
 		UCP_Checkout::register_routes();
 		UCP_Orders::register_routes();
