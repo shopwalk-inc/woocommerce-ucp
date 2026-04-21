@@ -9,7 +9,7 @@
  * Orders are read directly from WooCommerce via wc_get_orders, scoped
  * to the buyer's customer ID resolved from the OAuth Bearer token.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

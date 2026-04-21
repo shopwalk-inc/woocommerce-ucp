@@ -12,7 +12,7 @@
  * via the agent's published JWK is a follow-up — both verifiers can run
  * side-by-side, with the JWT path tried first and HMAC as a fallback.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -69,7 +69,7 @@ final class UCP_Signing {
 	 */
 	public static function sign( string $payload, string $secret ): string {
 		$mac = hash_hmac( 'sha256', $payload, $secret, true );
-		return rtrim( strtr( base64_encode( $mac ), '+/', '-_' ), '=' );
+		return rtrim( strtr( base64_encode( $mac ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for HMAC-SHA256 signature encoding per RFC 7515.
 	}
 
 	/**
@@ -162,7 +162,7 @@ final class UCP_Signing {
 
 		// Build the signing input — for detached payload, use the raw payload
 		// encoded as base64url in the signing input position
-		$payload_b64 = rtrim( strtr( base64_encode( $payload ), '+/', '-_' ), '=' );
+		$payload_b64 = rtrim( strtr( base64_encode( $payload ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for JWT detached payload per RFC 7797.
 		$signing_input = $parts[0] . '.' . $payload_b64;
 		$sig = self::base64url_decode( $parts[2] );
 
@@ -210,11 +210,11 @@ final class UCP_Signing {
 		$bit_string = chr( 0x03 ) . self::der_length( strlen( $seq ) + 1 ) . chr( 0x00 ) . $seq;
 		$spki = self::der_sequence( $algo_oid . $bit_string );
 
-		return "-----BEGIN PUBLIC KEY-----\n" . chunk_split( base64_encode( $spki ), 64, "\n" ) . "-----END PUBLIC KEY-----\n";
+		return "-----BEGIN PUBLIC KEY-----\n" . chunk_split( base64_encode( $spki ), 64, "\n" ) . "-----END PUBLIC KEY-----\n"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PEM public key encoding per RFC 7468.
 	}
 
 	private static function base64url_decode( string $data ): string {
-		return base64_decode( strtr( $data, '-_', '+/' ) . str_repeat( '=', ( 4 - strlen( $data ) % 4 ) % 4 ) );
+		return base64_decode( strtr( $data, '-_', '+/' ) . str_repeat( '=', ( 4 - strlen( $data ) % 4 ) % 4 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Required for JWT/HMAC signature verification per RFC 7515.
 	}
 
 	private static function der_length( int $len ): string {

@@ -12,19 +12,19 @@
  * - admin/ is the only place both tiers are surfaced in one view (the
  *   dashboard shows UCP status AND the Shopwalk CTA).
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Shopwalk_AI bootstrap.
+ * WooCommerce_UCP bootstrap.
  *
  * Loaded once on `plugins_loaded`. Owns the activation/deactivation
  * lifecycle, registers all subsystems, and decides whether the optional
  * Shopwalk integration is loaded based on WP option state.
  */
-final class Shopwalk_AI {
+final class WooCommerce_UCP {
 
 	/**
 	 * Singleton instance.
@@ -161,8 +161,8 @@ final class Shopwalk_AI {
 		require_once $dir . 'class-dashboard.php';
 		require_once $dir . 'class-self-test.php';
 
-		Shopwalk_AI_Admin_Dashboard::instance();
-		Shopwalk_AI_Admin_Self_Test::instance();
+		WooCommerce_UCP_Admin_Dashboard::instance();
+		WooCommerce_UCP_Admin_Self_Test::instance();
 	}
 
 	/**
@@ -264,7 +264,7 @@ final class Shopwalk_AI {
 <?php
 /**
  * UCP discovery — served at /.well-known/ucp
- * Created by shopwalk-ai plugin. Safe to delete if plugin is removed.
+ * Created by woocommerce-ucp plugin. Safe to delete if plugin is removed.
  */
 if ( ! file_exists( dirname( __FILE__, 2 ) . '/wp-load.php' ) ) { exit; }
 require_once dirname( __FILE__, 2 ) . '/wp-load.php';
@@ -284,7 +284,7 @@ PHP;
 <?php
 /**
  * OAuth 2.0 server metadata — served at /.well-known/oauth-authorization-server (RFC 8414)
- * Created by shopwalk-ai plugin. Safe to delete if plugin is removed.
+ * Created by woocommerce-ucp plugin. Safe to delete if plugin is removed.
  */
 if ( ! file_exists( dirname( __FILE__, 2 ) . '/wp-load.php' ) ) { exit; }
 require_once dirname( __FILE__, 2 ) . '/wp-load.php';
@@ -301,7 +301,7 @@ exit;
 PHP;
 
 		$htaccess = <<<'HTACCESS'
-# Managed by shopwalk-ai plugin
+# Managed by woocommerce-ucp plugin
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule ^ucp/?$ ucp.php [L]
@@ -309,11 +309,11 @@ RewriteRule ^oauth-authorization-server/?$ oauth-authorization-server.php [L]
 </IfModule>
 HTACCESS;
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing static discovery endpoint file to /.well-known/ on activation.
 		file_put_contents( $dir . '/ucp.php', $ucp_php );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing static discovery endpoint file to /.well-known/ on activation.
 		file_put_contents( $dir . '/oauth-authorization-server.php', $oauth_php );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing .htaccess rewrite rules to /.well-known/ on activation.
 		file_put_contents( $dir . '/.htaccess', $htaccess );
 	}
 
@@ -332,7 +332,8 @@ HTACCESS;
 			}
 		}
 		$htaccess = $dir . '/.htaccess';
-		if ( file_exists( $htaccess ) && str_contains( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess to check if managed by this plugin.
+		if ( file_exists( $htaccess ) && ( str_contains( (string) file_get_contents( $htaccess ), 'woocommerce-ucp plugin' ) || str_contains( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 			@unlink( $htaccess );
 		}
@@ -346,11 +347,11 @@ add_filter(
 	static function ( array $schedules ): array {
 		$schedules['shopwalk_ai_minute'] = array(
 			'interval' => 60,
-			'display'  => esc_html__( 'Every Minute (Shopwalk AI)', 'shopwalk-ai' ),
+			'display'  => esc_html__( 'Every Minute (WooCommerce UCP)', 'woocommerce-ucp' ),
 		);
 		$schedules['shopwalk_ai_five_minutes'] = array(
 			'interval' => 300,
-			'display'  => esc_html__( 'Every 5 Minutes (Shopwalk AI)', 'shopwalk-ai' ),
+			'display'  => esc_html__( 'Every 5 Minutes (WooCommerce UCP)', 'woocommerce-ucp' ),
 		);
 		return $schedules;
 	}

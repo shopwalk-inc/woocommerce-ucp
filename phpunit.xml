@@ -5,7 +5,7 @@
          colors="true"
          displayDetailsOnTestsThatTriggerWarnings="true">
   <testsuites>
-    <testsuite name="Shopwalk AI UCP">
+    <testsuite name="WooCommerce UCP">
       <directory>tests</directory>
     </testsuite>
   </testsuites>

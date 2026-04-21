@@ -131,7 +131,7 @@ A WooCommerce payment method named **"Pay via UCP"** is registered for labeling 
 
 ### Dashboard
 
-**WP Admin → Shopwalk AI → Payments** shows every registered adapter, ready/not-ready state, and deep-links into the WC settings page for each gateway so setup never leaves context.
+**WP Admin → UCP → Payments** shows every registered adapter, ready/not-ready state, and deep-links into the WC settings page for each gateway so setup never leaves context.
 
 ---
 
@@ -152,16 +152,16 @@ A WooCommerce payment method named **"Pay via UCP"** is registered for labeling 
 
 ### From the WordPress Plugin Directory (recommended)
 
-1. **Plugins → Add New**, search for **Shopwalk AI**
+1. **Plugins → Add New**, search for **WooCommerce UCP**
 2. **Install Now**, then **Activate**
-3. Visit **Shopwalk AI** in the WP Admin sidebar
+3. Visit **UCP** in the WP Admin sidebar
 4. Click **Test Connectivity** and **Local Self-Test** to verify your environment
 
 ### Manual installation
 
 1. Download the latest release zip from the [Releases page](https://github.com/shopwalk-inc/woocommerce-ucp/releases)
 2. **Plugins → Add New → Upload Plugin**, select the zip, activate
-3. Visit **Shopwalk AI** to run the self-test
+3. Visit **UCP** to run the self-test
 
 ---
 

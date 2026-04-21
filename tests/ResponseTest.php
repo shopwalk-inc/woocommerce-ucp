@@ -5,7 +5,7 @@
  * Pure helpers, no WordPress runtime required beyond the WP_Error stub in
  * tests/bootstrap.php.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 use PHPUnit\Framework\TestCase;

@@ -1,6 +1,6 @@
 {
-    "name": "shopwalk-inc/shopwalk-ai",
-    "description": "Shopwalk AI — WooCommerce plugin",
+    "name": "shopwalk-inc/woocommerce-ucp",
+    "description": "WooCommerce UCP — Universal Commerce Protocol",
     "license": "GPL-2.0-or-later",
     "require": {
         "php": ">=8.0"
@@ -16,8 +16,8 @@
         }
     },
     "scripts": {
-        "qit:security": "qit run:security shopwalk-ai",
-        "qit:phpcs": "qit run:phpcs shopwalk-ai",
-        "qit:activation": "qit run:activation shopwalk-ai"
+        "qit:security": "qit run:security woocommerce-ucp",
+        "qit:phpcs": "qit run:phpcs woocommerce-ucp",
+        "qit:activation": "qit run:activation woocommerce-ucp"
     }
 }

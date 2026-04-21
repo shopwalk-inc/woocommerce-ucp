@@ -11,7 +11,7 @@
  * agent on issuance — subsequent verifications hash the candidate and
  * compare against the stored hash.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -210,7 +210,7 @@ final class UCP_OAuth_Server {
 				return new WP_Error( 'invalid_grant', 'code_verifier required (PKCE)', array( 'status' => 400 ) );
 			}
 			if ( $stored_method === 'S256' ) {
-				$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' );
+				$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PKCE S256 code challenge per RFC 7636.
 			} else {
 				$computed = $code_verifier; // plain
 			}

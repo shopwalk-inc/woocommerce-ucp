@@ -15,7 +15,7 @@
  * so third parties can add support for additional gateways without
  * touching plugin core.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

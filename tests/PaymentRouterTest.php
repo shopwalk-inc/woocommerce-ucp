@@ -3,7 +3,7 @@
  * Tests for UCP_Payment_Router — adapter lookup, dispatch, and the
  * `shopwalk_ucp_payment_adapters` filter surface.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 use Brain\Monkey;

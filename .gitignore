@@ -14,9 +14,10 @@ node_modules/
 # Dev tools
 .env
 .env.*
-shopwalk-ai.zip
+woocommerce-ucp.zip
 .phpunit.result.cache
 .phpunit.cache/
 
 # License config injected at download time — contains partner key
 shopwalk-ai-config.php
+woocommerce-ucp-config.php

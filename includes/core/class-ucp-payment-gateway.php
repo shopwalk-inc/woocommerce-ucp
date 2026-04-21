@@ -18,7 +18,7 @@
  * until WooCommerce has loaded. So we declare it inside a `woocommerce_init`
  * callback rather than at file-parse time.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -59,10 +59,10 @@ function shopwalk_ucp_define_payment_gateway_class(): void {
 		 */
 		public function __construct() {
 			$this->id                 = 'shopwalk_ucp';
-			$this->method_title       = __( 'Pay via UCP', 'shopwalk-ai' );
-			$this->method_description = __( 'Universal Commerce Protocol — orders placed by AI shopping agents through the UCP checkout-sessions API.', 'shopwalk-ai' );
-			$this->title              = __( 'Pay via UCP', 'shopwalk-ai' );
-			$this->description        = __( 'AI agent checkout via UCP. Used by Shopwalk and other UCP-compliant agents.', 'shopwalk-ai' );
+			$this->method_title       = __( 'Pay via UCP', 'woocommerce-ucp' );
+			$this->method_description = __( 'Universal Commerce Protocol — orders placed by AI shopping agents through the UCP checkout-sessions API.', 'woocommerce-ucp' );
+			$this->title              = __( 'Pay via UCP', 'woocommerce-ucp' );
+			$this->description        = __( 'AI agent checkout via UCP. Used by Shopwalk and other UCP-compliant agents.', 'woocommerce-ucp' );
 			$this->has_fields         = false;
 			$this->supports           = array( 'products', 'refunds' );
 			$this->enabled            = (string) get_option( 'shopwalk_ucp_gateway_enabled', 'yes' );
@@ -81,9 +81,9 @@ function shopwalk_ucp_define_payment_gateway_class(): void {
 		public function init_form_fields(): void {
 			$this->form_fields = array(
 				'enabled' => array(
-					'title'   => __( 'Enable / Disable', 'shopwalk-ai' ),
+					'title'   => __( 'Enable / Disable', 'woocommerce-ucp' ),
 					'type'    => 'checkbox',
-					'label'   => __( 'Enable Pay via UCP', 'shopwalk-ai' ),
+					'label'   => __( 'Enable Pay via UCP', 'woocommerce-ucp' ),
 					'default' => 'yes',
 				),
 			);

@@ -10,7 +10,7 @@
  * Removing the `shopwalk/` directory from the plugin leaves Tier 1 (UCP)
  * fully functional — this class has no callers from `core/`.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -102,7 +102,7 @@ final class Shopwalk_Sync {
 		if ( function_exists( 'wc_get_logger' ) ) {
 			wc_get_logger()->info(
 				sprintf( 'Push sync complete: %d products queued and flushed (reason: %s)', $count, $reason ),
-				array( 'source' => 'shopwalk-ai' )
+				array( 'source' => 'woocommerce-ucp' )
 			);
 		}
 	}
@@ -250,7 +250,7 @@ final class Shopwalk_Sync {
 					'Content-Type'     => 'application/json',
 					'X-SW-License-Key' => Shopwalk_License::key(),
 					'X-SW-Domain'      => $domain ? $domain : $site_url,
-					'User-Agent'       => 'shopwalk-ai-plugin/' . SHOPWALK_AI_VERSION,
+					'User-Agent'       => 'woocommerce-ucp-plugin/' . SHOPWALK_AI_VERSION,
 				),
 				'body'    => wp_json_encode(
 					array(

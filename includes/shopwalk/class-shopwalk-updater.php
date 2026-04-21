@@ -8,7 +8,7 @@
  *
  * Also enables WordPress automatic background updates for this plugin.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -31,7 +31,7 @@ final class Shopwalk_Updater {
 	private const CACHE_TTL = 4 * HOUR_IN_SECONDS;
 
 	/**
-	 * Plugin basename (e.g. shopwalk-ai/shopwalk-ai.php).
+	 * Plugin basename (e.g. woocommerce-ucp/woocommerce-ucp.php).
 	 *
 	 * @var string
 	 */
@@ -137,7 +137,7 @@ final class Shopwalk_Updater {
 		}
 
 		return (object) array(
-			'name'          => 'Shopwalk AI — UCP Commerce Adapter',
+			'name'          => 'WooCommerce UCP — Universal Commerce Protocol',
 			'slug'          => $this->plugin_slug,
 			'version'       => $remote['version'] ?? SHOPWALK_AI_VERSION,
 			'author'        => '<a href="https://shopwalk.com">Shopwalk, Inc.</a>',
@@ -216,7 +216,7 @@ final class Shopwalk_Updater {
 	 */
 	public function enable_auto_update( $update, $item ) {
 		if ( isset( $item->slug ) && $item->slug === $this->plugin_slug ) {
-			return true; // Always auto-update Shopwalk AI plugin.
+			return true; // Always auto-update WooCommerce UCP plugin.
 		}
 		return $update;
 	}
@@ -248,7 +248,7 @@ final class Shopwalk_Updater {
 			return $remote['download_url'];
 		}
 		// Fallback: latest release asset directly from GitHub.
-		return 'https://github.com/shopwalk-inc/woocommerce-ucp/releases/latest/download/shopwalk-ai.zip';
+		return 'https://github.com/shopwalk-inc/woocommerce-ucp/releases/latest/download/woocommerce-ucp.zip';
 	}
 
 	/**
@@ -263,7 +263,7 @@ final class Shopwalk_Updater {
 		}
 
 		$headers = array(
-			'User-Agent' => 'shopwalk-ai-plugin/' . SHOPWALK_AI_VERSION,
+			'User-Agent' => 'woocommerce-ucp-plugin/' . SHOPWALK_AI_VERSION,
 		);
 
 		// Include license key for authenticated version check.

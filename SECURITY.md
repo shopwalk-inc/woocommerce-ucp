@@ -10,7 +10,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in the Shopwalk AI WooCommerce plugin, please **do not** open a public GitHub issue.
+If you discover a security vulnerability in the WooCommerce UCP plugin, please **do not** open a public GitHub issue.
 
 Instead, report it privately:
 
@@ -26,4 +26,4 @@ We aim to respond within **48 hours** and will keep you informed as we work on a
 
 ## Scope
 
-This policy covers the `shopwalk-ai` WooCommerce plugin. For vulnerabilities in the Shopwalk platform itself, please use the same email.
+This policy covers the `woocommerce-ucp` WooCommerce plugin. For vulnerabilities in the Shopwalk platform itself, please use the same email.

@@ -11,7 +11,7 @@
  *     subscription's HMAC secret, POSTs to the agent's callback URL,
  *     and retries with exponential backoff on 5xx.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -274,11 +274,11 @@ final class UCP_Webhook_Delivery {
 		$webhook_id = 'evt_' . wp_generate_uuid4();
 
 		// Content-Digest (SHA-256 of body).
-		$digest = base64_encode( hash( 'sha256', $payload, true ) );
+		$digest = base64_encode( hash( 'sha256', $payload, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for Content-Digest header per RFC 9530.
 
 		// HMAC signature over the signed content per UCP spec.
 		$signed_content = $webhook_id . '.' . $timestamp . '.' . $payload;
-		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $secret, true ) );
+		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $secret, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for HMAC-SHA256 webhook signature.
 
 		$response = wp_remote_post(
 			(string) $sub['callback_url'],

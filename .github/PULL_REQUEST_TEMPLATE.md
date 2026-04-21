@@ -69,6 +69,6 @@ Fixes #<!-- issue number, or "N/A" -->
 ## Checklist
 
 - [ ] My code follows the [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/)
-- [ ] All user-facing strings use `__()` / `_e()` with the `shopwalk-ai` text domain
+- [ ] All user-facing strings use `__()` / `_e()` with the `woocommerce-ucp` text domain
 - [ ] I have not introduced any obfuscated code
 - [ ] I have read [CONTRIBUTING.md](.github/CONTRIBUTING.md)

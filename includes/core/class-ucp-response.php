@@ -5,7 +5,7 @@
  * Every UCP endpoint should use UCP_Response::ok() or UCP_Response::error()
  * so that the outer envelope stays consistent with the spec version.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

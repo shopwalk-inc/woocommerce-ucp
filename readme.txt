@@ -1,4 +1,4 @@
-=== Shopwalk AI — UCP Adapter for WooCommerce ===
+=== WooCommerce UCP — Universal Commerce Protocol ===
 Contributors: shopwalkinc
 Tags: woocommerce, ai, ucp, agent, commerce
 Requires at least: 6.0
@@ -10,13 +10,13 @@ Stable tag: 3.0.42
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Make any WooCommerce store fully purchasable by UCP-compliant AI shopping agents. Free, standalone, no account required.
+Make any WooCommerce store fully purchasable by AI shopping agents. Free, standalone, no account required.
 
 == Description ==
 
-This plugin makes any WooCommerce store **fully purchasable by AI shopping agents** that speak the [Universal Commerce Protocol (UCP)](https://ucp.dev). Install it and your store can be discovered, browsed, and transacted by Claude, ChatGPT, Anthropic, custom agents, and any other UCP-compliant client — with **no account, no signup, no external service required**.
+This plugin makes any WooCommerce store **fully purchasable by AI shopping agents** that speak the [Universal Commerce Protocol (UCP)](https://ucp.dev). Install it and your store can be discovered, browsed, and transacted by any UCP-compliant client — with **no account, no signup, no external service required**.
 
-Optional Shopwalk integration is layered on top for merchants who want real-time push sync to the Shopwalk network and Premier listing on shopwalk.com.
+Optional Shopwalk network integration is available for merchants who want real-time push sync to the Shopwalk network and Premier listing on shopwalk.com.
 
 = What you get out of the box (no account needed) =
 
@@ -47,9 +47,9 @@ This plugin implements the UCP spec from [ucp.dev](https://ucp.dev) exactly. It 
 
 == Installation ==
 
-1. Upload the `shopwalk-ai` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "Shopwalk AI"**
+1. Upload the `woocommerce-ucp` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "WooCommerce UCP"**
 2. Activate the plugin
-3. Visit **Shopwalk AI** in the WP Admin sidebar
+3. Visit **UCP** in the WP Admin sidebar
 4. Click **"Run self-test"** to verify your environment supports the UCP layer
 5. (Optional) Click **"Connect to Shopwalk"** if you also want to sync to the Shopwalk network
 
@@ -85,7 +85,7 @@ The agent creates a UCP checkout session, submits a tokenized payment credential
 
 = Which payment gateways are supported out of the box? =
 
-Stripe (via the WooCommerce Stripe Gateway plugin). Additional adapters for PayPal, Square, and others can be added via the `shopwalk_ucp_payment_adapters` filter without modifying plugin code. The WP Admin **Shopwalk AI → Payments** panel shows which adapters are registered, which are ready, and deep-links into WooCommerce for any that aren't configured yet.
+Stripe (via the WooCommerce Stripe Gateway plugin). Additional adapters for PayPal, Square, and others can be added via the `shopwalk_ucp_payment_adapters` filter without modifying plugin code. The WP Admin **UCP → Payments** panel shows which adapters are registered, which are ready, and deep-links into WooCommerce for any that aren't configured yet.
 
 = How do I uninstall cleanly? =
 
@@ -102,7 +102,7 @@ When the optional Shopwalk integration is connected (a license key is entered in
 * Product categories
 * Product page URLs
 
-This data is used to index the store on the Shopwalk AI shopping network. **No data is sent to Shopwalk when the plugin is installed without an active license.**
+This data is used to index the store on the Shopwalk shopping network. **No data is sent to Shopwalk when the plugin is installed without an active license.**
 
 Shopwalk Terms of Service: https://shopwalk.com/terms
 Shopwalk Privacy Policy: https://shopwalk.com/privacy

@@ -7,7 +7,7 @@
  * we reproduce it here as the reference implementation and assert the exact
  * byte-level behavior the server expects for S256 and plain.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 use PHPUnit\Framework\TestCase;

@@ -7,7 +7,7 @@
  * payment gateway. The Shopwalk agent receives a payment_url that it presents
  * to the buyer.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -350,11 +350,11 @@ final class UCP_Direct_Checkout {
 		$body       = wp_json_encode( $payload );
 		$timestamp  = time();
 		$webhook_id = 'evt_' . wp_generate_uuid4();
-		$digest     = base64_encode( hash( 'sha256', $body, true ) );
+		$digest     = base64_encode( hash( 'sha256', $body, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for Content-Digest header per RFC 9530.
 
 		// HMAC signature over the signed content using the license key.
 		$signed_content = $webhook_id . '.' . $timestamp . '.' . $body;
-		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $license_key, true ) );
+		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $license_key, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for HMAC-SHA256 webhook signature.
 
 		wp_remote_post(
 			$api_url . '/api/v1/ucp/webhooks/orders',

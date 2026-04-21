@@ -1,22 +1,22 @@
 <?php
 /**
- * Plugin Name: Shopwalk AI — UCP Commerce Adapter for WooCommerce
+ * Plugin Name: WooCommerce UCP — Universal Commerce Protocol
  * Plugin URI:  https://github.com/shopwalk-inc/woocommerce-ucp
- * Description: Make any WooCommerce store fully purchasable by UCP-compliant AI shopping agents (Shopwalk, OpenAI, Anthropic, LangChain, custom). Implements the Universal Commerce Protocol (ucp.dev) — checkout, OAuth identity, orders, webhooks. Optional Shopwalk integration layered on top.
+ * Description: Make any WooCommerce store fully purchasable by UCP-compliant AI shopping agents. Implements the Universal Commerce Protocol (ucp.dev) — checkout, OAuth identity, orders, webhooks. Optional Shopwalk network integration available with a free license.
  * Version:     3.0.42
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: shopwalk-ai
+ * Text Domain: woocommerce-ucp
  * Domain Path: /languages
  * Requires at least: 6.0
  * Requires PHP: 8.0
  * WC requires at least: 8.0
  * WC tested up to: 9.5
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -60,21 +60,21 @@ add_action(
 
 // ─── Activation / Deactivation ──────────────────────────────────────────────
 
-register_activation_hook( __FILE__, array( 'Shopwalk_AI', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'Shopwalk_AI', 'deactivate' ) );
+register_activation_hook( __FILE__, array( 'WooCommerce_UCP', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'WooCommerce_UCP', 'deactivate' ) );
 
 // ─── Bootstrap ──────────────────────────────────────────────────────────────
 
-require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-shopwalk-ai.php';
+require_once SHOPWALK_AI_PLUGIN_DIR . 'includes/class-woocommerce-ucp.php';
 
-add_action( 'plugins_loaded', array( 'Shopwalk_AI', 'instance' ), 5 );
+add_action( 'plugins_loaded', array( 'WooCommerce_UCP', 'instance' ), 5 );
 
 // ─── Plugin action links (Plugins list page) ────────────────────────────────
 
 add_filter(
 	'plugin_action_links_' . plugin_basename( __FILE__ ),
 	static function ( array $links ): array {
-		$dashboard = '<a href="' . esc_url( admin_url( 'admin.php?page=shopwalk-ai' ) ) . '">' . esc_html__( 'Dashboard', 'shopwalk-ai' ) . '</a>';
+		$dashboard = '<a href="' . esc_url( admin_url( 'admin.php?page=woocommerce-ucp' ) ) . '">' . esc_html__( 'Dashboard', 'woocommerce-ucp' ) . '</a>';
 		array_unshift( $links, $dashboard );
 		return $links;
 	}

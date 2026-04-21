@@ -7,7 +7,7 @@
  * `order.refunded`). Each subscription stores its own HMAC secret used by
  * the delivery worker (UCP_Webhook_Delivery) to sign outbound payloads.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -207,7 +207,11 @@ final class UCP_Webhook_Subscriptions {
 		global $wpdb;
 		$table = UCP_Storage::table( 'webhook_subscriptions' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results( "SELECT * FROM {$table}", ARRAY_A );
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from UCP_Storage::table(), not user input.
+			"SELECT * FROM {$table}",
+			ARRAY_A
+		);
 		$out = array();
 		foreach ( (array) $rows as $row ) {
 			$events = json_decode( (string) $row['event_types'], true ) ?: array();

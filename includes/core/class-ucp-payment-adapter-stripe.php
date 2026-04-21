@@ -13,7 +13,7 @@
  * identically to a native Stripe checkout — the only difference is how
  * the session was created.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

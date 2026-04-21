@@ -7,7 +7,7 @@
  *                                   → canceled
  *                                   → requires_escalation (error)
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

@@ -10,7 +10,7 @@
  *
  * Auth: HMAC-signed request from Shopwalk (X-Shopwalk-Signature header).
  *
- * @package ShopwalkAI
+ * @package WooCommerceUCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

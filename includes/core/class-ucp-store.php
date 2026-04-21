@@ -5,7 +5,7 @@
  * Returns store metadata: name, description, product count, currency,
  * Shopwalk connection status. Used by the Shopwalk probe and sync pipeline.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

@@ -1,4 +1,4 @@
-# Contributing to Shopwalk AI
+# Contributing to WooCommerce UCP
 
 Thank you for your interest in contributing. This document covers everything you need to submit a great pull request.
 
@@ -42,7 +42,7 @@ cd woocommerce-ucp
 composer install
 
 # Symlink or copy to your local WP install
-ln -s $(pwd) /path/to/wp-content/plugins/shopwalk-ai
+ln -s $(pwd) /path/to/wp-content/plugins/woocommerce-ucp
 ```
 
 ---
@@ -141,9 +141,9 @@ Before submitting a PR, verify:
 
 ## Translations
 
-Translation files go in `languages/shopwalk-ai-{locale}.po`.
+Translation files go in `languages/woocommerce-ucp-{locale}.po`.
 
-The text domain is `shopwalk-ai`. All user-facing strings must use `__()`, `_e()`, `esc_html__()`, or equivalent with this text domain.
+The text domain is `woocommerce-ucp`. All user-facing strings must use `__()`, `_e()`, `esc_html__()`, or equivalent with this text domain.
 
 ---
 

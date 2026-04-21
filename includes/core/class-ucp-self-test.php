@@ -8,7 +8,7 @@
  * The admin AJAX runner (admin/class-self-test.php) calls run_all() and
  * streams results to the dashboard one row at a time.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;

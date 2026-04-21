@@ -3,15 +3,15 @@
  * Admin Self-Test runner — wraps UCP_Self_Test in a wp-ajax handler
  * so the dashboard can run diagnostics from a button click.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Shopwalk_AI_Admin_Self_Test — AJAX endpoint.
+ * WooCommerce_UCP_Admin_Self_Test — AJAX endpoint.
  */
-final class Shopwalk_AI_Admin_Self_Test {
+final class WooCommerce_UCP_Admin_Self_Test {
 
 	/**
 	 * Singleton instance.
@@ -48,7 +48,7 @@ final class Shopwalk_AI_Admin_Self_Test {
 	public function handle(): void {
 		check_ajax_referer( 'shopwalk_self_test', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-ai' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'woocommerce-ucp' ) ), 403 );
 		}
 		wp_send_json_success(
 			array(

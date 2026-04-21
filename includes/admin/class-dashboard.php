@@ -3,12 +3,12 @@
  * WP Admin Dashboard — three tools: UCP, Sync, License.
  * Adapts based on tier (unlicensed / free / pro).
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
 
-final class Shopwalk_AI_Admin_Dashboard {
+final class WooCommerce_UCP_Admin_Dashboard {
 
 	private static ?self $instance = null;
 
@@ -35,10 +35,10 @@ final class Shopwalk_AI_Admin_Dashboard {
 
 	public function register_menu(): void {
 		add_menu_page(
-			__( 'Shopwalk AI', 'shopwalk-ai' ),
-			__( 'Shopwalk AI', 'shopwalk-ai' ),
+			__( 'UCP Commerce', 'woocommerce-ucp' ),
+			__( 'UCP', 'woocommerce-ucp' ),
 			'manage_woocommerce',
-			'shopwalk-ai',
+			'woocommerce-ucp',
 			array( $this, 'render_page' ),
 			'dashicons-share-alt2',
 			58
@@ -46,13 +46,13 @@ final class Shopwalk_AI_Admin_Dashboard {
 	}
 
 	public function enqueue_assets( string $hook ): void {
-		if ( $hook !== 'toplevel_page_shopwalk-ai' ) {
+		if ( $hook !== 'toplevel_page_woocommerce-ucp' ) {
 			return;
 		}
-		wp_register_script( 'shopwalk-ai-admin', '', array(), SHOPWALK_AI_VERSION, true );
-		wp_enqueue_script( 'shopwalk-ai-admin' );
+		wp_register_script( 'woocommerce-ucp-admin', '', array(), SHOPWALK_AI_VERSION, true );
+		wp_enqueue_script( 'woocommerce-ucp-admin' );
 		wp_add_inline_script(
-			'shopwalk-ai-admin',
+			'woocommerce-ucp-admin',
 			'window.swAdmin = ' . wp_json_encode( array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonces'  => array(
@@ -90,9 +90,9 @@ final class Shopwalk_AI_Admin_Dashboard {
 		?>
 		<div class="wrap sw-wrap">
 			<h1>
-				<?php esc_html_e( 'Shopwalk AI', 'shopwalk-ai' ); ?>
+				<?php esc_html_e( 'UCP Commerce', 'woocommerce-ucp' ); ?>
 				<?php if ( $tier === 'free' || $tier === 'pro' ) : ?>
-					<span class="sw-connected">✅ <?php esc_html_e( 'Connected', 'shopwalk-ai' ); ?></span>
+					<span class="sw-connected">✅ <?php esc_html_e( 'Connected', 'woocommerce-ucp' ); ?></span>
 				<?php endif; ?>
 				<?php if ( $tier === 'pro' ) : ?>
 					<span class="sw-badge sw-badge-pro">PRO</span>
@@ -119,10 +119,10 @@ final class Shopwalk_AI_Admin_Dashboard {
 		$product_count = wp_count_posts( 'product' )->publish ?? 0;
 		?>
 		<div class="sw-card">
-			<h2><?php esc_html_e( 'UCP', 'shopwalk-ai' ); ?></h2>
+			<h2><?php esc_html_e( 'UCP', 'woocommerce-ucp' ); ?></h2>
 
 			<div id="sw-ucp-results">
-				<p class="sw-muted"><?php esc_html_e( 'Click "Test Connectivity" to check your UCP endpoints.', 'shopwalk-ai' ); ?></p>
+				<p class="sw-muted"><?php esc_html_e( 'Click "Test Connectivity" to check your UCP endpoints.', 'woocommerce-ucp' ); ?></p>
 			</div>
 
 			<p class="sw-muted">
@@ -131,10 +131,10 @@ final class Shopwalk_AI_Admin_Dashboard {
 
 			<p>
 				<button type="button" class="button button-primary" id="sw-probe-btn">
-					<?php esc_html_e( 'Test Connectivity', 'shopwalk-ai' ); ?>
+					<?php esc_html_e( 'Test Connectivity', 'woocommerce-ucp' ); ?>
 				</button>
 				<button type="button" class="button" id="sw-self-test-btn">
-					<?php esc_html_e( 'Local Self-Test', 'shopwalk-ai' ); ?>
+					<?php esc_html_e( 'Local Self-Test', 'woocommerce-ucp' ); ?>
 				</button>
 			</p>
 		</div>
@@ -146,16 +146,16 @@ final class Shopwalk_AI_Admin_Dashboard {
 	private function render_payments_tool(): void {
 		?>
 		<div class="sw-card">
-			<h2><?php esc_html_e( 'Payments', 'shopwalk-ai' ); ?></h2>
+			<h2><?php esc_html_e( 'Payments', 'woocommerce-ucp' ); ?></h2>
 			<p class="sw-muted">
-				<?php esc_html_e( 'UCP agents complete payment using whichever WooCommerce gateways you already have configured. The plugin never asks for its own payment keys.', 'shopwalk-ai' ); ?>
+				<?php esc_html_e( 'UCP agents complete payment using whichever WooCommerce gateways you already have configured. The plugin never asks for its own payment keys.', 'woocommerce-ucp' ); ?>
 			</p>
 			<div id="sw-payments-list" class="sw-muted">
-				<?php esc_html_e( 'Loading payment gateways…', 'shopwalk-ai' ); ?>
+				<?php esc_html_e( 'Loading payment gateways…', 'woocommerce-ucp' ); ?>
 			</div>
 			<p>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout' ) ); ?>" class="button">
-					<?php esc_html_e( 'Open WooCommerce → Payments', 'shopwalk-ai' ); ?>
+					<?php esc_html_e( 'Open WooCommerce → Payments', 'woocommerce-ucp' ); ?>
 				</a>
 			</p>
 		</div>
@@ -167,7 +167,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 	private function render_sync_tool( string $tier ): void {
 		?>
 		<div class="sw-card">
-			<h2><?php esc_html_e( 'Sync', 'shopwalk-ai' ); ?></h2>
+			<h2><?php esc_html_e( 'Sync', 'woocommerce-ucp' ); ?></h2>
 
 			<div id="sw-sync-info">
 				<p class="sw-muted">Loading sync status...</p>
@@ -175,7 +175,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 
 			<p>
 				<a href="https://shopwalk.com/partners/products" target="_blank" class="button button-primary">
-					<?php esc_html_e( 'Manage Sync in Partner Portal', 'shopwalk-ai' ); ?>
+					<?php esc_html_e( 'Manage Sync in Partner Portal', 'woocommerce-ucp' ); ?>
 				</a>
 			</p>
 		</div>
@@ -193,7 +193,7 @@ final class Shopwalk_AI_Admin_Dashboard {
 		?>
 		<div class="sw-card">
 			<h2>
-				<?php esc_html_e( 'License', 'shopwalk-ai' ); ?>
+				<?php esc_html_e( 'License', 'woocommerce-ucp' ); ?>
 				<?php if ( $tier === 'pro' ) : ?>
 					<span class="sw-badge sw-badge-pro">PRO</span>
 				<?php elseif ( $tier === 'free' ) : ?>
@@ -210,15 +210,15 @@ final class Shopwalk_AI_Admin_Dashboard {
 						other AI agents. 5% commission only on AI purchases made through Shopwalk.
 					</p>
 					<a href="<?php echo esc_url( SHOPWALK_SIGNUP_URL ); ?>" class="button button-primary" target="_blank" rel="noopener">
-						<?php esc_html_e( 'Sign up at shopwalk.com', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Sign up at shopwalk.com', 'woocommerce-ucp' ); ?>
 					</a>
 				</div>
 
-				<h3><?php esc_html_e( 'Already have a license?', 'shopwalk-ai' ); ?></h3>
+				<h3><?php esc_html_e( 'Already have a license?', 'woocommerce-ucp' ); ?></h3>
 				<p>
 					<input type="text" id="sw-license-input" class="regular-text" placeholder="sw_site_..." value="" />
 					<button type="button" class="button button-primary" id="sw-activate-btn">
-						<?php esc_html_e( 'Activate', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Activate', 'woocommerce-ucp' ); ?>
 					</button>
 				</p>
 				<p id="sw-activate-status"></p>
@@ -226,53 +226,53 @@ final class Shopwalk_AI_Admin_Dashboard {
 			<?php else : ?>
 				<table class="sw-details">
 					<tr>
-						<td><?php esc_html_e( 'License', 'shopwalk-ai' ); ?></td>
+						<td><?php esc_html_e( 'License', 'woocommerce-ucp' ); ?></td>
 						<td>
 							<code id="sw-license-display"><?php echo esc_html( $license_key ); ?></code>
 							<button type="button" class="button button-small" onclick="navigator.clipboard.writeText(document.getElementById('sw-license-display').textContent)">
-								<?php esc_html_e( 'Copy', 'shopwalk-ai' ); ?>
+								<?php esc_html_e( 'Copy', 'woocommerce-ucp' ); ?>
 							</button>
 						</td>
 					</tr>
-					<tr><td><?php esc_html_e( 'Partner ID', 'shopwalk-ai' ); ?></td><td><code><?php echo esc_html( $partner_id ); ?></code></td></tr>
-					<tr><td><?php esc_html_e( 'Plan', 'shopwalk-ai' ); ?></td><td><?php echo esc_html( $plan_label ); ?></td></tr>
-					<tr><td><?php esc_html_e( 'Status', 'shopwalk-ai' ); ?></td><td>✅ <?php esc_html_e( 'Active', 'shopwalk-ai' ); ?></td></tr>
-					<tr><td><?php esc_html_e( 'Domain', 'shopwalk-ai' ); ?></td><td><?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Partner ID', 'woocommerce-ucp' ); ?></td><td><code><?php echo esc_html( $partner_id ); ?></code></td></tr>
+					<tr><td><?php esc_html_e( 'Plan', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( $plan_label ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Status', 'woocommerce-ucp' ); ?></td><td>✅ <?php esc_html_e( 'Active', 'woocommerce-ucp' ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Domain', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></td></tr>
 					<?php if ( $tier === 'pro' && $next_bill ) : ?>
-						<tr><td><?php esc_html_e( 'Next billing', 'shopwalk-ai' ); ?></td><td><?php echo esc_html( $next_bill ); ?></td></tr>
+						<tr><td><?php esc_html_e( 'Next billing', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( $next_bill ); ?></td></tr>
 					<?php endif; ?>
 				</table>
 
 				<p>
 					<button type="button" class="button" id="sw-test-license-btn">
-						<?php esc_html_e( 'Test License', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Test License', 'woocommerce-ucp' ); ?>
 					</button>
 					<span class="sw-muted" id="sw-test-license-result"></span>
 				</p>
 
-				<h3><?php esc_html_e( 'Update License', 'shopwalk-ai' ); ?></h3>
+				<h3><?php esc_html_e( 'Update License', 'woocommerce-ucp' ); ?></h3>
 				<p>
 					<input type="text" id="sw-license-input" class="regular-text" placeholder="sw_site_..." value="" />
 					<button type="button" class="button" id="sw-activate-btn">
-						<?php esc_html_e( 'Update', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Update', 'woocommerce-ucp' ); ?>
 					</button>
 				</p>
 				<p id="sw-activate-status"></p>
 
 				<?php if ( $tier === 'free' ) : ?>
 					<div class="sw-upgrade-cta">
-						<p><strong><?php esc_html_e( 'Upgrade to Pro', 'shopwalk-ai' ); ?></strong></p>
-						<p class="sw-muted"><?php esc_html_e( 'Take control of how AI represents your brand:', 'shopwalk-ai' ); ?></p>
+						<p><strong><?php esc_html_e( 'Upgrade to Pro', 'woocommerce-ucp' ); ?></strong></p>
+						<p class="sw-muted"><?php esc_html_e( 'Take control of how AI represents your brand:', 'woocommerce-ucp' ); ?></p>
 						<ul style="margin:4px 0 12px 16px;font-size:13px;color:#6b7280;">
-							<li><?php esc_html_e( 'Analytics — see how AI agents find and recommend your products', 'shopwalk-ai' ); ?></li>
-							<li><?php esc_html_e( 'Brand Voice — control how AI describes your store and products', 'shopwalk-ai' ); ?></li>
-							<li><?php esc_html_e( 'Knowledge Base — teach AI about your shipping, returns, and policies', 'shopwalk-ai' ); ?></li>
-							<li><?php esc_html_e( 'Gap Analysis — discover what shoppers search for that you don\'t carry', 'shopwalk-ai' ); ?></li>
-							<li><?php esc_html_e( 'Priority Support — phone + email support', 'shopwalk-ai' ); ?></li>
+							<li><?php esc_html_e( 'Analytics — see how AI agents find and recommend your products', 'woocommerce-ucp' ); ?></li>
+							<li><?php esc_html_e( 'Brand Voice — control how AI describes your store and products', 'woocommerce-ucp' ); ?></li>
+							<li><?php esc_html_e( 'Knowledge Base — teach AI about your shipping, returns, and policies', 'woocommerce-ucp' ); ?></li>
+							<li><?php esc_html_e( 'Gap Analysis — discover what shoppers search for that you don\'t carry', 'woocommerce-ucp' ); ?></li>
+							<li><?php esc_html_e( 'Priority Support — phone + email support', 'woocommerce-ucp' ); ?></li>
 						</ul>
 						<p>
 							<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/upgrade' ); ?>" class="button button-primary" target="_blank" rel="noopener">
-								<?php esc_html_e( 'Upgrade to Pro →', 'shopwalk-ai' ); ?>
+								<?php esc_html_e( 'Upgrade to Pro →', 'woocommerce-ucp' ); ?>
 							</a>
 						</p>
 					</div>
@@ -280,10 +280,10 @@ final class Shopwalk_AI_Admin_Dashboard {
 
 				<p>
 					<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/dashboard' ); ?>" class="button" target="_blank" rel="noopener">
-						<?php esc_html_e( 'Open Partner Portal →', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Open Partner Portal →', 'woocommerce-ucp' ); ?>
 					</a>
 					<a href="#" id="sw-disconnect-btn" class="sw-disconnect-link">
-						<?php esc_html_e( 'Disconnect', 'shopwalk-ai' ); ?>
+						<?php esc_html_e( 'Disconnect', 'woocommerce-ucp' ); ?>
 					</a>
 				</p>
 			<?php endif; ?>
@@ -731,10 +731,10 @@ JS;
 		);
 
 		// 11. .htaccess REST API blocking (Apache only)
-		if ( function_exists( 'apache_get_modules' ) || stripos( $_SERVER['SERVER_SOFTWARE'] ?? '', 'apache' ) !== false ) {
+		if ( function_exists( 'apache_get_modules' ) || stripos( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ?? '' ) ), 'apache' ) !== false ) {
 			$htaccess = ABSPATH . '.htaccess';
 			if ( file_exists( $htaccess ) ) {
-				$content     = file_get_contents( $htaccess );
+				$content     = file_get_contents( $htaccess ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess for diagnostic check, no remote fetch.
 				$blocks_json = preg_match( '/RewriteRule.*wp-json.*\[F\]|Deny.*wp-json/i', $content );
 				$checks[]    = array(
 					'check'   => '.htaccess',
@@ -763,9 +763,9 @@ JS;
 	 * Detect the hosting provider from server environment.
 	 */
 	private function detect_hosting(): array {
-		$server_sw = $_SERVER['SERVER_SOFTWARE'] ?? '';
+		$server_sw = sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ?? '' ) );
 		$hostname  = gethostname() ?: '';
-		$server_ip = $_SERVER['SERVER_ADDR'] ?? '';
+		$server_ip = sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ?? '' ) );
 
 		// Check known hosting signatures
 		$hosts = array(
@@ -784,7 +784,7 @@ JS;
 			'a2hosting'   => array( 'name' => 'A2 Hosting',        'phone' => '1-888-546-8946', 'support' => 'a2hosting.com/support' ),
 		);
 
-		$search = strtolower( $server_sw . ' ' . $hostname . ' ' . $server_ip . ' ' . ( $_SERVER['DOCUMENT_ROOT'] ?? '' ) );
+		$search = strtolower( $server_sw . ' ' . $hostname . ' ' . $server_ip . ' ' . sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ?? '' ) ) );
 		foreach ( $hosts as $key => $info ) {
 			if ( strpos( $search, $key ) !== false ) {
 				return $info;
@@ -940,7 +940,7 @@ JS;
 			'https://api.shopwalk.com/api/v1/public/ucp/probe',
 			array(
 				'timeout' => 15,
-				'headers' => array( 'Content-Type' => 'application/json', 'User-Agent' => 'shopwalk-ai-plugin/' . SHOPWALK_AI_VERSION ),
+				'headers' => array( 'Content-Type' => 'application/json', 'User-Agent' => 'woocommerce-ucp-plugin/' . SHOPWALK_AI_VERSION ),
 				'body'    => wp_json_encode( array( 'store_url' => home_url() ) ),
 			)
 		);
@@ -959,7 +959,7 @@ JS;
 			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ), 403 );
 		}
 
-		$new_key = sanitize_text_field( $_POST['license_key'] ?? '' );
+		$new_key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
 		if ( ! $new_key ) {
 			wp_send_json_error( array( 'message' => 'License key is required.' ) );
 		}

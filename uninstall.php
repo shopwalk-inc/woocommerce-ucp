@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall Shopwalk AI — UCP Adapter.
+ * Uninstall WooCommerce UCP — Universal Commerce Protocol.
  *
  * Removes the plugin's local state cleanly:
  *  - All wp_ucp_* tables (oauth_clients, oauth_tokens, checkout_sessions,
@@ -11,7 +11,7 @@
  *  - The static /.well-known/ucp.php and oauth-authorization-server.php
  *    files written on activation
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 // Only run if WordPress triggered this uninstall.
@@ -30,7 +30,7 @@ $tables = array(
 );
 foreach ( $tables as $name ) {
 	$table = $wpdb->prefix . 'ucp_' . $name;
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.NoCaching
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 }
 
@@ -64,7 +64,8 @@ foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
 	}
 }
 $htaccess = $well_known_dir . '/.htaccess';
-if ( file_exists( $htaccess ) && false !== strpos( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) {
+// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess to check if managed by this plugin.
+if ( file_exists( $htaccess ) && ( false !== strpos( (string) file_get_contents( $htaccess ), 'woocommerce-ucp plugin' ) || false !== strpos( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) ) {
 	// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 	@unlink( $htaccess );
 }

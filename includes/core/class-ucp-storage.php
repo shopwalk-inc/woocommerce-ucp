@@ -12,7 +12,7 @@
  * Schema is created on plugin activation via dbDelta(). install() is
  * idempotent — safe to call repeatedly.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -148,7 +148,7 @@ final class UCP_Storage {
 		global $wpdb;
 		foreach ( array( 'webhook_queue', 'webhook_subscriptions', 'checkout_sessions', 'oauth_tokens', 'oauth_clients' ) as $name ) {
 			$table = self::table( $name );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 		}
 	}

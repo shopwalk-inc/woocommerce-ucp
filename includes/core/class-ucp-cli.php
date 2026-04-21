@@ -8,7 +8,7 @@
  *   wp shopwalk client delete <client_id>
  *   wp shopwalk client rotate-secret <client_id>
  *
- * @package ShopwalkAI
+ * @package WooCommerceUCP
  */
 
 if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
@@ -83,8 +83,12 @@ class UCP_CLI {
 		global $wpdb;
 		$table = UCP_Storage::table( 'oauth_clients' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$clients = $wpdb->get_results( "SELECT client_id, name, redirect_uris, scopes_allowed, created_at FROM {$table} ORDER BY created_at DESC", ARRAY_A );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$clients = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from UCP_Storage::table(), not user input.
+			"SELECT client_id, name, redirect_uris, scopes_allowed, created_at FROM {$table} ORDER BY created_at DESC",
+			ARRAY_A
+		);
 
 		if ( empty( $clients ) ) {
 			WP_CLI::line( 'No OAuth clients found.' );
@@ -131,7 +135,7 @@ class UCP_CLI {
 		}
 
 		$table = UCP_Storage::table( 'oauth_clients' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$deleted = $wpdb->delete( $table, array( 'client_id' => $client_id ) );
 
 		if ( ! $deleted ) {
@@ -140,7 +144,7 @@ class UCP_CLI {
 
 		// Also revoke all tokens for this client
 		$token_table = UCP_Storage::table( 'oauth_tokens' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( $wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"UPDATE {$token_table} SET revoked_at = %s WHERE client_id = %s AND revoked_at IS NULL",

@@ -5,7 +5,7 @@
  * Returns paginated product data for the Shopwalk sync pipeline.
  * This is the endpoint shopwalk-api calls to fetch products during sync.
  *
- * @package Shopwalk
+ * @package WooCommerceUCP
  */
 
 defined( 'ABSPATH' ) || exit;
