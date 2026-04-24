@@ -161,6 +161,16 @@ final class WooCommerce_UCP {
 		require_once $dir . 'class-dashboard.php';
 		require_once $dir . 'class-self-test.php';
 
+		// Shopwalk_Connect drives OAuth connect + Pro upgrade + hourly tier
+		// poll. Loaded in admin always (unlicensed users need the Connect
+		// button; licensed users need the upgrade button / cron).
+		$connect = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-connect.php';
+		if ( file_exists( $connect ) ) {
+			require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-license.php';
+			require_once $connect;
+			Shopwalk_Connect::init();
+		}
+
 		WooCommerce_UCP_Admin_Dashboard::instance();
 		WooCommerce_UCP_Admin_Self_Test::instance();
 	}
@@ -241,6 +251,7 @@ final class WooCommerce_UCP {
 		wp_clear_scheduled_hook( 'shopwalk_ucp_session_cleanup' );
 		wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
 		wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
+		wp_clear_scheduled_hook( 'shopwalk_status_poll' );
 		self::remove_well_known_files();
 	}
 

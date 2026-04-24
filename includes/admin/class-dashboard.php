@@ -63,9 +63,45 @@ final class WooCommerce_UCP_Admin_Dashboard {
 					'disconnect'      => wp_create_nonce( 'shopwalk_disconnect' ),
 					'sync_status'     => wp_create_nonce( 'shopwalk_sync_status' ),
 					'payments_status' => wp_create_nonce( 'shopwalk_payments_status' ),
+					'upgrade_url'     => wp_create_nonce( 'shopwalk_upgrade_url' ),
 				),
 			) ) . ';' . $this->admin_js()
 		);
+	}
+
+	/**
+	 * Surface the result of an OAuth callback. handle_oauth_callback redirects
+	 * back to the dashboard with ?sw_connect=(ok|declined|state_mismatch|exchange_failed)
+	 * after consuming the code.
+	 */
+	private function render_connect_notice(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only notice
+		$state = isset( $_GET['sw_connect'] ) ? sanitize_text_field( wp_unslash( $_GET['sw_connect'] ) ) : '';
+		if ( $state === '' ) {
+			return;
+		}
+		$reason = isset( $_GET['sw_reason'] ) ? sanitize_text_field( wp_unslash( $_GET['sw_reason'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$map = array(
+			'ok'              => array( 'notice-success', __( 'Connected to Shopwalk. Free tier active.', 'woocommerce-ucp' ) ),
+			'declined'        => array( 'notice-warning', __( 'Connection cancelled. No changes made.', 'woocommerce-ucp' ) ),
+			'state_mismatch'  => array( 'notice-error',   __( 'Connection failed: state mismatch. Please try again.', 'woocommerce-ucp' ) ),
+			'exchange_failed' => array( 'notice-error',   __( 'Connection failed while exchanging the code.', 'woocommerce-ucp' ) ),
+		);
+		if ( ! isset( $map[ $state ] ) ) {
+			return;
+		}
+		list( $class, $msg ) = $map[ $state ];
+		?>
+		<div class="notice <?php echo esc_attr( $class ); ?> is-dismissible">
+			<p><?php echo esc_html( $msg ); ?><?php
+			if ( $reason !== '' ) {
+				echo ' <code>' . esc_html( $reason ) . '</code>';
+			}
+			?></p>
+		</div>
+		<?php
 	}
 
 	// ── Tier detection ─────────────────────────────────────────────────────
@@ -102,6 +138,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			</h1>
 
 			<?php $this->render_styles(); ?>
+			<?php $this->render_connect_notice(); ?>
 			<div id="sw-status-banner"></div>
 			<?php $this->render_ucp_tool( $tier ); ?>
 			<?php $this->render_payments_tool(); ?>
@@ -209,15 +246,18 @@ final class WooCommerce_UCP_Admin_Dashboard {
 						to the AI commerce network — your products appear in search results across Claude, ChatGPT, and
 						other AI agents. 5% commission only on AI purchases made through Shopwalk.
 					</p>
-					<a href="<?php echo esc_url( SHOPWALK_SIGNUP_URL ); ?>" class="button button-primary" target="_blank" rel="noopener">
-						<?php esc_html_e( 'Sign up at shopwalk.com', 'woocommerce-ucp' ); ?>
+					<a href="<?php echo esc_url( Shopwalk_Connect::connect_url() ); ?>" class="button button-primary">
+						<?php esc_html_e( 'Connect to Shopwalk', 'woocommerce-ucp' ); ?>
 					</a>
+					<p class="sw-muted" style="margin:12px 0 0;font-size:12px;">
+						<?php esc_html_e( 'Opens shopwalk.com. After you approve, we mint a license bound to this domain.', 'woocommerce-ucp' ); ?>
+					</p>
 				</div>
 
 				<h3><?php esc_html_e( 'Already have a license?', 'woocommerce-ucp' ); ?></h3>
 				<p>
 					<input type="text" id="sw-license-input" class="regular-text" placeholder="sw_site_..." value="" />
-					<button type="button" class="button button-primary" id="sw-activate-btn">
+					<button type="button" class="button" id="sw-activate-btn">
 						<?php esc_html_e( 'Activate', 'woocommerce-ucp' ); ?>
 					</button>
 				</p>
@@ -271,9 +311,16 @@ final class WooCommerce_UCP_Admin_Dashboard {
 							<li><?php esc_html_e( 'Priority Support — phone + email support', 'woocommerce-ucp' ); ?></li>
 						</ul>
 						<p>
-							<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/upgrade' ); ?>" class="button button-primary" target="_blank" rel="noopener">
-								<?php esc_html_e( 'Upgrade to Pro →', 'woocommerce-ucp' ); ?>
-							</a>
+							<button type="button" class="button button-primary sw-upgrade-btn" data-plan="annual">
+								<?php esc_html_e( 'Upgrade to Pro — $278.40/yr', 'woocommerce-ucp' ); ?>
+							</button>
+							<button type="button" class="button sw-upgrade-btn" data-plan="monthly">
+								<?php esc_html_e( 'Monthly — $29/mo', 'woocommerce-ucp' ); ?>
+							</button>
+							<span class="sw-muted" id="sw-upgrade-status" style="margin-left:8px;"></span>
+						</p>
+						<p class="sw-muted" style="font-size:12px;margin:8px 0 0;">
+							<?php esc_html_e( '14-day free trial. Cancel any time before day 15 → no charge.', 'woocommerce-ucp' ); ?>
 						</p>
 					</div>
 				<?php endif; ?>
@@ -526,6 +573,25 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			});
 		});
 	}
+
+	// ── Upgrade to Pro ──────────────────────────────────────────────────
+	var upgradeStatus = $('sw-upgrade-status');
+	document.querySelectorAll('.sw-upgrade-btn').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			var plan = btn.getAttribute('data-plan') || 'annual';
+			if (upgradeStatus) upgradeStatus.textContent = 'Opening Stripe…';
+			document.querySelectorAll('.sw-upgrade-btn').forEach(function (b) { b.disabled = true; });
+			postAjax('shopwalk_upgrade_url', { nonce: s.nonces.upgrade_url, plan: plan }).then(function (resp) {
+				if (resp && resp.success && resp.data && resp.data.url) {
+					window.location.href = resp.data.url;
+					return;
+				}
+				document.querySelectorAll('.sw-upgrade-btn').forEach(function (b) { b.disabled = false; });
+				if (upgradeStatus) upgradeStatus.textContent = 'Could not start upgrade. ' +
+					((resp && resp.data && resp.data.message) ? '(' + resp.data.message + ')' : '');
+			});
+		});
+	});
 
 	// ── Disconnect ──────────────────────────────────────────────────────
 	var disconnectBtn = $('sw-disconnect-btn');
