@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset name="Shopwalk UCP">
+	<description>WordPress Coding Standards for WooCommerce UCP</description>
+	<rule ref="WordPress"/>
+	<config name="minimum_supported_wp_version" value="6.0"/>
+	<config name="testVersion" value="8.0-"/>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="woocommerce-ucp"/>
+			</property>
+		</properties>
+	</rule>
+	<file>.</file>
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>assets/*</exclude-pattern>
+	<exclude-pattern>languages/*</exclude-pattern>
+</ruleset>

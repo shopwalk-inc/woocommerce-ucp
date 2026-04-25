@@ -1,0 +1,1 @@
+# Language files\n\nGenerate with: `wp i18n make-pot . languages/woocommerce-ucp.pot`

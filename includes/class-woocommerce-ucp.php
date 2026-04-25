@@ -208,13 +208,13 @@ final class WooCommerce_UCP {
 			wp_schedule_event( time() + 600, 'hourly', 'shopwalk_ucp_session_cleanup' );
 		}
 		if ( ! wp_next_scheduled( 'shopwalk_ucp_webhook_flush' ) ) {
-			wp_schedule_event( time() + 60, 'shopwalk_ai_minute', 'shopwalk_ucp_webhook_flush' );
+			wp_schedule_event( time() + 60, 'shopwalk_ucp_minute', 'shopwalk_ucp_webhook_flush' );
 		}
 
 		// Tier 2: keep the legacy queue cron registered too — only fires
 		// when the Shopwalk module is loaded (no-op otherwise).
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) ) {
-			wp_schedule_event( time() + 300, 'shopwalk_ai_five_minutes', 'shopwalk_flush_queue' );
+			wp_schedule_event( time() + 300, 'shopwalk_ucp_five_minutes', 'shopwalk_flush_queue' );
 		}
 
 		// Write static /.well-known/ucp.php for reliable discovery on
@@ -356,11 +356,11 @@ HTACCESS;
 add_filter(
 	'cron_schedules',
 	static function ( array $schedules ): array {
-		$schedules['shopwalk_ai_minute'] = array(
+		$schedules['shopwalk_ucp_minute'] = array(
 			'interval' => 60,
 			'display'  => esc_html__( 'Every Minute (WooCommerce UCP)', 'woocommerce-ucp' ),
 		);
-		$schedules['shopwalk_ai_five_minutes'] = array(
+		$schedules['shopwalk_ucp_five_minutes'] = array(
 			'interval' => 300,
 			'display'  => esc_html__( 'Every 5 Minutes (WooCommerce UCP)', 'woocommerce-ucp' ),
 		);
