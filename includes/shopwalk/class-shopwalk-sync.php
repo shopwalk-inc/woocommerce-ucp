@@ -95,8 +95,11 @@ final class Shopwalk_Sync {
 
 		// Immediately flush the queue instead of waiting for the 5-minute cron.
 		// This makes "Sync Now" feel instant from the partner portal.
-		while ( count( (array) get_option( self::QUEUE_OPTION, array() ) ) > 0 ) {
+		// Re-read after each flush — the queue shrinks as items go through.
+		$queue = (array) get_option( self::QUEUE_OPTION, array() );
+		while ( ! empty( $queue ) ) {
 			$this->flush();
+			$queue = (array) get_option( self::QUEUE_OPTION, array() );
 		}
 
 		if ( function_exists( 'wc_get_logger' ) ) {
@@ -120,7 +123,12 @@ final class Shopwalk_Sync {
 		if ( get_post_type( $post_id ) !== 'product' ) {
 			return;
 		}
-		$this->push_to_queue( array( 'op' => 'upsert', 'product_id' => $post_id ) );
+		$this->push_to_queue(
+			array(
+				'op'         => 'upsert',
+				'product_id' => $post_id,
+			)
+		);
 	}
 
 	/**
@@ -133,7 +141,12 @@ final class Shopwalk_Sync {
 		if ( get_post_type( $post_id ) !== 'product' ) {
 			return;
 		}
-		$this->push_to_queue( array( 'op' => 'delete', 'product_id' => $post_id ) );
+		$this->push_to_queue(
+			array(
+				'op'         => 'delete',
+				'product_id' => $post_id,
+			)
+		);
 	}
 
 	/**
@@ -146,7 +159,12 @@ final class Shopwalk_Sync {
 		if ( get_post_type( $post_id ) !== 'product' ) {
 			return;
 		}
-		$this->push_to_queue( array( 'op' => 'delete', 'product_id' => $post_id ) );
+		$this->push_to_queue(
+			array(
+				'op'         => 'delete',
+				'product_id' => $post_id,
+			)
+		);
 	}
 
 	/**
@@ -157,7 +175,7 @@ final class Shopwalk_Sync {
 	 * @return void
 	 */
 	private function push_to_queue( array $event ): void {
-		$queue = (array) get_option( self::QUEUE_OPTION, array() );
+		$queue   = (array) get_option( self::QUEUE_OPTION, array() );
 		$queue[] = $event;
 		update_option( self::QUEUE_OPTION, $queue, false );
 	}
@@ -186,8 +204,11 @@ final class Shopwalk_Sync {
 				continue;
 			}
 			$op = (string) ( $event['op'] ?? 'upsert' );
-			if ( $op === 'delete' ) {
-				$products[] = array( 'external_id' => (string) $pid, 'op' => 'delete' );
+			if ( 'delete' === $op ) {
+				$products[] = array(
+					'external_id' => (string) $pid,
+					'op'          => 'delete',
+				);
 				continue;
 			}
 			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $pid ) : null;
@@ -195,24 +216,32 @@ final class Shopwalk_Sync {
 				continue;
 			}
 			// Build images array
-			$images = array();
+			$images   = array();
 			$image_id = $product->get_image_id();
 			if ( $image_id ) {
 				$url = wp_get_attachment_url( $image_id );
 				if ( $url ) {
-					$images[] = array( 'url' => $url, 'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: '', 'position' => 0 );
+					$images[] = array(
+						'url'      => $url,
+						'alt'      => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: '',
+						'position' => 0,
+					);
 				}
 			}
 			foreach ( $product->get_gallery_image_ids() as $pos => $gid ) {
 				$url = wp_get_attachment_url( $gid );
 				if ( $url ) {
-					$images[] = array( 'url' => $url, 'alt' => '', 'position' => $pos + 1 );
+					$images[] = array(
+						'url'      => $url,
+						'alt'      => '',
+						'position' => $pos + 1,
+					);
 				}
 			}
 
 			// Build categories array
 			$categories = array();
-			$terms = get_the_terms( $pid, 'product_cat' );
+			$terms      = get_the_terms( $pid, 'product_cat' );
 			if ( $terms && ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
 					$categories[] = $term->name;
@@ -220,19 +249,19 @@ final class Shopwalk_Sync {
 			}
 
 			$products[] = array(
-				'external_id'      => (string) $pid,
-				'name'             => (string) $product->get_name(),
-				'description'      => (string) $product->get_description(),
+				'external_id'       => (string) $pid,
+				'name'              => (string) $product->get_name(),
+				'description'       => (string) $product->get_description(),
 				'short_description' => (string) $product->get_short_description(),
-				'sku'              => (string) $product->get_sku(),
-				'price'            => (float) $product->get_price(),
-				'compare_at_price' => (float) $product->get_regular_price(),
-				'currency'         => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD',
-				'in_stock'         => (bool) $product->is_in_stock(),
-				'source_url'       => (string) get_permalink( $pid ),
-				'categories'       => $categories,
-				'images'           => $images,
-				'op'               => 'upsert',
+				'sku'               => (string) $product->get_sku(),
+				'price'             => (float) $product->get_price(),
+				'compare_at_price'  => (float) $product->get_regular_price(),
+				'currency'          => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD',
+				'in_stock'          => (bool) $product->is_in_stock(),
+				'source_url'        => (string) get_permalink( $pid ),
+				'categories'        => $categories,
+				'images'            => $images,
+				'op'                => 'upsert',
 			);
 		}
 		if ( count( $products ) === 0 ) {
@@ -272,7 +301,7 @@ final class Shopwalk_Sync {
 	 */
 	public function full_sync(): int {
 		$this->current_sync_type = 'full';
-		$pids  = get_posts(
+		$pids                    = get_posts(
 			array(
 				'post_type'      => 'product',
 				'post_status'    => 'publish',
@@ -285,7 +314,10 @@ final class Shopwalk_Sync {
 		// to prevent unbounded growth between flush cycles.
 		$queue = array();
 		foreach ( (array) $pids as $pid ) {
-			$queue[] = array( 'op' => 'upsert', 'product_id' => (int) $pid );
+			$queue[] = array(
+				'op'         => 'upsert',
+				'product_id' => (int) $pid,
+			);
 		}
 		update_option( self::QUEUE_OPTION, $queue, false );
 		return count( (array) $pids );

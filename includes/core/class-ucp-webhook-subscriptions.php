@@ -82,7 +82,7 @@ final class UCP_Webhook_Subscriptions {
 		$callback_url = (string) ( $body['callback_url'] ?? '' );
 		$event_types  = (array) ( $body['event_types'] ?? array() );
 
-		if ( $callback_url === '' || ! filter_var( $callback_url, FILTER_VALIDATE_URL ) ) {
+		if ( '' === $callback_url || ! filter_var( $callback_url, FILTER_VALIDATE_URL ) ) {
 			return UCP_Response::error( 'invalid_request', 'callback_url is required and must be a valid URL', 'recoverable', 400 );
 		}
 		$event_types = array_values( array_intersect( $event_types, self::ALLOWED_EVENTS ) );
@@ -171,7 +171,15 @@ final class UCP_Webhook_Subscriptions {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( UCP_Storage::table( 'webhook_subscriptions' ), array( 'id' => $id ) );
-		return new WP_REST_Response( UCP_Response::ok( array( 'deleted' => true, 'id' => $id ) ), 200 );
+		return new WP_REST_Response(
+			UCP_Response::ok(
+				array(
+					'deleted' => true,
+					'id'      => $id,
+				)
+			),
+			200
+		);
 	}
 
 	// ── Internal helpers ─────────────────────────────────────────────────
@@ -194,7 +202,7 @@ final class UCP_Webhook_Subscriptions {
 			),
 			ARRAY_A
 		);
-		return $row ?: null;
+		return $row ? $row : null;
 	}
 
 	/**

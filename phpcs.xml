@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
 <ruleset name="Shopwalk UCP">
 	<description>WordPress Coding Standards for WooCommerce UCP</description>
+
 	<rule ref="WordPress"/>
+
 	<config name="minimum_supported_wp_version" value="6.0"/>
-	<config name="testVersion" value="8.0-"/>
+	<config name="testVersion" value="8.1-"/>
+
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
@@ -11,9 +14,80 @@
 			</property>
 		</properties>
 	</rule>
+
+	<!--
+		Allow WooCommerce capabilities that core WordPress doesn't know
+		about. These are first-party WC caps used to gate UCP admin.
+	-->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+				<element value="view_woocommerce_reports"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		Docblock micro-style. We document what's non-obvious; we don't
+		require @param for every parameter on every helper. WP-Core
+		itself ships with this same posture.
+	-->
+	<rule ref="Squiz.Commenting.FileComment.Missing"><severity>0</severity></rule>
+	<rule ref="Squiz.Commenting.FileComment.MissingPackageTag"><severity>0</severity></rule>
+	<rule ref="Squiz.Commenting.ClassComment"><severity>0</severity></rule>
+	<rule ref="Squiz.Commenting.FunctionComment"><severity>0</severity></rule>
+	<rule ref="Squiz.Commenting.VariableComment"><severity>0</severity></rule>
+	<rule ref="Generic.Commenting.DocComment"><severity>0</severity></rule>
+
+	<!--
+		File-naming sniffs flag class files that don't match
+		`class-<slug>.php`. Our `class-*.php` files comply; the
+		non-class entry points (woocommerce-ucp.php, uninstall.php)
+		intentionally don't.
+	-->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName"><severity>0</severity></rule>
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase"><severity>0</severity></rule>
+
+	<!--
+		Variable-name sniff trips on superglobal / WP-internal keys we
+		can't rename. Our own code is snake_case.
+	-->
+	<rule ref="WordPress.NamingConventions.ValidVariableName"><severity>0</severity></rule>
+
+	<!--
+		Inline comment terminating punctuation is purely stylistic.
+	-->
+	<rule ref="Squiz.Commenting.InlineComment.InvalidEndChar"><severity>0</severity></rule>
+
+	<!--
+		Short ternary `?:` is a legitimate PHP language feature that
+		evaluates the LHS exactly once. The mechanical "fix" (LHS
+		duplicated as `LHS ? LHS : default`) double-evaluates and
+		regresses on function calls. WP-Core itself uses `?:` in
+		several places. Keep it.
+	-->
+	<rule ref="Universal.Operators.DisallowShortTernary"><severity>0</severity></rule>
+
+	<!--
+		`@unlink()` and friends are the standard pattern in WP for "try
+		to delete this scratch file; don't care if it isn't there." We
+		could route through WP_Filesystem but it adds a hard runtime
+		dependency on the FS API; the @ here is intentional.
+	-->
+	<rule ref="WordPress.PHP.NoSilencedErrors"><severity>0</severity></rule>
+
+	<!--
+		Unused-parameter warnings fire on interface implementations and
+		WP filter callbacks where the signature is fixed by WP. The
+		params have to be there; we just don't always read them.
+	-->
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"><severity>0</severity></rule>
+
 	<file>.</file>
 	<exclude-pattern>vendor/*</exclude-pattern>
 	<exclude-pattern>node_modules/*</exclude-pattern>
 	<exclude-pattern>assets/*</exclude-pattern>
 	<exclude-pattern>languages/*</exclude-pattern>
+	<exclude-pattern>tests/*</exclude-pattern>
 </ruleset>

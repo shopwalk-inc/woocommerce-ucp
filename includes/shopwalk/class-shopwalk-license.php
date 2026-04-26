@@ -35,7 +35,7 @@ final class Shopwalk_License {
 	 */
 	public static function is_valid(): bool {
 		$key = (string) get_option( self::OPTION_KEY, '' );
-		return $key !== '' && (
+		return '' !== $key && (
 			str_starts_with( $key, 'sw_lic_' ) ||
 			str_starts_with( $key, 'sw_site_' )
 		);
@@ -73,9 +73,9 @@ final class Shopwalk_License {
 			array(
 				'timeout' => 15,
 				'headers' => array(
-					'Content-Type'    => 'application/json',
+					'Content-Type'     => 'application/json',
 					'X-SW-License-Key' => $license_key,
-					'User-Agent'      => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 				'body'    => wp_json_encode(
 					array(
@@ -86,22 +86,32 @@ final class Shopwalk_License {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return array( 'ok' => false, 'message' => $response->get_error_message() );
+			return array(
+				'ok'      => false,
+				'message' => $response->get_error_message(),
+			);
 		}
 		$status = (int) wp_remote_retrieve_response_code( $response );
 		if ( $status >= 300 ) {
-			return array( 'ok' => false, 'message' => 'Shopwalk API returned HTTP ' . $status );
+			return array(
+				'ok'      => false,
+				'message' => 'Shopwalk API returned HTTP ' . $status,
+			);
 		}
 		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		$pid  = (string) ( $body['partner_id'] ?? '' );
 
 		update_option( self::OPTION_KEY, $license_key, false );
-		if ( $pid !== '' ) {
+		if ( '' !== $pid ) {
 			update_option( self::OPTION_PARTNER_ID, $pid, false );
 		}
 		do_action( 'shopwalk_license_activated', $license_key, $pid );
 
-		return array( 'ok' => true, 'message' => 'Activated', 'partner_id' => $pid );
+		return array(
+			'ok'         => true,
+			'message'    => 'Activated',
+			'partner_id' => $pid,
+		);
 	}
 
 	/**
@@ -112,13 +122,13 @@ final class Shopwalk_License {
 	 */
 	public static function deactivate(): void {
 		$key = self::key();
-		if ( $key !== '' ) {
+		if ( '' !== $key ) {
 			wp_remote_post(
 				SHOPWALK_API_BASE . '/plugin/deactivate',
 				array(
 					'timeout' => 5,
 					'headers' => array(
-						'Content-Type'    => 'application/json',
+						'Content-Type'     => 'application/json',
 						'X-SW-License-Key' => $key,
 					),
 					'body'    => wp_json_encode( array( 'site_url' => home_url() ) ),

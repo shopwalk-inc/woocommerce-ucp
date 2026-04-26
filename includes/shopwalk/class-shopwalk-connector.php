@@ -57,7 +57,7 @@ final class Shopwalk_Connector {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'woocommerce-ucp' ) ), 403 );
 		}
 		$key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
-		if ( $key === '' ) {
+		if ( '' === $key ) {
 			wp_send_json_error( array( 'message' => __( 'License key is required.', 'woocommerce-ucp' ) ), 400 );
 		}
 		$result = Shopwalk_License::activate( $key );
@@ -116,7 +116,7 @@ final class Shopwalk_Connector {
 			$remaining = self::SYNC_COOLDOWN - ( $now - $last );
 			wp_send_json_error(
 				array(
-					'message'         => sprintf(
+					'message'            => sprintf(
 						/* translators: %d: seconds remaining */
 						__( 'Please wait %d seconds before syncing again.', 'woocommerce-ucp' ),
 						$remaining
@@ -129,32 +129,43 @@ final class Shopwalk_Connector {
 		}
 
 		// Mark sync as in progress.
-		update_option( self::SYNC_STATE_OPTION, array(
-			'status'       => 'syncing',
-			'last_sync_at' => $now,
-			'started_at'   => $now,
-		), false );
+		update_option(
+			self::SYNC_STATE_OPTION,
+			array(
+				'status'       => 'syncing',
+				'last_sync_at' => $now,
+				'started_at'   => $now,
+			),
+			false
+		);
 
 		$sync   = Shopwalk_Sync::instance();
 		$queued = $sync->full_sync();
 
 		// Flush immediately — don't wait for WP-Cron.
+		// Re-read after each flush — the queue shrinks as items go through.
 		$batches = 0;
-		while ( count( (array) get_option( 'shopwalk_sync_queue', array() ) ) > 0 ) {
+		$queue   = (array) get_option( 'shopwalk_sync_queue', array() );
+		while ( ! empty( $queue ) ) {
 			$sync->flush();
-			$batches++;
+			++$batches;
+			$queue = (array) get_option( 'shopwalk_sync_queue', array() );
 		}
 
 		$completed = time();
 
 		// Update sync state.
-		update_option( self::SYNC_STATE_OPTION, array(
-			'status'       => 'complete',
-			'last_sync_at' => $now,
-			'products'     => $queued,
-			'batches'      => $batches,
-			'completed_at' => $completed,
-		), false );
+		update_option(
+			self::SYNC_STATE_OPTION,
+			array(
+				'status'       => 'complete',
+				'last_sync_at' => $now,
+				'products'     => $queued,
+				'batches'      => $batches,
+				'completed_at' => $completed,
+			),
+			false
+		);
 
 		// Append to sync history (keep last 10).
 		$history   = (array) get_option( 'shopwalk_sync_history', array() );
@@ -173,7 +184,7 @@ final class Shopwalk_Connector {
 			array(
 				'message' => sprintf(
 					/* translators: %d: number of products synced */
-					__( '%d products synced in %d batches.', 'woocommerce-ucp' ),
+					__( '%1$d products synced in %2$d batches.', 'woocommerce-ucp' ),
 					$queued,
 					$batches
 				),

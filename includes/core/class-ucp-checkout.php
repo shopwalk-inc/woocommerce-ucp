@@ -130,19 +130,19 @@ final class UCP_Checkout {
 		$wpdb->insert(
 			UCP_Storage::table( 'checkout_sessions' ),
 			array(
-				'id'         => $id,
-				'client_id'  => $client_id,
-				'user_id'    => $user_id ?: null,
-				'status'     => 'incomplete',
-				'line_items' => wp_json_encode( $line_items ),
-				'buyer'      => wp_json_encode( $body['buyer'] ?? null ),
-				'fulfillment'=> wp_json_encode( $body['fulfillment'] ?? null ),
-				'payment'    => wp_json_encode( $body['payment'] ?? null ),
-				'totals'     => wp_json_encode( $totals ),
-				'messages'   => wp_json_encode( array() ),
-				'created_at' => $now,
-				'updated_at' => $now,
-				'expires_at' => $expires,
+				'id'          => $id,
+				'client_id'   => $client_id,
+				'user_id'     => $user_id ? $user_id : null,
+				'status'      => 'incomplete',
+				'line_items'  => wp_json_encode( $line_items ),
+				'buyer'       => wp_json_encode( $body['buyer'] ?? null ),
+				'fulfillment' => wp_json_encode( $body['fulfillment'] ?? null ),
+				'payment'     => wp_json_encode( $body['payment'] ?? null ),
+				'totals'      => wp_json_encode( $totals ),
+				'messages'    => wp_json_encode( array() ),
+				'created_at'  => $now,
+				'updated_at'  => $now,
+				'expires_at'  => $expires,
 			)
 		);
 
@@ -150,7 +150,14 @@ final class UCP_Checkout {
 
 		// Cache for idempotency if key was provided.
 		if ( ! empty( $idempotency_key ) ) {
-			set_transient( $cache_key, array( 'body' => $response_body, 'status' => 201 ), DAY_IN_SECONDS );
+			set_transient(
+				$cache_key,
+				array(
+					'body'   => $response_body,
+					'status' => 201,
+				),
+				DAY_IN_SECONDS
+			);
 		}
 
 		return new WP_REST_Response( $response_body, 201 );
@@ -187,7 +194,7 @@ final class UCP_Checkout {
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
 		}
-		if ( $row['status'] !== 'incomplete' && $row['status'] !== 'ready_for_complete' ) {
+		if ( 'incomplete' !== $row['status'] && 'ready_for_complete' !== $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Session cannot be updated in its current status', 'recoverable', 409 );
 		}
 
@@ -235,7 +242,7 @@ final class UCP_Checkout {
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
 		}
-		if ( $row['status'] !== 'ready_for_complete' ) {
+		if ( 'ready_for_complete' !== $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Session is not ready_for_complete', 'recoverable', 409 );
 		}
 
@@ -246,7 +253,10 @@ final class UCP_Checkout {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				UCP_Storage::table( 'checkout_sessions' ),
-				array( 'status' => 'requires_escalation', 'updated_at' => current_time( 'mysql', true ) ),
+				array(
+					'status'     => 'requires_escalation',
+					'updated_at' => current_time( 'mysql', true ),
+				),
 				array( 'id' => $id )
 			);
 			return $order;
@@ -281,14 +291,17 @@ final class UCP_Checkout {
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
 		}
-		if ( $row['status'] === 'completed' ) {
+		if ( 'completed' === $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Cannot cancel a completed session', 'recoverable', 409 );
 		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			UCP_Storage::table( 'checkout_sessions' ),
-			array( 'status' => 'canceled', 'updated_at' => current_time( 'mysql', true ) ),
+			array(
+				'status'     => 'canceled',
+				'updated_at' => current_time( 'mysql', true ),
+			),
 			array( 'id' => $id )
 		);
 		return new WP_REST_Response( self::session_to_object( $id ), 200 );
@@ -314,7 +327,7 @@ final class UCP_Checkout {
 			),
 			ARRAY_A
 		);
-		return $row ?: null;
+		return $row ? $row : null;
 	}
 
 	/**
@@ -360,7 +373,7 @@ final class UCP_Checkout {
 			$order = wc_get_order( $wc_order_id );
 			if ( $order ) {
 				foreach ( array_values( $order->get_items() ) as $idx => $wc_item ) {
-					$li = UCP_Response::build_line_item( $wc_item, $idx );
+					$li              = UCP_Response::build_line_item( $wc_item, $idx );
 					$line_items[]    = $li;
 					$line_item_ids[] = $li['id'];
 				}
@@ -411,12 +424,12 @@ final class UCP_Checkout {
 			$fulfillment  = array(
 				'methods' => array(
 					array(
-						'id'                       => 'fm_1',
-						'type'                     => 'shipping',
-						'line_item_ids'            => $line_item_ids,
-						'selected_destination_id'  => 'dest_1',
-						'destinations'             => array( UCP_Response::to_destination( $address_data ) ),
-						'groups'                   => array(),
+						'id'                      => 'fm_1',
+						'type'                    => 'shipping',
+						'line_item_ids'           => $line_item_ids,
+						'selected_destination_id' => 'dest_1',
+						'destinations'            => array( UCP_Response::to_destination( $address_data ) ),
+						'groups'                  => array(),
 					),
 				),
 			);
@@ -441,8 +454,8 @@ final class UCP_Checkout {
 
 		// On completed sessions, include order reference + payment URL so the
 		// agent can hand control to the buyer for native-checkout payment.
-		if ( $row['status'] === 'completed' && $wc_order_id ) {
-			$order        = $order ?? ( function_exists( 'wc_get_order' ) ? wc_get_order( $wc_order_id ) : null );
+		if ( 'completed' === $row['status'] && $wc_order_id ) {
+			$order         = $order ?? ( function_exists( 'wc_get_order' ) ? wc_get_order( $wc_order_id ) : null );
 			$data['order'] = array(
 				'id'            => strval( $wc_order_id ),
 				'permalink_url' => $order ? $order->get_view_order_url() : '',
@@ -576,7 +589,7 @@ final class UCP_Checkout {
 				// `stripe_requires_action` and similar soft failures are
 				// recoverable via the payment_url handoff — keep the order
 				// in pending so the buyer can complete 3DS on native checkout.
-				if ( $code === 'stripe_requires_action' ) {
+				if ( 'stripe_requires_action' === $code ) {
 					$order->update_status( 'pending', 'UCP payment deferred to buyer (3DS required): ' . $result->get_error_message() );
 					return $order;
 				}

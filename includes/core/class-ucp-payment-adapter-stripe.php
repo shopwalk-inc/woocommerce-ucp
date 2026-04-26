@@ -40,7 +40,7 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 	 * {@inheritdoc}
 	 */
 	public function is_ready(): bool {
-		return $this->secret_key() !== '';
+		return '' !== $this->secret_key();
 	}
 
 	/**
@@ -51,13 +51,13 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 		$testmode = ( $settings['testmode'] ?? 'no' ) === 'yes';
 
 		return array(
-			'gateway'       => 'stripe',
-			'credential'    => 'payment_method_id',
-			'tokenize_from' => 'https://js.stripe.com/v3/',
+			'gateway'         => 'stripe',
+			'credential'      => 'payment_method_id',
+			'tokenize_from'   => 'https://js.stripe.com/v3/',
 			'publishable_key' => $testmode
 				? (string) ( $settings['test_publishable_key'] ?? '' )
 				: (string) ( $settings['publishable_key'] ?? '' ),
-			'mode'          => $testmode ? 'test' : 'live',
+			'mode'            => $testmode ? 'test' : 'live',
 		);
 	}
 
@@ -66,7 +66,7 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 	 */
 	public function authorize( $order, array $payment ) {
 		$secret_key = $this->secret_key();
-		if ( $secret_key === '' ) {
+		if ( '' === $secret_key ) {
 			return new WP_Error(
 				'stripe_not_configured',
 				'WooCommerce Stripe Gateway is not installed or has no secret key configured.',
@@ -80,7 +80,7 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 				?? $payment['credential']['payment_method_id']
 				?? ''
 		);
-		if ( $pm_id === '' ) {
+		if ( '' === $pm_id ) {
 			return new WP_Error(
 				'missing_payment_method',
 				'payment.payment_method_id (a Stripe PaymentMethod id like "pm_…") is required for the stripe gateway.',
@@ -103,7 +103,7 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 		);
 
 		$customer_id = (string) ( $payment['customer_id'] ?? $payment['stripe_customer_id'] ?? '' );
-		if ( $customer_id !== '' ) {
+		if ( '' !== $customer_id ) {
 			$body['customer'] = $customer_id;
 		}
 
@@ -138,7 +138,7 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 			);
 		}
 
-		if ( $result['status'] !== 'requires_capture' && $result['status'] !== 'succeeded' ) {
+		if ( 'requires_capture' !== $result['status'] && 'succeeded' !== $result['status'] ) {
 			// 3DS / off-session step required — not supported in fully-automated
 			// agent flows without the buyer present. Surface cleanly so the
 			// agent can fall back to a payment_url handoff if needed.
@@ -146,9 +146,9 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 				'stripe_requires_action',
 				'Payment requires additional buyer action (3D Secure). Resubmit with an already-confirmed PaymentMethod or hand the buyer order.payment_url.',
 				array(
-					'status'                => 402,
-					'payment_intent_id'     => (string) $result['id'],
-					'next_action'           => $result['next_action'] ?? null,
+					'status'            => 402,
+					'payment_intent_id' => (string) $result['id'],
+					'next_action'       => $result['next_action'] ?? null,
 				)
 			);
 		}

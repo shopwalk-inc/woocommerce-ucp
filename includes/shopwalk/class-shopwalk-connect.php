@@ -16,12 +16,12 @@ defined( 'ABSPATH' ) || exit;
 
 final class Shopwalk_Connect {
 
-	private const STATE_TRANSIENT   = 'shopwalk_oauth_state';
-	private const STATE_TTL         = 10 * MINUTE_IN_SECONDS;
-	private const CRON_HOOK         = 'shopwalk_status_poll';
-	private const OPTION_PLAN       = 'shopwalk_plan';
-	private const OPTION_STATUS     = 'shopwalk_subscription_status';
-	private const OPTION_LAST_POLL  = 'shopwalk_last_status_poll';
+	private const STATE_TRANSIENT  = 'shopwalk_oauth_state';
+	private const STATE_TTL        = 10 * MINUTE_IN_SECONDS;
+	private const CRON_HOOK        = 'shopwalk_status_poll';
+	private const OPTION_PLAN      = 'shopwalk_plan';
+	private const OPTION_STATUS    = 'shopwalk_subscription_status';
+	private const OPTION_LAST_POLL = 'shopwalk_last_status_poll';
 
 	public static function init(): void {
 		// OAuth callback — merchant lands back here from shopwalk.com with ?code&state.
@@ -75,13 +75,15 @@ final class Shopwalk_Connect {
 			return;
 		}
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- state nonce is the CSRF guard here.
-		if ( ( $_GET['page'] ?? '' ) !== 'woocommerce-ucp' ) {
+		$page   = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
+		if ( 'woocommerce-ucp' !== $page ) {
 			return;
 		}
-		if ( ( $_GET['action'] ?? '' ) !== 'oauth-callback' ) {
+		if ( 'oauth-callback' !== $action ) {
 			return;
 		}
-		$code  = isset( $_GET['code'] )  ? sanitize_text_field( wp_unslash( $_GET['code'] ) )  : '';
+		$code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		$error = isset( $_GET['error'] ) ? sanitize_text_field( wp_unslash( $_GET['error'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
@@ -94,21 +96,26 @@ final class Shopwalk_Connect {
 			admin_url( 'admin.php' )
 		);
 
-		if ( $error !== '' ) {
+		if ( '' !== $error ) {
 			wp_safe_redirect( add_query_arg( 'sw_connect', 'declined', $redirect ) );
 			exit;
 		}
-		if ( $code === '' || $state === '' || ! hash_equals( $expected, $state ) ) {
+		if ( '' === $code || '' === $state || ! hash_equals( $expected, $state ) ) {
 			wp_safe_redirect( add_query_arg( 'sw_connect', 'state_mismatch', $redirect ) );
 			exit;
 		}
 
 		$result = self::exchange_code( $code );
 		if ( ! $result['ok'] ) {
-			wp_safe_redirect( add_query_arg(
-				array( 'sw_connect' => 'exchange_failed', 'sw_reason' => rawurlencode( $result['message'] ) ),
-				$redirect
-			) );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'sw_connect' => 'exchange_failed',
+						'sw_reason'  => rawurlencode( $result['message'] ),
+					),
+					$redirect
+				)
+			);
 			exit;
 		}
 
@@ -134,24 +141,35 @@ final class Shopwalk_Connect {
 					'Content-Type' => 'application/json',
 					'User-Agent'   => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
-				'body'    => wp_json_encode( array(
-					'code'     => $code,
-					'site_url' => home_url(),
-				) ),
+				'body'    => wp_json_encode(
+					array(
+						'code'     => $code,
+						'site_url' => home_url(),
+					)
+				),
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return array( 'ok' => false, 'message' => $response->get_error_message() );
+			return array(
+				'ok'      => false,
+				'message' => $response->get_error_message(),
+			);
 		}
 		$status = (int) wp_remote_retrieve_response_code( $response );
 		if ( $status >= 300 ) {
-			return array( 'ok' => false, 'message' => 'api_http_' . $status );
+			return array(
+				'ok'      => false,
+				'message' => 'api_http_' . $status,
+			);
 		}
 		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		$key  = (string) ( $body['license_key'] ?? '' );
 		$tier = (string) ( $body['tier'] ?? 'free' );
-		if ( $key === '' ) {
-			return array( 'ok' => false, 'message' => 'missing_license_key' );
+		if ( '' === $key ) {
+			return array(
+				'ok'      => false,
+				'message' => 'missing_license_key',
+			);
 		}
 
 		update_option( 'shopwalk_license_key', $key, false );
@@ -163,7 +181,10 @@ final class Shopwalk_Connect {
 		}
 
 		do_action( 'shopwalk_license_activated', $key, (string) ( $body['partner_id'] ?? '' ) );
-		return array( 'ok' => true, 'message' => 'connected' );
+		return array(
+			'ok'      => true,
+			'message' => 'connected',
+		);
 	}
 
 	// ── Upgrade to Pro ──────────────────────────────────────────────────────
@@ -180,12 +201,12 @@ final class Shopwalk_Connect {
 		check_ajax_referer( 'shopwalk_upgrade_url', 'nonce' );
 
 		$plan = isset( $_POST['plan'] ) ? sanitize_text_field( wp_unslash( $_POST['plan'] ) ) : 'annual';
-		if ( $plan !== 'monthly' && $plan !== 'annual' ) {
+		if ( 'monthly' !== $plan && 'annual' !== $plan ) {
 			$plan = 'annual';
 		}
 
 		$key = class_exists( 'Shopwalk_License' ) ? Shopwalk_License::key() : '';
-		if ( $key === '' ) {
+		if ( '' === $key ) {
 			wp_send_json_error( array( 'message' => 'not_licensed' ), 400 );
 		}
 
@@ -206,9 +227,20 @@ final class Shopwalk_Connect {
 		$status = (int) wp_remote_retrieve_response_code( $response );
 		$body   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( $status >= 300 || empty( $body['url'] ) ) {
-			wp_send_json_error( array( 'message' => $body['error'] ?? 'upstream_error', 'status' => $status ), 502 );
+			wp_send_json_error(
+				array(
+					'message' => $body['error'] ?? 'upstream_error',
+					'status'  => $status,
+				),
+				502
+			);
 		}
-		wp_send_json_success( array( 'url' => (string) $body['url'], 'plan' => $plan ) );
+		wp_send_json_success(
+			array(
+				'url'  => (string) $body['url'],
+				'plan' => $plan,
+			)
+		);
 	}
 
 	// ── Hourly tier + subscription poll ─────────────────────────────────────
@@ -222,7 +254,7 @@ final class Shopwalk_Connect {
 			return;
 		}
 		$key = Shopwalk_License::key();
-		if ( $key === '' ) {
+		if ( '' === $key ) {
 			return;
 		}
 
@@ -248,7 +280,7 @@ final class Shopwalk_Connect {
 			return;
 		}
 
-		$tier    = isset( $body['tier'] ) && $body['tier'] === 'pro' ? 'pro' : 'free';
+		$tier    = isset( $body['tier'] ) && 'pro' === $body['tier'] ? 'pro' : 'free';
 		$substat = (string) ( $body['subscription_status'] ?? '' );
 
 		update_option( self::OPTION_PLAN, $tier, false );

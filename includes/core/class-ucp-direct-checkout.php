@@ -72,7 +72,7 @@ final class UCP_Direct_Checkout {
 		if ( ! $header_key ) {
 			$header_key = $request->get_header( 'X-SW-License-Key' );
 		}
-		if ( ! $header_key || $header_key === '' ) {
+		if ( ! $header_key || '' === $header_key ) {
 			return new WP_Error(
 				'missing_license_key',
 				'A valid X-License-Key or X-SW-License-Key header is required.',
@@ -81,7 +81,7 @@ final class UCP_Direct_Checkout {
 		}
 
 		$stored_key = get_option( 'shopwalk_license_key', '' );
-		if ( $stored_key === '' || $header_key !== $stored_key ) {
+		if ( '' === $stored_key || $header_key !== $stored_key ) {
 			return new WP_Error(
 				'invalid_license_key',
 				'License key does not match.',
@@ -312,12 +312,12 @@ final class UCP_Direct_Checkout {
 		$shopwalk_source   = $order->get_meta( '_shopwalk_source' );
 
 		// Only fire for Shopwalk-originated orders.
-		if ( $shopwalk_source !== 'direct_checkout' || $shopwalk_order_id === '' ) {
+		if ( 'direct_checkout' !== $shopwalk_source || '' === $shopwalk_order_id ) {
 			return;
 		}
 
 		$license_key = get_option( 'shopwalk_license_key', '' );
-		if ( $license_key === '' ) {
+		if ( '' === $license_key ) {
 			return;
 		}
 
@@ -392,7 +392,7 @@ final class UCP_Direct_Checkout {
 		}
 
 		$shopwalk_return = $order->get_meta( '_shopwalk_return_url' );
-		if ( $shopwalk_return !== '' ) {
+		if ( '' !== $shopwalk_return ) {
 			// Append order_id + status as query params for the Shopwalk UI.
 			$shopwalk_return = add_query_arg(
 				array(

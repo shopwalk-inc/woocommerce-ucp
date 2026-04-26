@@ -60,7 +60,12 @@ interface UCP_Payment_Adapter_Interface {
 
 /**
  * UCP_Payment_Router — central adapter lookup + dispatch.
+ *
+ * Lives in the same file as UCP_Payment_Adapter_Interface above; the
+ * interface is intimately coupled to this router (single producer,
+ * single consumer) so they ship as one unit.
  */
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- See class docblock.
 final class UCP_Payment_Router {
 
 	/**
@@ -131,7 +136,7 @@ final class UCP_Payment_Router {
 	 */
 	public static function authorize( $order, array $payment ) {
 		$gateway = isset( $payment['gateway'] ) ? (string) $payment['gateway'] : '';
-		if ( $gateway === '' ) {
+		if ( '' === $gateway ) {
 			return new WP_Error(
 				'missing_gateway',
 				'payment.gateway is required — specify which WooCommerce payment gateway to use (e.g. "stripe").',

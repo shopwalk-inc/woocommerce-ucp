@@ -24,7 +24,7 @@ final class UCP_Self_Test {
 	 * @return array<int, array{check:string, status:string, message:string}>
 	 */
 	public static function run_all(): array {
-		$results = array();
+		$results   = array();
 		$results[] = self::check_well_known_ucp();
 		$results[] = self::check_well_known_oauth();
 		$results[] = self::check_oauth_authorize();
@@ -42,13 +42,25 @@ final class UCP_Self_Test {
 	private static function check_well_known_ucp(): array {
 		$response = wp_remote_get( home_url( '/.well-known/ucp' ), array( 'timeout' => 5 ) );
 		if ( is_wp_error( $response ) ) {
-			return array( 'check' => '/.well-known/ucp reachable', 'status' => 'fail', 'message' => $response->get_error_message() );
+			return array(
+				'check'   => '/.well-known/ucp reachable',
+				'status'  => 'fail',
+				'message' => $response->get_error_message(),
+			);
 		}
 		$status = (int) wp_remote_retrieve_response_code( $response );
-		if ( $status !== 200 ) {
-			return array( 'check' => '/.well-known/ucp reachable', 'status' => 'fail', 'message' => 'HTTP ' . $status );
+		if ( 200 !== $status ) {
+			return array(
+				'check'   => '/.well-known/ucp reachable',
+				'status'  => 'fail',
+				'message' => 'HTTP ' . $status,
+			);
 		}
-		return array( 'check' => '/.well-known/ucp reachable', 'status' => 'pass', 'message' => 'Discovery doc served via static .well-known/ucp.php shim.' );
+		return array(
+			'check'   => '/.well-known/ucp reachable',
+			'status'  => 'pass',
+			'message' => 'Discovery doc served via static .well-known/ucp.php shim.',
+		);
 	}
 
 	/**
@@ -57,13 +69,25 @@ final class UCP_Self_Test {
 	private static function check_well_known_oauth(): array {
 		$response = wp_remote_get( home_url( '/.well-known/oauth-authorization-server' ), array( 'timeout' => 5 ) );
 		if ( is_wp_error( $response ) ) {
-			return array( 'check' => '/.well-known/oauth-authorization-server reachable', 'status' => 'fail', 'message' => $response->get_error_message() );
+			return array(
+				'check'   => '/.well-known/oauth-authorization-server reachable',
+				'status'  => 'fail',
+				'message' => $response->get_error_message(),
+			);
 		}
 		$status = (int) wp_remote_retrieve_response_code( $response );
-		if ( $status !== 200 ) {
-			return array( 'check' => '/.well-known/oauth-authorization-server reachable', 'status' => 'fail', 'message' => 'HTTP ' . $status );
+		if ( 200 !== $status ) {
+			return array(
+				'check'   => '/.well-known/oauth-authorization-server reachable',
+				'status'  => 'fail',
+				'message' => 'HTTP ' . $status,
+			);
 		}
-		return array( 'check' => '/.well-known/oauth-authorization-server reachable', 'status' => 'pass', 'message' => 'OAuth server metadata published.' );
+		return array(
+			'check'   => '/.well-known/oauth-authorization-server reachable',
+			'status'  => 'pass',
+			'message' => 'OAuth server metadata published.',
+		);
 	}
 
 	/**
@@ -72,14 +96,26 @@ final class UCP_Self_Test {
 	private static function check_oauth_authorize(): array {
 		$response = wp_remote_get( rest_url( UCP_REST_NAMESPACE . '/oauth/authorize' ), array( 'timeout' => 5 ) );
 		if ( is_wp_error( $response ) ) {
-			return array( 'check' => 'OAuth /authorize wired', 'status' => 'fail', 'message' => $response->get_error_message() );
+			return array(
+				'check'   => 'OAuth /authorize wired',
+				'status'  => 'fail',
+				'message' => $response->get_error_message(),
+			);
 		}
 		// Without query params we expect a 400 (missing client_id) — that's a healthy "wired" signal.
 		$status = (int) wp_remote_retrieve_response_code( $response );
-		if ( $status === 404 ) {
-			return array( 'check' => 'OAuth /authorize wired', 'status' => 'fail', 'message' => 'Route not registered (got 404).' );
+		if ( 404 === $status ) {
+			return array(
+				'check'   => 'OAuth /authorize wired',
+				'status'  => 'fail',
+				'message' => 'Route not registered (got 404).',
+			);
 		}
-		return array( 'check' => 'OAuth /authorize wired', 'status' => 'pass', 'message' => 'Endpoint responds.' );
+		return array(
+			'check'   => 'OAuth /authorize wired',
+			'status'  => 'pass',
+			'message' => 'Endpoint responds.',
+		);
 	}
 
 	/**
@@ -95,14 +131,26 @@ final class UCP_Self_Test {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return array( 'check' => 'POST /checkout-sessions wired', 'status' => 'fail', 'message' => $response->get_error_message() );
+			return array(
+				'check'   => 'POST /checkout-sessions wired',
+				'status'  => 'fail',
+				'message' => $response->get_error_message(),
+			);
 		}
 		$status = (int) wp_remote_retrieve_response_code( $response );
-		if ( $status === 404 ) {
-			return array( 'check' => 'POST /checkout-sessions wired', 'status' => 'fail', 'message' => 'Route not registered (got 404).' );
+		if ( 404 === $status ) {
+			return array(
+				'check'   => 'POST /checkout-sessions wired',
+				'status'  => 'fail',
+				'message' => 'Route not registered (got 404).',
+			);
 		}
 		// Expect 400 — missing line_items[]. Anything other than 404/5xx is healthy.
-		return array( 'check' => 'POST /checkout-sessions wired', 'status' => 'pass', 'message' => 'Endpoint responds.' );
+		return array(
+			'check'   => 'POST /checkout-sessions wired',
+			'status'  => 'pass',
+			'message' => 'Endpoint responds.',
+		);
 	}
 
 	/**
@@ -111,9 +159,17 @@ final class UCP_Self_Test {
 	private static function check_wp_cron_alive(): array {
 		$next = wp_next_scheduled( 'shopwalk_ucp_webhook_flush' );
 		if ( ! $next ) {
-			return array( 'check' => 'WP-Cron scheduled', 'status' => 'fail', 'message' => 'shopwalk_ucp_webhook_flush is not scheduled.' );
+			return array(
+				'check'   => 'WP-Cron scheduled',
+				'status'  => 'fail',
+				'message' => 'shopwalk_ucp_webhook_flush is not scheduled.',
+			);
 		}
-		return array( 'check' => 'WP-Cron scheduled', 'status' => 'pass', 'message' => 'Next webhook flush at ' . gmdate( 'c', (int) $next ) );
+		return array(
+			'check'   => 'WP-Cron scheduled',
+			'status'  => 'pass',
+			'message' => 'Next webhook flush at ' . gmdate( 'c', (int) $next ),
+		);
 	}
 
 	/**
@@ -121,13 +177,25 @@ final class UCP_Self_Test {
 	 */
 	private static function check_payment_gateway_registered(): array {
 		if ( ! class_exists( 'WC_Payment_Gateways' ) ) {
-			return array( 'check' => 'WC payment gateway "Pay via UCP"', 'status' => 'warn', 'message' => 'WooCommerce not loaded.' );
+			return array(
+				'check'   => 'WC payment gateway "Pay via UCP"',
+				'status'  => 'warn',
+				'message' => 'WooCommerce not loaded.',
+			);
 		}
 		$gateways = WC_Payment_Gateways::instance()->payment_gateways();
 		if ( ! isset( $gateways['shopwalk_ucp'] ) ) {
-			return array( 'check' => 'WC payment gateway "Pay via UCP"', 'status' => 'fail', 'message' => 'Gateway not registered with WooCommerce.' );
+			return array(
+				'check'   => 'WC payment gateway "Pay via UCP"',
+				'status'  => 'fail',
+				'message' => 'Gateway not registered with WooCommerce.',
+			);
 		}
-		return array( 'check' => 'WC payment gateway "Pay via UCP"', 'status' => 'pass', 'message' => 'Gateway registered.' );
+		return array(
+			'check'   => 'WC payment gateway "Pay via UCP"',
+			'status'  => 'pass',
+			'message' => 'Gateway registered.',
+		);
 	}
 
 	/**
@@ -135,10 +203,18 @@ final class UCP_Self_Test {
 	 */
 	private static function check_signing_secret(): array {
 		$secret = UCP_Signing::store_secret();
-		if ( $secret === '' ) {
-			return array( 'check' => 'Store signing secret', 'status' => 'fail', 'message' => 'No signing secret found.' );
+		if ( '' === $secret ) {
+			return array(
+				'check'   => 'Store signing secret',
+				'status'  => 'fail',
+				'message' => 'No signing secret found.',
+			);
 		}
-		return array( 'check' => 'Store signing secret', 'status' => 'pass', 'message' => 'Outbound webhook signing secret is set (' . strlen( $secret ) . ' chars).' );
+		return array(
+			'check'   => 'Store signing secret',
+			'status'  => 'pass',
+			'message' => 'Outbound webhook signing secret is set (' . strlen( $secret ) . ' chars).',
+		);
 	}
 
 	/**
@@ -156,8 +232,16 @@ final class UCP_Self_Test {
 			}
 		}
 		if ( count( $missing ) > 0 ) {
-			return array( 'check' => 'UCP database tables', 'status' => 'fail', 'message' => 'Missing: ' . implode( ', ', $missing ) . '. Re-activate the plugin to recreate.' );
+			return array(
+				'check'   => 'UCP database tables',
+				'status'  => 'fail',
+				'message' => 'Missing: ' . implode( ', ', $missing ) . '. Re-activate the plugin to recreate.',
+			);
 		}
-		return array( 'check' => 'UCP database tables', 'status' => 'pass', 'message' => 'All 5 wp_ucp_* tables exist.' );
+		return array(
+			'check'   => 'UCP database tables',
+			'status'  => 'pass',
+			'message' => 'All 5 wp_ucp_* tables exist.',
+		);
 	}
 }

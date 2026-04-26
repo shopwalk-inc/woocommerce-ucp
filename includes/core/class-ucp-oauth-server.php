@@ -101,13 +101,13 @@ final class UCP_OAuth_Server {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function handle_authorize( WP_REST_Request $request ) {
-		$client_id    = (string) $request->get_param( 'client_id' );
-		$redirect_uri = (string) $request->get_param( 'redirect_uri' );
-		$state        = (string) $request->get_param( 'state' );
-		$scope        = (string) $request->get_param( 'scope' );
+		$client_id     = (string) $request->get_param( 'client_id' );
+		$redirect_uri  = (string) $request->get_param( 'redirect_uri' );
+		$state         = (string) $request->get_param( 'state' );
+		$scope         = (string) $request->get_param( 'scope' );
 		$response_type = (string) $request->get_param( 'response_type' );
 
-		if ( $response_type !== 'code' ) {
+		if ( 'code' !== $response_type ) {
 			return new WP_Error( 'unsupported_response_type', 'Only response_type=code is supported', array( 'status' => 400 ) );
 		}
 
@@ -123,16 +123,22 @@ final class UCP_OAuth_Server {
 		$user_id = get_current_user_id();
 		if ( ! $user_id ) {
 			$login_url = wp_login_url( rest_url( UCP_REST_NAMESPACE . '/oauth/authorize' ) . '?' . http_build_query( $request->get_query_params() ) );
-			return new WP_REST_Response( array( 'login_required' => true, 'login_url' => $login_url ), 401 );
+			return new WP_REST_Response(
+				array(
+					'login_required' => true,
+					'login_url'      => $login_url,
+				),
+				401
+			);
 		}
 
 		// PKCE — store code_challenge if provided (RFC 7636).
 		$code_challenge        = (string) $request->get_param( 'code_challenge' );
 		$code_challenge_method = (string) $request->get_param( 'code_challenge_method' );
-		if ( $code_challenge !== '' && $code_challenge_method === '' ) {
+		if ( '' !== $code_challenge && '' === $code_challenge_method ) {
 			$code_challenge_method = 'plain'; // RFC 7636 §4.3 default
 		}
-		if ( $code_challenge_method !== '' && $code_challenge_method !== 'S256' && $code_challenge_method !== 'plain' ) {
+		if ( '' !== $code_challenge_method && 'S256' !== $code_challenge_method && 'plain' !== $code_challenge_method ) {
 			return new WP_Error( 'invalid_request', 'code_challenge_method must be S256 or plain', array( 'status' => 400 ) );
 		}
 
@@ -141,7 +147,7 @@ final class UCP_OAuth_Server {
 			'authorization_code',
 			$client_id,
 			$user_id,
-			$scope !== '' ? explode( ' ', $scope ) : array( 'ucp:checkout', 'ucp:orders' ),
+			'' !== $scope ? explode( ' ', $scope ) : array( 'ucp:checkout', 'ucp:orders' ),
 			self::CODE_TTL,
 			$code_challenge,
 			$code_challenge_method
@@ -204,12 +210,12 @@ final class UCP_OAuth_Server {
 		// the token request MUST include a matching code_verifier.
 		$stored_challenge = $row['code_challenge'] ?? '';
 		$stored_method    = $row['code_challenge_method'] ?? '';
-		if ( $stored_challenge !== '' ) {
+		if ( '' !== $stored_challenge ) {
 			$code_verifier = (string) $request->get_param( 'code_verifier' );
-			if ( $code_verifier === '' ) {
+			if ( '' === $code_verifier ) {
 				return new WP_Error( 'invalid_grant', 'code_verifier required (PKCE)', array( 'status' => 400 ) );
 			}
-			if ( $stored_method === 'S256' ) {
+			if ( 'S256' === $stored_method ) {
 				$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PKCE S256 code challenge per RFC 7636.
 			} else {
 				$computed = $code_verifier; // plain
@@ -223,7 +229,7 @@ final class UCP_OAuth_Server {
 		// One-time use — revoke the code immediately.
 		self::revoke_token( (int) $row['id'] );
 
-		$scopes = json_decode( (string) $row['scopes'], true ) ?: array();
+		$scopes  = json_decode( (string) $row['scopes'], true ) ?: array();
 		$user_id = (int) $row['user_id'];
 
 		$access  = self::issue_token( 'access', $client_id, $user_id, $scopes, self::ACCESS_TTL );
@@ -283,7 +289,7 @@ final class UCP_OAuth_Server {
 	 */
 	public static function handle_revoke( WP_REST_Request $request ): WP_REST_Response {
 		$token = (string) $request->get_param( 'token' );
-		if ( $token !== '' ) {
+		if ( '' !== $token ) {
 			$row = self::lookup_token_any_type( $token );
 			if ( $row ) {
 				self::revoke_token( (int) $row['id'] );
@@ -312,9 +318,9 @@ final class UCP_OAuth_Server {
 		}
 		return new WP_REST_Response(
 			array(
-				'sub'           => (string) $user->ID,
-				'email'         => (string) $user->user_email,
-				'name'          => (string) $user->display_name,
+				'sub'                => (string) $user->ID,
+				'email'              => (string) $user->user_email,
+				'name'               => (string) $user->display_name,
 				'preferred_username' => (string) $user->user_login,
 			),
 			200
@@ -363,14 +369,17 @@ final class UCP_OAuth_Server {
 			'created_at' => $now,
 		);
 		// PKCE: store challenge alongside the authorization code
-		if ( $code_challenge !== '' ) {
+		if ( '' !== $code_challenge ) {
 			$row['code_challenge']        = $code_challenge;
 			$row['code_challenge_method'] = $code_challenge_method;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert( $table, $row );
-		return array( 'plaintext' => $plaintext, 'hash' => $hash );
+		return array(
+			'plaintext' => $plaintext,
+			'hash'      => $hash,
+		);
 	}
 
 	/**
@@ -451,7 +460,7 @@ final class UCP_OAuth_Server {
 	 */
 	public static function authenticate_request( WP_REST_Request $request ) {
 		$header = (string) $request->get_header( 'authorization' );
-		if ( $header === '' || ! str_starts_with( $header, 'Bearer ' ) ) {
+		if ( '' === $header || ! str_starts_with( $header, 'Bearer ' ) ) {
 			return new WP_Error( 'unauthorized', 'Bearer token required', array( 'status' => 401 ) );
 		}
 		$token = substr( $header, 7 );

@@ -147,29 +147,29 @@ final class UCP_Webhook_Delivery {
 	private static function build_order_payload( $order, string $event_type ): array {
 		$line_items = array();
 		foreach ( $order->get_items() as $idx => $item ) {
-			$fulfilled  = ( $order->get_status() === 'completed' ) ? $item->get_quantity() : 0;
+			$fulfilled    = ( 'completed' === $order->get_status() ) ? $item->get_quantity() : 0;
 			$line_items[] = UCP_Response::build_order_line_item( $item, $idx, $fulfilled );
 		}
 
 		// Map WC status to a UCP fulfillment expectation.
-		$wc_status = $order->get_status();
+		$wc_status    = $order->get_status();
 		$expectations = array();
 		if ( in_array( $wc_status, array( 'processing', 'on-hold' ), true ) ) {
 			$expectations[] = array(
-				'type'    => 'shipping',
-				'status'  => 'pending',
-				'label'   => 'Order is being processed',
+				'type'   => 'shipping',
+				'status' => 'pending',
+				'label'  => 'Order is being processed',
 			);
-		} elseif ( $wc_status === 'completed' ) {
+		} elseif ( 'completed' === $wc_status ) {
 			$expectations[] = array(
-				'type'    => 'shipping',
-				'status'  => 'complete',
-				'label'   => 'Order has been fulfilled',
+				'type'   => 'shipping',
+				'status' => 'complete',
+				'label'  => 'Order has been fulfilled',
 			);
 		}
 
 		// Build fulfillment events from order notes/status history.
-		$fulfillment_events = array();
+		$fulfillment_events   = array();
 		$fulfillment_events[] = array(
 			'type'        => 'status_change',
 			'status'      => $wc_status,
@@ -189,32 +189,35 @@ final class UCP_Webhook_Delivery {
 		}
 		foreach ( $order->get_coupon_codes() as $code ) {
 			$adjustments[] = array(
-				'type'  => 'coupon',
-				'code'  => $code,
+				'type' => 'coupon',
+				'code' => $code,
 			);
 		}
 
 		return array(
-			'ucp'        => array( 'version' => UCP_Response::VERSION, 'status' => 'ok' ),
-			'event'      => $event_type,
-			'id'         => strval( $order->get_id() ),
-			'label'      => '#' . $order->get_order_number(),
+			'ucp'           => array(
+				'version' => UCP_Response::VERSION,
+				'status'  => 'ok',
+			),
+			'event'         => $event_type,
+			'id'            => strval( $order->get_id() ),
+			'label'         => '#' . $order->get_order_number(),
 			'permalink_url' => $order->get_view_order_url(),
-			'currency'   => $order->get_currency(),
-			'line_items' => $line_items,
-			'fulfillment' => array(
+			'currency'      => $order->get_currency(),
+			'line_items'    => $line_items,
+			'fulfillment'   => array(
 				'expectations' => $expectations,
 				'events'       => $fulfillment_events,
 			),
-			'adjustments' => $adjustments,
-			'totals'      => UCP_Response::build_totals(
+			'adjustments'   => $adjustments,
+			'totals'        => UCP_Response::build_totals(
 				$order->get_subtotal(),
 				$order->get_shipping_total(),
 				$order->get_total_tax(),
 				$order->get_discount_total(),
 				$order->get_total()
 			),
-			'messages'    => array(),
+			'messages'      => array(),
 		);
 	}
 
@@ -262,7 +265,10 @@ final class UCP_Webhook_Delivery {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$queue,
-				array( 'failed_at' => current_time( 'mysql', true ), 'last_error' => 'subscription deleted' ),
+				array(
+					'failed_at'  => current_time( 'mysql', true ),
+					'last_error' => 'subscription deleted',
+				),
 				array( 'id' => (int) $row['id'] )
 			);
 			return;
@@ -285,13 +291,13 @@ final class UCP_Webhook_Delivery {
 			array(
 				'timeout' => 15,
 				'headers' => array(
-					'Content-Type'    => 'application/json',
+					'Content-Type'      => 'application/json',
 					'Webhook-Timestamp' => strval( $timestamp ),
-					'Webhook-Id'      => $webhook_id,
-					'UCP-Agent'       => 'profile="' . get_site_url() . '/.well-known/ucp"',
-					'Content-Digest'  => 'sha-256=:' . $digest . ':',
-					'Signature-Input' => 'sig1=("content-digest" "webhook-id" "webhook-timestamp");keyid="store-hmac";alg="hmac-sha256"',
-					'Signature'       => 'sig1=:' . $signature . ':',
+					'Webhook-Id'        => $webhook_id,
+					'UCP-Agent'         => 'profile="' . get_site_url() . '/.well-known/ucp"',
+					'Content-Digest'    => 'sha-256=:' . $digest . ':',
+					'Signature-Input'   => 'sig1=("content-digest" "webhook-id" "webhook-timestamp");keyid="store-hmac";alg="hmac-sha256"',
+					'Signature'         => 'sig1=:' . $signature . ':',
 				),
 				'body'    => $payload,
 			)

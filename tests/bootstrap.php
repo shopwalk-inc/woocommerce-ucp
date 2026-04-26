@@ -23,8 +23,11 @@ if ( ! class_exists( 'WP_Error' ) ) {
 			$this->message = $message;
 			$this->data    = is_array( $data ) ? $data : array();
 		}
-		public function get_error_code(): string { return $this->code; }
-		public function get_error_message(): string { return $this->message; }
-		public function get_error_data() { return $this->data; }
+		public function get_error_code(): string {
+			return $this->code; }
+		public function get_error_message(): string {
+			return $this->message; }
+		public function get_error_data() {
+			return $this->data; }
 	}
 }

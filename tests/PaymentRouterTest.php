@@ -16,29 +16,35 @@ require_once __DIR__ . '/../includes/core/class-ucp-payment-router.php';
 
 final class ReadyTestAdapter implements UCP_Payment_Adapter_Interface {
 	public static int $authorize_calls = 0;
-	public static $last_order = null;
-	public static array $last_payment = array();
+	public static $last_order          = null;
+	public static array $last_payment  = array();
 
-	public function id(): string { return 'ready_test'; }
-	public function is_ready(): bool { return true; }
-	public function discovery_hint(): array { return array( 'gateway' => 'ready_test' ); }
+	public function id(): string {
+		return 'ready_test'; }
+	public function is_ready(): bool {
+		return true; }
+	public function discovery_hint(): array {
+		return array( 'gateway' => 'ready_test' ); }
 	public function authorize( $order, array $payment ) {
-		self::$authorize_calls++;
+		++self::$authorize_calls;
 		self::$last_order   = $order;
 		self::$last_payment = $payment;
 		return true;
 	}
 	public static function reset(): void {
 		self::$authorize_calls = 0;
-		self::$last_order = null;
-		self::$last_payment = array();
+		self::$last_order      = null;
+		self::$last_payment    = array();
 	}
 }
 
 final class NotReadyTestAdapter implements UCP_Payment_Adapter_Interface {
-	public function id(): string { return 'not_ready_test'; }
-	public function is_ready(): bool { return false; }
-	public function discovery_hint(): array { return array(); }
+	public function id(): string {
+		return 'not_ready_test'; }
+	public function is_ready(): bool {
+		return false; }
+	public function discovery_hint(): array {
+		return array(); }
 	public function authorize( $order, array $payment ) {
 		return true; // should never be called
 	}
@@ -93,7 +99,10 @@ final class PaymentRouterTest extends TestCase {
 			->andReturn( array( 'ready_test' => ReadyTestAdapter::class ) );
 
 		$order   = new stdClass();
-		$payment = array( 'gateway' => 'ready_test', 'payment_method_id' => 'pm_xxx' );
+		$payment = array(
+			'gateway'           => 'ready_test',
+			'payment_method_id' => 'pm_xxx',
+		);
 
 		$result = UCP_Payment_Router::authorize( $order, $payment );
 
@@ -105,10 +114,12 @@ final class PaymentRouterTest extends TestCase {
 
 	public function test_registry_drops_non_existent_classes(): void {
 		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
-			->andReturn( array(
-				'ready_test' => ReadyTestAdapter::class,
-				'ghost'      => 'Class_That_Does_Not_Exist_Anywhere',
-			) );
+			->andReturn(
+				array(
+					'ready_test' => ReadyTestAdapter::class,
+					'ghost'      => 'Class_That_Does_Not_Exist_Anywhere',
+				)
+			);
 
 		$registry = UCP_Payment_Router::registry();
 
@@ -118,10 +129,12 @@ final class PaymentRouterTest extends TestCase {
 
 	public function test_discovery_hints_only_include_ready_adapters(): void {
 		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
-			->andReturn( array(
-				'ready_test'     => ReadyTestAdapter::class,
-				'not_ready_test' => NotReadyTestAdapter::class,
-			) );
+			->andReturn(
+				array(
+					'ready_test'     => ReadyTestAdapter::class,
+					'not_ready_test' => NotReadyTestAdapter::class,
+				)
+			);
 
 		$hints = UCP_Payment_Router::discovery_hints();
 

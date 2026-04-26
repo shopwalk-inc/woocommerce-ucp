@@ -46,26 +46,28 @@ final class WooCommerce_UCP_Admin_Dashboard {
 	}
 
 	public function enqueue_assets( string $hook ): void {
-		if ( $hook !== 'toplevel_page_woocommerce-ucp' ) {
+		if ( 'toplevel_page_woocommerce-ucp' !== $hook ) {
 			return;
 		}
 		wp_register_script( 'woocommerce-ucp-admin', '', array(), WOOCOMMERCE_UCP_VERSION, true );
 		wp_enqueue_script( 'woocommerce-ucp-admin' );
 		wp_add_inline_script(
 			'woocommerce-ucp-admin',
-			'window.swAdmin = ' . wp_json_encode( array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonces'  => array(
-					'self_test'       => wp_create_nonce( 'shopwalk_self_test' ),
-					'probe'           => wp_create_nonce( 'shopwalk_probe' ),
-					'activate'        => wp_create_nonce( 'shopwalk_activate' ),
-					'test_license'    => wp_create_nonce( 'shopwalk_test_license' ),
-					'disconnect'      => wp_create_nonce( 'shopwalk_disconnect' ),
-					'sync_status'     => wp_create_nonce( 'shopwalk_sync_status' ),
-					'payments_status' => wp_create_nonce( 'shopwalk_payments_status' ),
-					'upgrade_url'     => wp_create_nonce( 'shopwalk_upgrade_url' ),
-				),
-			) ) . ';' . $this->admin_js()
+			'window.swAdmin = ' . wp_json_encode(
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonces'  => array(
+						'self_test'       => wp_create_nonce( 'shopwalk_self_test' ),
+						'probe'           => wp_create_nonce( 'shopwalk_probe' ),
+						'activate'        => wp_create_nonce( 'shopwalk_activate' ),
+						'test_license'    => wp_create_nonce( 'shopwalk_test_license' ),
+						'disconnect'      => wp_create_nonce( 'shopwalk_disconnect' ),
+						'sync_status'     => wp_create_nonce( 'shopwalk_sync_status' ),
+						'payments_status' => wp_create_nonce( 'shopwalk_payments_status' ),
+						'upgrade_url'     => wp_create_nonce( 'shopwalk_upgrade_url' ),
+					),
+				)
+			) . ';' . $this->admin_js()
 		);
 	}
 
@@ -77,7 +79,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 	private function render_connect_notice(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only notice
 		$state = isset( $_GET['sw_connect'] ) ? sanitize_text_field( wp_unslash( $_GET['sw_connect'] ) ) : '';
-		if ( $state === '' ) {
+		if ( '' === $state ) {
 			return;
 		}
 		$reason = isset( $_GET['sw_reason'] ) ? sanitize_text_field( wp_unslash( $_GET['sw_reason'] ) ) : '';
@@ -86,8 +88,8 @@ final class WooCommerce_UCP_Admin_Dashboard {
 		$map = array(
 			'ok'              => array( 'notice-success', __( 'Connected to Shopwalk. Free tier active.', 'woocommerce-ucp' ) ),
 			'declined'        => array( 'notice-warning', __( 'Connection cancelled. No changes made.', 'woocommerce-ucp' ) ),
-			'state_mismatch'  => array( 'notice-error',   __( 'Connection failed: state mismatch. Please try again.', 'woocommerce-ucp' ) ),
-			'exchange_failed' => array( 'notice-error',   __( 'Connection failed while exchanging the code.', 'woocommerce-ucp' ) ),
+			'state_mismatch'  => array( 'notice-error', __( 'Connection failed: state mismatch. Please try again.', 'woocommerce-ucp' ) ),
+			'exchange_failed' => array( 'notice-error', __( 'Connection failed while exchanging the code.', 'woocommerce-ucp' ) ),
 		);
 		if ( ! isset( $map[ $state ] ) ) {
 			return;
@@ -95,11 +97,13 @@ final class WooCommerce_UCP_Admin_Dashboard {
 		list( $class, $msg ) = $map[ $state ];
 		?>
 		<div class="notice <?php echo esc_attr( $class ); ?> is-dismissible">
-			<p><?php echo esc_html( $msg ); ?><?php
-			if ( $reason !== '' ) {
+			<p><?php echo esc_html( $msg ); ?>
+			<?php
+			if ( '' !== $reason ) {
 				echo ' <code>' . esc_html( $reason ) . '</code>';
 			}
-			?></p>
+			?>
+			</p>
 		</div>
 		<?php
 	}
@@ -111,28 +115,28 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			return 'unlicensed';
 		}
 		$key = Shopwalk_License::key();
-		if ( $key === '' ) {
+		if ( '' === $key ) {
 			return 'unlicensed';
 		}
 		$plan = get_option( 'shopwalk_plan', 'free' );
-		return $plan === 'pro' ? 'pro' : 'free';
+		return 'pro' === $plan ? 'pro' : 'free';
 	}
 
 	// ── Page render ────────────────────────────────────────────────────────
 
 	public function render_page(): void {
-		$tier = $this->get_tier();
-		$tier_label = $tier === 'pro' ? 'Pro' : ( $tier === 'free' ? '' : '' );
+		$tier       = $this->get_tier();
+		$tier_label = 'pro' === $tier ? 'Pro' : ( 'free' === $tier ? '' : '' );
 		?>
 		<div class="wrap sw-wrap">
 			<h1>
 				<?php esc_html_e( 'UCP Commerce', 'woocommerce-ucp' ); ?>
-				<?php if ( $tier === 'free' || $tier === 'pro' ) : ?>
+				<?php if ( 'free' === $tier || 'pro' === $tier ) : ?>
 					<span class="sw-connected">✅ <?php esc_html_e( 'Connected', 'woocommerce-ucp' ); ?></span>
 				<?php endif; ?>
-				<?php if ( $tier === 'pro' ) : ?>
+				<?php if ( 'pro' === $tier ) : ?>
 					<span class="sw-badge sw-badge-pro">PRO</span>
-				<?php elseif ( $tier === 'free' ) : ?>
+				<?php elseif ( 'free' === $tier ) : ?>
 					<span class="sw-badge sw-badge-free">FREE</span>
 				<?php endif; ?>
 			</h1>
@@ -142,7 +146,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			<div id="sw-status-banner"></div>
 			<?php $this->render_ucp_tool( $tier ); ?>
 			<?php $this->render_payments_tool(); ?>
-			<?php if ( $tier !== 'unlicensed' ) : ?>
+			<?php if ( 'unlicensed' !== $tier ) : ?>
 				<?php $this->render_sync_tool( $tier ); ?>
 			<?php endif; ?>
 			<?php $this->render_license_tool( $tier ); ?>
@@ -225,20 +229,20 @@ final class WooCommerce_UCP_Admin_Dashboard {
 		$license_key = class_exists( 'Shopwalk_License' ) ? Shopwalk_License::key() : '';
 		$partner_id  = class_exists( 'Shopwalk_License' ) ? Shopwalk_License::partner_id() : '';
 		$plan        = get_option( 'shopwalk_plan', 'free' );
-		$plan_label  = $plan === 'pro' ? get_option( 'shopwalk_plan_label', 'Pro' ) : 'Free';
+		$plan_label  = 'pro' === $plan ? get_option( 'shopwalk_plan_label', 'Pro' ) : 'Free';
 		$next_bill   = get_option( 'shopwalk_next_billing', '' );
 		?>
 		<div class="sw-card">
 			<h2>
 				<?php esc_html_e( 'License', 'woocommerce-ucp' ); ?>
-				<?php if ( $tier === 'pro' ) : ?>
+				<?php if ( 'pro' === $tier ) : ?>
 					<span class="sw-badge sw-badge-pro">PRO</span>
-				<?php elseif ( $tier === 'free' ) : ?>
+				<?php elseif ( 'free' === $tier ) : ?>
 					<span class="sw-badge sw-badge-free">FREE</span>
 				<?php endif; ?>
 			</h2>
 
-			<?php if ( $tier === 'unlicensed' ) : ?>
+			<?php if ( 'unlicensed' === $tier ) : ?>
 				<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;margin-bottom:16px;">
 					<p style="font-size:15px;font-weight:600;margin:0 0 8px;">Connect your store to Shopwalk</p>
 					<p class="sw-muted" style="margin:0 0 12px;">
@@ -278,7 +282,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 					<tr><td><?php esc_html_e( 'Plan', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( $plan_label ); ?></td></tr>
 					<tr><td><?php esc_html_e( 'Status', 'woocommerce-ucp' ); ?></td><td>✅ <?php esc_html_e( 'Active', 'woocommerce-ucp' ); ?></td></tr>
 					<tr><td><?php esc_html_e( 'Domain', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></td></tr>
-					<?php if ( $tier === 'pro' && $next_bill ) : ?>
+					<?php if ( 'pro' === $tier && $next_bill ) : ?>
 						<tr><td><?php esc_html_e( 'Next billing', 'woocommerce-ucp' ); ?></td><td><?php echo esc_html( $next_bill ); ?></td></tr>
 					<?php endif; ?>
 				</table>
@@ -299,7 +303,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 				</p>
 				<p id="sw-activate-status"></p>
 
-				<?php if ( $tier === 'free' ) : ?>
+				<?php if ( 'free' === $tier ) : ?>
 					<div class="sw-upgrade-cta">
 						<p><strong><?php esc_html_e( 'Upgrade to Pro', 'woocommerce-ucp' ); ?></strong></p>
 						<p class="sw-muted"><?php esc_html_e( 'Take control of how AI represents your brand:', 'woocommerce-ucp' ); ?></p>
@@ -723,16 +727,16 @@ JS;
 		);
 
 		// 3. REST API enabled
-		$rest_url  = get_rest_url();
-		$rest_ok   = ! empty( $rest_url );
-		$checks[]  = array(
+		$rest_url = get_rest_url();
+		$rest_ok  = ! empty( $rest_url );
+		$checks[] = array(
 			'check'   => 'REST API',
 			'status'  => $rest_ok ? 'pass' : 'fail',
 			'message' => $rest_ok ? 'Enabled' : 'Disabled — check for plugins blocking REST API',
 		);
 
 		// 4. License key
-		$license = get_option( 'shopwalk_license_key', '' );
+		$license  = get_option( 'shopwalk_license_key', '' );
 		$checks[] = array(
 			'check'   => 'License key',
 			'status'  => ! empty( $license ) ? 'pass' : 'fail',
@@ -811,18 +815,29 @@ JS;
 		}
 
 		// 12. Loopback test (can WP reach itself)
-		$loop_resp = wp_remote_get( rest_url( 'ucp/v1/store' ), array( 'timeout' => 5, 'sslverify' => false ) );
+		$loop_resp = wp_remote_get(
+			rest_url( 'ucp/v1/store' ),
+			array(
+				'timeout'   => 5,
+				'sslverify' => false,
+			)
+		);
 		$loop_code = is_wp_error( $loop_resp ) ? 0 : wp_remote_retrieve_response_code( $loop_resp );
 		$checks[]  = array(
 			'check'   => 'Loopback',
-			'status'  => $loop_code === 200 ? 'pass' : 'fail',
-			'message' => $loop_code === 200 ? 'WordPress can reach its own REST API' : 'Failed — loopback blocked (HTTP ' . $loop_code . ')',
+			'status'  => 200 === $loop_code ? 'pass' : 'fail',
+			'message' => 200 === $loop_code ? 'WordPress can reach its own REST API' : 'Failed — loopback blocked (HTTP ' . $loop_code . ')',
 		);
 
 		// Detect hosting provider for support CTA
 		$host_info = $this->detect_hosting();
 
-		wp_send_json_success( array( 'checks' => $checks, 'host' => $host_info ) );
+		wp_send_json_success(
+			array(
+				'checks' => $checks,
+				'host'   => $host_info,
+			)
+		);
 	}
 
 	/**
@@ -835,19 +850,71 @@ JS;
 
 		// Check known hosting signatures
 		$hosts = array(
-			'bluehost'    => array( 'name' => 'Bluehost',          'phone' => '1-888-401-4678', 'support' => 'bluehost.com/support' ),
-			'siteground'  => array( 'name' => 'SiteGround',        'phone' => '1-800-828-9231', 'support' => 'siteground.com/support' ),
-			'hostgator'   => array( 'name' => 'HostGator',         'phone' => '1-866-964-2867', 'support' => 'hostgator.com/support' ),
-			'godaddy'     => array( 'name' => 'GoDaddy',           'phone' => '1-480-505-8877', 'support' => 'godaddy.com/help' ),
-			'dreamhost'   => array( 'name' => 'DreamHost',         'phone' => '1-714-706-4182', 'support' => 'dreamhost.com/support' ),
-			'wpengine'    => array( 'name' => 'WP Engine',         'phone' => '1-877-973-6446', 'support' => 'wpengine.com/support' ),
-			'kinsta'      => array( 'name' => 'Kinsta',            'phone' => '',                'support' => 'kinsta.com/support' ),
-			'cloudways'   => array( 'name' => 'Cloudways',         'phone' => '',                'support' => 'cloudways.com/support' ),
-			'flywheel'    => array( 'name' => 'Flywheel',          'phone' => '',                'support' => 'getflywheel.com/support' ),
-			'namecheap'   => array( 'name' => 'Namecheap',         'phone' => '1-888-401-4678', 'support' => 'namecheap.com/support' ),
-			'inmotionhosting' => array( 'name' => 'InMotion Hosting', 'phone' => '1-888-321-HOST', 'support' => 'inmotionhosting.com/support' ),
-			'liquidweb'   => array( 'name' => 'Liquid Web',        'phone' => '1-800-580-4985', 'support' => 'liquidweb.com/support' ),
-			'a2hosting'   => array( 'name' => 'A2 Hosting',        'phone' => '1-888-546-8946', 'support' => 'a2hosting.com/support' ),
+			'bluehost'        => array(
+				'name'    => 'Bluehost',
+				'phone'   => '1-888-401-4678',
+				'support' => 'bluehost.com/support',
+			),
+			'siteground'      => array(
+				'name'    => 'SiteGround',
+				'phone'   => '1-800-828-9231',
+				'support' => 'siteground.com/support',
+			),
+			'hostgator'       => array(
+				'name'    => 'HostGator',
+				'phone'   => '1-866-964-2867',
+				'support' => 'hostgator.com/support',
+			),
+			'godaddy'         => array(
+				'name'    => 'GoDaddy',
+				'phone'   => '1-480-505-8877',
+				'support' => 'godaddy.com/help',
+			),
+			'dreamhost'       => array(
+				'name'    => 'DreamHost',
+				'phone'   => '1-714-706-4182',
+				'support' => 'dreamhost.com/support',
+			),
+			'wpengine'        => array(
+				'name'    => 'WP Engine',
+				'phone'   => '1-877-973-6446',
+				'support' => 'wpengine.com/support',
+			),
+			'kinsta'          => array(
+				'name'    => 'Kinsta',
+				'phone'   => '',
+				'support' => 'kinsta.com/support',
+			),
+			'cloudways'       => array(
+				'name'    => 'Cloudways',
+				'phone'   => '',
+				'support' => 'cloudways.com/support',
+			),
+			'flywheel'        => array(
+				'name'    => 'Flywheel',
+				'phone'   => '',
+				'support' => 'getflywheel.com/support',
+			),
+			'namecheap'       => array(
+				'name'    => 'Namecheap',
+				'phone'   => '1-888-401-4678',
+				'support' => 'namecheap.com/support',
+			),
+			'inmotionhosting' => array(
+				'name'    => 'InMotion Hosting',
+				'phone'   => '1-888-321-HOST',
+				'support' => 'inmotionhosting.com/support',
+			),
+			'liquidweb'       => array(
+				'name'    => 'Liquid Web',
+				'phone'   => '1-800-580-4985',
+				'support' => 'liquidweb.com/support',
+			),
+			'a2hosting'       => array(
+				'name'    => 'A2 Hosting',
+				'phone'   => '1-888-546-8946',
+				'support' => 'a2hosting.com/support',
+			),
 		);
 
 		$search = strtolower( $server_sw . ' ' . $hostname . ' ' . $server_ip . ' ' . sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ?? '' ) ) );
@@ -870,7 +937,11 @@ JS;
 			}
 		}
 
-		return array( 'name' => '', 'phone' => '', 'support' => '' );
+		return array(
+			'name'    => '',
+			'phone'   => '',
+			'support' => '',
+		);
 	}
 
 	public function ajax_payments_status(): void {
@@ -971,14 +1042,17 @@ JS;
 		}
 
 		$api_url  = defined( 'SHOPWALK_API_URL' ) ? SHOPWALK_API_URL : 'https://api.shopwalk.com';
-		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
-		$response = wp_remote_get( $api_url . '/api/v1/plugin/status', array(
-			'headers' => array(
-				'X-SW-License-Key' => $license_key,
-				'X-SW-Domain'      => $domain ?: home_url(),
-			),
-			'timeout' => 5,
-		) );
+		$domain   = wp_parse_url( home_url(), PHP_URL_HOST );
+		$response = wp_remote_get(
+			$api_url . '/api/v1/plugin/status',
+			array(
+				'headers' => array(
+					'X-SW-License-Key' => $license_key,
+					'X-SW-Domain'      => $domain ? $domain : home_url(),
+				),
+				'timeout' => 5,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			wp_send_json_error( array( 'message' => $response->get_error_message() ) );
@@ -987,13 +1061,15 @@ JS;
 			wp_send_json_error( array( 'message' => 'HTTP ' . wp_remote_retrieve_response_code( $response ) ) );
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
 		$local_count = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
 
-		wp_send_json_success( array(
-			'sync'        => $body['sync'] ?? array(),
-			'local_count' => $local_count,
-		) );
+		wp_send_json_success(
+			array(
+				'sync'        => $body['sync'] ?? array(),
+				'local_count' => $local_count,
+			)
+		);
 	}
 
 	public function ajax_probe(): void {
@@ -1006,7 +1082,10 @@ JS;
 			'https://api.shopwalk.com/api/v1/public/ucp/probe',
 			array(
 				'timeout' => 15,
-				'headers' => array( 'Content-Type' => 'application/json', 'User-Agent' => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION ),
+				'headers' => array(
+					'Content-Type' => 'application/json',
+					'User-Agent'   => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
+				),
 				'body'    => wp_json_encode( array( 'store_url' => home_url() ) ),
 			)
 		);
@@ -1016,7 +1095,7 @@ JS;
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $resp ), true );
-		wp_send_json_success( $body ?: array() );
+		wp_send_json_success( $body ? $body : array() );
 	}
 
 	public function ajax_activate(): void {
@@ -1082,11 +1161,13 @@ JS;
 			}
 		}
 
-		wp_send_json_success( array(
-			'valid'   => $valid,
-			'plan'    => $plan,
-			'message' => $valid ? 'License is valid' : ( $result['message'] ?? 'Validation failed' ),
-		) );
+		wp_send_json_success(
+			array(
+				'valid'   => $valid,
+				'plan'    => $plan,
+				'message' => $valid ? 'License is valid' : ( $result['message'] ?? 'Validation failed' ),
+			)
+		);
 	}
 
 	public function ajax_disconnect(): void {

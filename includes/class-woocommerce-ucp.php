@@ -139,7 +139,7 @@ final class WooCommerce_UCP {
 		// hook when Shopwalk_License wasn't loaded yet).
 		if ( get_option( 'shopwalk_license_needs_activation' ) === '1' ) {
 			$key = Shopwalk_License::key();
-			if ( $key !== '' ) {
+			if ( '' !== $key ) {
 				$result = Shopwalk_License::activate( $key );
 				if ( $result['ok'] ?? false ) {
 					delete_option( 'shopwalk_license_needs_activation' );
@@ -182,7 +182,7 @@ final class WooCommerce_UCP {
 	 */
 	public function is_shopwalk_connected(): bool {
 		$key = (string) get_option( 'shopwalk_license_key', '' );
-		return $key !== '' && (
+		return '' !== $key && (
 			str_starts_with( $key, 'sw_lic_' ) ||
 			str_starts_with( $key, 'sw_site_' )
 		);
@@ -353,10 +353,14 @@ HTACCESS;
 
 // Custom cron intervals — registered once globally so the activation hook
 // can schedule jobs with these names regardless of which subsystem owns them.
+// 1-min interval is intentional: the partner-portal "Sync Now" feel
+// depends on a sub-minute drain, and both consumers (webhook + sync
+// queue) short-circuit when empty.
+// phpcs:disable WordPress.WP.CronInterval
 add_filter(
 	'cron_schedules',
 	static function ( array $schedules ): array {
-		$schedules['shopwalk_ucp_minute'] = array(
+		$schedules['shopwalk_ucp_minute']       = array(
 			'interval' => 60,
 			'display'  => esc_html__( 'Every Minute (WooCommerce UCP)', 'woocommerce-ucp' ),
 		);
@@ -367,3 +371,4 @@ add_filter(
 		return $schedules;
 	}
 );
+// phpcs:enable WordPress.WP.CronInterval

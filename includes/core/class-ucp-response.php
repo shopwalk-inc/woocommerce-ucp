@@ -53,21 +53,25 @@ final class UCP_Response {
 	 * @return WP_Error
 	 */
 	public static function error( $code, $message, $severity = 'recoverable', $status = 400 ) {
-		return new WP_Error( $code, $message, array(
-			'status' => $status,
-			'ucp'    => array(
-				'version' => self::VERSION,
-				'status'  => 'error',
-			),
-			'messages' => array(
-				array(
-					'type'     => 'error',
-					'code'     => $code,
-					'content'  => $message,
-					'severity' => $severity,
+		return new WP_Error(
+			$code,
+			$message,
+			array(
+				'status'   => $status,
+				'ucp'      => array(
+					'version' => self::VERSION,
+					'status'  => 'error',
 				),
-			),
-		) );
+				'messages' => array(
+					array(
+						'type'     => 'error',
+						'code'     => $code,
+						'content'  => $message,
+						'severity' => $severity,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -92,17 +96,32 @@ final class UCP_Response {
 	 */
 	public static function build_totals( $subtotal, $shipping, $tax, $discount, $total ) {
 		$totals   = array();
-		$totals[] = array( 'type' => 'subtotal', 'amount' => self::to_cents( $subtotal ) );
+		$totals[] = array(
+			'type'   => 'subtotal',
+			'amount' => self::to_cents( $subtotal ),
+		);
 		if ( floatval( $shipping ) > 0 ) {
-			$totals[] = array( 'type' => 'shipping', 'amount' => self::to_cents( $shipping ) );
+			$totals[] = array(
+				'type'   => 'shipping',
+				'amount' => self::to_cents( $shipping ),
+			);
 		}
 		if ( floatval( $tax ) > 0 ) {
-			$totals[] = array( 'type' => 'tax', 'amount' => self::to_cents( $tax ) );
+			$totals[] = array(
+				'type'   => 'tax',
+				'amount' => self::to_cents( $tax ),
+			);
 		}
 		if ( floatval( $discount ) > 0 ) {
-			$totals[] = array( 'type' => 'discount', 'amount' => -1 * self::to_cents( $discount ) );
+			$totals[] = array(
+				'type'   => 'discount',
+				'amount' => -1 * self::to_cents( $discount ),
+			);
 		}
-		$totals[] = array( 'type' => 'total', 'amount' => self::to_cents( $total ) );
+		$totals[] = array(
+			'type'   => 'total',
+			'amount' => self::to_cents( $total ),
+		);
 		return $totals;
 	}
 
@@ -143,8 +162,8 @@ final class UCP_Response {
 		}
 
 		return array(
-			'id'   => 'li_' . ( $index + 1 ),
-			'item' => array(
+			'id'       => 'li_' . ( $index + 1 ),
+			'item'     => array(
 				'id'        => strval( $wc_item->get_product_id() ),
 				'title'     => $wc_item->get_name(),
 				'price'     => self::to_cents( $wc_item->get_total() / max( $wc_item->get_quantity(), 1 ) ),
@@ -152,8 +171,14 @@ final class UCP_Response {
 			),
 			'quantity' => $wc_item->get_quantity(),
 			'totals'   => array(
-				array( 'type' => 'subtotal', 'amount' => self::to_cents( $wc_item->get_subtotal() ) ),
-				array( 'type' => 'total', 'amount' => self::to_cents( $wc_item->get_total() ) ),
+				array(
+					'type'   => 'subtotal',
+					'amount' => self::to_cents( $wc_item->get_subtotal() ),
+				),
+				array(
+					'type'   => 'total',
+					'amount' => self::to_cents( $wc_item->get_total() ),
+				),
 			),
 		);
 	}
@@ -178,7 +203,7 @@ final class UCP_Response {
 		);
 
 		// Derive status from quantities.
-		if ( $total_qty == 0 ) {
+		if ( 0 === $total_qty ) {
 			$base['status'] = 'removed';
 		} elseif ( $fulfilled_qty >= $total_qty ) {
 			$base['status'] = 'fulfilled';

@@ -57,10 +57,10 @@ wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 // ── Remove /.well-known/ files ─────────────────────────────────────────────
 $well_known_dir = ABSPATH . '.well-known';
 foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
-	$path = $well_known_dir . '/' . $file;
-	if ( file_exists( $path ) ) {
+	$file_path = $well_known_dir . '/' . $file;
+	if ( file_exists( $file_path ) ) {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-		@unlink( $path );
+		@unlink( $file_path );
 	}
 }
 $htaccess = $well_known_dir . '/.htaccess';
