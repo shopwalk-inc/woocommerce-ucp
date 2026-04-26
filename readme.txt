@@ -2,7 +2,7 @@
 Contributors: shopwalkinc
 Tags: woocommerce, ai, ucp, agent, commerce
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 8.0
 WC requires at least: 8.0
 WC tested up to: 9.8
@@ -107,10 +107,19 @@ This data is used to index the store on the Shopwalk shopping network. **No data
 Shopwalk Terms of Service: https://shopwalk.com/terms
 Shopwalk Privacy Policy: https://shopwalk.com/privacy
 
+== Screenshots ==
+
+1. WooCommerce \u2192 UCP dashboard. UCP status panel with self-test diagnostic + the optional Shopwalk connection card.
+2. Self-test diagnostic results. 8 automated checks covering WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery doc.
+3. Payments section. The "Pay via UCP" gateway is registered automatically; merchants enable it from the standard WooCommerce \u2192 Settings \u2192 Payments screen.
+4. Optional Shopwalk connect flow. Enter a free Shopwalk license to enable real-time push sync, brand voice, and Premier listing on shopwalk.com.
+
 == Changelog ==
 
 = 3.0.45 =
 * WP.org compliance pass: bump WC tested up to 9.8, rename `shopwalk_ai_*` cron hooks to `shopwalk_ucp_*`, add WordPress Coding Standards (`phpcs.xml`), create `languages/` directory for translations.
+* Bump `Tested up to: 6.8`. Generate `languages/woocommerce-ucp.pot` for translators.
+* Add `Screenshots` section to readme.
 
 = 3.0.0 =
 **Complete rewrite as a UCP-compliant adapter.** The plugin's primary identity is now "the UCP adapter for WooCommerce." Shopwalk integration is one of several features layered on top.
