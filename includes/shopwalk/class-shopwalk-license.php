@@ -195,7 +195,15 @@ final class Shopwalk_License {
 		$plan         = (string) ( $body['plan'] ?? '' );
 		$plan_label   = (string) ( $body['plan_label'] ?? '' );
 		$next_billing = (string) ( $body['next_billing_date'] ?? '' );
-		$lic_status   = (string) ( $body['status'] ?? '' );
+		// Prefer `license_status` (used by /plugin/activate, where the
+		// top-level `status` field is the "ok" envelope). Fall back to
+		// `status` for endpoints that don't carry an envelope. Any value
+		// of "ok" is treated as missing — it's the envelope, not the
+		// license state.
+		$lic_status = (string) ( $body['license_status'] ?? $body['status'] ?? '' );
+		if ( 'ok' === $lic_status ) {
+			$lic_status = '';
+		}
 
 		update_option( self::OPTION_KEY, $license_key, false );
 		if ( '' !== $pid ) {
