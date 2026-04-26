@@ -29,6 +29,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 		add_action( 'wp_ajax_shopwalk_activate', array( $this, 'ajax_activate' ) );
 		add_action( 'wp_ajax_shopwalk_test_license', array( $this, 'ajax_test_license' ) );
 		add_action( 'wp_ajax_shopwalk_disconnect', array( $this, 'ajax_disconnect' ) );
+		add_action( 'wp_ajax_shopwalk_toggle_discovery', array( $this, 'ajax_toggle_discovery' ) );
 		add_action( 'wp_ajax_shopwalk_sync_status', array( $this, 'ajax_sync_status' ) );
 		add_action( 'wp_ajax_shopwalk_payments_status', array( $this, 'ajax_payments_status' ) );
 	}
@@ -62,6 +63,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 						'activate'        => wp_create_nonce( 'shopwalk_activate' ),
 						'test_license'    => wp_create_nonce( 'shopwalk_test_license' ),
 						'disconnect'      => wp_create_nonce( 'shopwalk_disconnect' ),
+						'toggle_discovery' => wp_create_nonce( 'shopwalk_toggle_discovery' ),
 						'sync_status'     => wp_create_nonce( 'shopwalk_sync_status' ),
 						'payments_status' => wp_create_nonce( 'shopwalk_payments_status' ),
 						'upgrade_url'     => wp_create_nonce( 'shopwalk_upgrade_url' ),
@@ -356,6 +358,26 @@ final class WooCommerce_UCP_Admin_Dashboard {
 					</div>
 				<?php endif; ?>
 
+				<?php
+				$is_paused = class_exists( 'Shopwalk_License' ) && Shopwalk_License::is_discovery_paused();
+				?>
+				<div class="sw-discovery-toggle">
+					<label class="sw-toggle-row">
+						<input
+							type="checkbox"
+							id="sw-discovery-toggle"
+							<?php checked( ! $is_paused ); ?>
+						/>
+						<span class="sw-toggle-label">
+							<?php esc_html_e( 'Allow Shopwalk to surface my store in AI discovery', 'woocommerce-ucp' ); ?>
+						</span>
+					</label>
+					<p class="sw-muted sw-toggle-help">
+						<?php esc_html_e( 'When off, your store and products are hidden from search, AI shopping, and store pages. Plugin stays connected; existing orders are unaffected. You can flip this back on any time.', 'woocommerce-ucp' ); ?>
+					</p>
+					<span class="sw-muted" id="sw-discovery-status"></span>
+				</div>
+
 				<p>
 					<a href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/dashboard' ); ?>" class="button" target="_blank" rel="noopener">
 						<?php esc_html_e( 'Open Partner Portal →', 'woocommerce-ucp' ); ?>
@@ -395,6 +417,11 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			.sw-upgrade-cta { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; }
 			.sw-disconnect-link { color: #991b1b; text-decoration: none; margin-left: 12px; font-size: 13px; }
 			.sw-disconnect-link:hover { text-decoration: underline; }
+			.sw-discovery-toggle { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+			.sw-toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+			.sw-toggle-row input[type="checkbox"] { transform: scale(1.2); }
+			.sw-toggle-label { font-weight: 500; }
+			.sw-toggle-help { margin: 6px 0 0; font-size: 12px; }
 			.sw-check-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
 			.sw-check-row:last-child { border-bottom: 0; }
 		</style>
@@ -633,6 +660,31 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			postAjax('shopwalk_disconnect', { nonce: s.nonces.disconnect }).then(function (resp) {
 				if (resp && resp.success) window.location.reload();
 				else alert((resp && resp.data && resp.data.message) || 'Disconnect failed.');
+			});
+		});
+	}
+
+	// ── Pause/Resume AI discovery ──────────────────────────────────────
+	var discoveryToggle = $('sw-discovery-toggle');
+	var discoveryStatus = $('sw-discovery-status');
+	if (discoveryToggle) {
+		discoveryToggle.addEventListener('change', function () {
+			var enable = discoveryToggle.checked;
+			var prev = !enable;
+			if (!enable && !confirm('Pause AI discovery? Your store and products will be hidden from search, AI shopping, and store pages within ~2 minutes. Existing orders are unaffected.')) {
+				discoveryToggle.checked = true;
+				return;
+			}
+			discoveryToggle.disabled = true;
+			if (discoveryStatus) discoveryStatus.textContent = enable ? 'Resuming…' : 'Pausing…';
+			postAjax('shopwalk_toggle_discovery', { nonce: s.nonces.toggle_discovery, enable: enable ? '1' : '0' }).then(function (resp) {
+				discoveryToggle.disabled = false;
+				if (resp && resp.success) {
+					if (discoveryStatus) discoveryStatus.textContent = enable ? 'Discovery resumed.' : 'Discovery paused.';
+				} else {
+					discoveryToggle.checked = prev;
+					if (discoveryStatus) discoveryStatus.textContent = (resp && resp.data && resp.data.message) || 'Failed.';
+				}
 			});
 		});
 	}
@@ -1202,5 +1254,35 @@ JS;
 		delete_option( 'shopwalk_sync_history' );
 
 		wp_send_json_success( array( 'message' => 'Disconnected from Shopwalk.' ) );
+	}
+
+	/**
+	 * AJAX: pause or resume AI discovery for the connected store.
+	 *
+	 * Body: enable=1 to resume, enable=0 to pause.
+	 */
+	public function ajax_toggle_discovery(): void {
+		check_ajax_referer( 'shopwalk_toggle_discovery', 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ), 403 );
+		}
+		if ( ! class_exists( 'Shopwalk_License' ) ) {
+			wp_send_json_error( array( 'message' => 'Shopwalk not connected.' ), 400 );
+		}
+		$enable = isset( $_POST['enable'] ) && '1' === $_POST['enable'];
+		$ok = $enable ? Shopwalk_License::resume_discovery() : Shopwalk_License::pause_discovery();
+		if ( ! $ok ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Could not reach Shopwalk. Try again in a moment.', 'woocommerce-ucp' ),
+				),
+				502
+			);
+		}
+		wp_send_json_success(
+			array(
+				'paused' => ! $enable,
+			)
+		);
 	}
 }

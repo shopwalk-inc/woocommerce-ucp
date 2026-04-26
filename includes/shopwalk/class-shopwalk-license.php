@@ -247,6 +247,63 @@ final class Shopwalk_License {
 	 *
 	 * @return void
 	 */
+	/**
+	 * The discovery-paused option name. Reflects whether the merchant has
+	 * paused AI discoverability from the in-plugin toggle.
+	 */
+	private const OPTION_DISCOVERY_PAUSED = 'shopwalk_discovery_paused';
+
+	/**
+	 * Returns true when the merchant has paused AI discoverability.
+	 */
+	public static function is_discovery_paused(): bool {
+		return (bool) get_option( self::OPTION_DISCOVERY_PAUSED, false );
+	}
+
+	/**
+	 * Best-effort POST to /api/v1/plugin/discovery/disable.
+	 * Sets the local option on success so the toggle reflects the API state
+	 * without a round-trip on every render.
+	 *
+	 * @return bool true on API success.
+	 */
+	public static function pause_discovery(): bool {
+		return self::call_discovery_endpoint( 'disable', true );
+	}
+
+	/**
+	 * Inverse of pause_discovery.
+	 */
+	public static function resume_discovery(): bool {
+		return self::call_discovery_endpoint( 'enable', false );
+	}
+
+	private static function call_discovery_endpoint( string $action, bool $next_paused ): bool {
+		$key = self::key();
+		if ( '' === $key ) {
+			return false;
+		}
+		$resp = wp_remote_post(
+			SHOPWALK_API_BASE . '/plugin/discovery/' . $action,
+			array(
+				'timeout' => 5,
+				'headers' => array(
+					'Content-Type'     => 'application/json',
+					'X-SW-License-Key' => $key,
+				),
+				'body'    => wp_json_encode( array( 'plugin_key' => $key ) ),
+			)
+		);
+		if ( is_wp_error( $resp ) ) {
+			return false;
+		}
+		if ( wp_remote_retrieve_response_code( $resp ) >= 300 ) {
+			return false;
+		}
+		update_option( self::OPTION_DISCOVERY_PAUSED, $next_paused, false );
+		return true;
+	}
+
 	public static function deactivate(): void {
 		$key = self::key();
 		if ( '' !== $key ) {
@@ -269,6 +326,7 @@ final class Shopwalk_License {
 		delete_option( self::OPTION_NEXT_BILLING );
 		update_option( self::OPTION_LICENSE_STATUS, 'unlicensed', false );
 		delete_option( self::OPTION_LAST_HEARTBEAT );
+		delete_option( self::OPTION_DISCOVERY_PAUSED );
 		do_action( 'shopwalk_license_deactivated' );
 	}
 }

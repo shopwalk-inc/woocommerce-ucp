@@ -6,7 +6,7 @@ Tested up to: 6.8
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.0.46
+Stable tag: 3.0.47
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -115,6 +115,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Optional Shopwalk connect flow. Enter a free Shopwalk license to enable real-time push sync, brand voice, and Premier listing on shopwalk.com.
 
 == Changelog ==
+
+= 3.0.47 =
+* Add a "Pause discovery" toggle to the connected-state Shopwalk panel in WP Admin. Merchants can hide their store and products from AI search / shopping / store pages without disconnecting the plugin or losing their license binding. POSTs to the new `/api/v1/plugin/discovery/{disable,enable}` endpoints; mirrors the API state to a local `shopwalk_discovery_paused` option so the toggle reflects current state without a round-trip on every render. Existing orders are unaffected; sync pauses while discovery is paused.
 
 = 3.0.46 =
 * Wire the WP Admin dashboard to live license state instead of hardcoded literals. The "Connected" badge on the Shopwalk panel and the License → Status pill now reflect the real license status returned by shopwalk-api (`active` | `expired` | `revoked`); the green pill flips to red on revocation rather than always reading "Active".
