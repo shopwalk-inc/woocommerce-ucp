@@ -84,7 +84,9 @@ final class WooCommerce_UCP {
 		require_once $dir . 'class-ucp-response.php';
 
 		// Payment router + shipped adapters — loaded before checkout so the
-		// /complete handler can dispatch to them.
+		// /complete handler can dispatch to them. Interface goes first
+		// (the router and concrete adapter both implement it).
+		require_once $dir . 'interface-ucp-payment-adapter.php';
 		require_once $dir . 'class-ucp-payment-router.php';
 		require_once $dir . 'class-ucp-payment-adapter-stripe.php';
 
@@ -139,7 +141,7 @@ final class WooCommerce_UCP {
 		// hook when Shopwalk_License wasn't loaded yet).
 		if ( get_option( 'shopwalk_license_needs_activation' ) === '1' ) {
 			$key = Shopwalk_License::key();
-			if ( $key !== '' ) {
+			if ( '' !== $key ) {
 				$result = Shopwalk_License::activate( $key );
 				if ( $result['ok'] ?? false ) {
 					delete_option( 'shopwalk_license_needs_activation' );
@@ -182,7 +184,7 @@ final class WooCommerce_UCP {
 	 */
 	public function is_shopwalk_connected(): bool {
 		$key = (string) get_option( 'shopwalk_license_key', '' );
-		return $key !== '' && (
+		return '' !== $key && (
 			str_starts_with( $key, 'sw_lic_' ) ||
 			str_starts_with( $key, 'sw_site_' )
 		);
@@ -203,18 +205,20 @@ final class WooCommerce_UCP {
 		require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/core/class-ucp-signing.php';
 		UCP_Signing::ensure_store_keypair();
 
-		// Schedule cron jobs for session cleanup + webhook delivery.
+		// Schedule hourly cron backstops for session cleanup + queue flushers.
+		// The queue flushers also fire on demand via wp_schedule_single_event
+		// — see UCP_Webhook_Delivery::enqueue_event_for_order() and
+		// Shopwalk_Sync::push_to_queue() — so organic events drain within
+		// seconds. The hourly recurrence is purely a worst-case backstop
+		// for events queued during a WP-Cron outage.
 		if ( ! wp_next_scheduled( 'shopwalk_ucp_session_cleanup' ) ) {
 			wp_schedule_event( time() + 600, 'hourly', 'shopwalk_ucp_session_cleanup' );
 		}
 		if ( ! wp_next_scheduled( 'shopwalk_ucp_webhook_flush' ) ) {
-			wp_schedule_event( time() + 60, 'shopwalk_ucp_minute', 'shopwalk_ucp_webhook_flush' );
+			wp_schedule_event( time() + 300, 'hourly', 'shopwalk_ucp_webhook_flush' );
 		}
-
-		// Tier 2: keep the legacy queue cron registered too — only fires
-		// when the Shopwalk module is loaded (no-op otherwise).
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) ) {
-			wp_schedule_event( time() + 300, 'shopwalk_ucp_five_minutes', 'shopwalk_flush_queue' );
+			wp_schedule_event( time() + 300, 'hourly', 'shopwalk_flush_queue' );
 		}
 
 		// Write static /.well-known/ucp.php for reliable discovery on
@@ -334,36 +338,29 @@ HTACCESS;
 	 * @return void
 	 */
 	public static function remove_well_known_files(): void {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		WP_Filesystem();
+		global $wp_filesystem;
+		if ( ! $wp_filesystem ) {
+			return; // Filesystem credentials prompt; nothing we can do here.
+		}
+
 		$dir = ABSPATH . '.well-known';
 		foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
 			$path = $dir . '/' . $file;
-			if ( file_exists( $path ) ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-				@unlink( $path );
+			if ( $wp_filesystem->exists( $path ) ) {
+				$wp_filesystem->delete( $path );
 			}
 		}
 		$htaccess = $dir . '/.htaccess';
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess to check if managed by this plugin.
-		if ( file_exists( $htaccess ) && ( str_contains( (string) file_get_contents( $htaccess ), 'woocommerce-ucp plugin' ) || str_contains( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-			@unlink( $htaccess );
+		if ( $wp_filesystem->exists( $htaccess ) ) {
+			$contents = (string) $wp_filesystem->get_contents( $htaccess );
+			if ( str_contains( $contents, 'woocommerce-ucp plugin' ) || str_contains( $contents, 'shopwalk-ai plugin' ) ) {
+				$wp_filesystem->delete( $htaccess );
+			}
 		}
 	}
 }
 
-// Custom cron intervals — registered once globally so the activation hook
-// can schedule jobs with these names regardless of which subsystem owns them.
-add_filter(
-	'cron_schedules',
-	static function ( array $schedules ): array {
-		$schedules['shopwalk_ucp_minute'] = array(
-			'interval' => 60,
-			'display'  => esc_html__( 'Every Minute (WooCommerce UCP)', 'woocommerce-ucp' ),
-		);
-		$schedules['shopwalk_ucp_five_minutes'] = array(
-			'interval' => 300,
-			'display'  => esc_html__( 'Every 5 Minutes (WooCommerce UCP)', 'woocommerce-ucp' ),
-		);
-		return $schedules;
-	}
-);
+// No custom cron intervals — we use built-in `hourly` as the worst-case
+// backstop and wp_schedule_single_event for instant drain on enqueue.

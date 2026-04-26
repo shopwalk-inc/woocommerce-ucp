@@ -29,13 +29,15 @@ final class UCP_Store {
 		$total          = (int) ( $product_counts->publish ?? 0 );
 
 		// Count in-stock products
-		$in_stock = (int) wc_get_products( array(
-			'status'       => 'publish',
-			'stock_status' => 'instock',
-			'limit'        => 0,
-			'return'       => 'ids',
-			'paginate'     => true,
-		) )->total;
+		$in_stock = (int) wc_get_products(
+			array(
+				'status'       => 'publish',
+				'stock_status' => 'instock',
+				'limit'        => 0,
+				'return'       => 'ids',
+				'paginate'     => true,
+			)
+		)->total;
 
 		$license_key = get_option( 'shopwalk_license_key', '' );
 

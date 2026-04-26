@@ -23,6 +23,12 @@ jobs:
 
       - name: Install PHP_CodeSniffer + WordPress standards
         run: |
+          # dealerdirect/phpcodesniffer-composer-installer is a Composer
+          # plugin and Composer 2.2+ refuses to install plugins unless
+          # they're explicitly allow-listed. Project composer.json allow-
+          # lists it locally, but `composer global` uses ~/.composer
+          # instead — allow-list it there too before installing.
+          composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer global require --dev \
             squizlabs/php_codesniffer:^3.10 \
             wp-coding-standards/wpcs:^3.1 \
@@ -33,10 +39,10 @@ jobs:
       - name: Verify WordPress standard is installed
         run: phpcs -i
 
-      - name: Run phpcs (WordPress ruleset)
+      - name: Run phpcs (project ruleset)
         run: |
-          phpcs --standard=WordPress \
-                --extensions=php \
-                --ignore=vendor/,tests/,node_modules/ \
-                --report=checkstyle \
-                -q . | cs2pr
+          # Use the project's phpcs.xml (which extends WordPress + adds
+          # the relaxations / capability allow-list documented in-file).
+          # Don't pass --standard inline — phpcs auto-discovers phpcs.xml
+          # in cwd, which is what we want.
+          phpcs --report=checkstyle -q | cs2pr

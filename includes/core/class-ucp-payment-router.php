@@ -21,45 +21,10 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Contract every payment adapter implements.
- */
-interface UCP_Payment_Adapter_Interface {
-
-	/**
-	 * Short, stable identifier ("stripe", "ppcp", "square", …).
-	 */
-	public function id(): string;
-
-	/**
-	 * Whether this adapter is usable right now. Typically checks that the
-	 * corresponding WC gateway plugin is installed and has credentials set.
-	 */
-	public function is_ready(): bool;
-
-	/**
-	 * Authorize payment for a WooCommerce order using an agent-supplied
-	 * credential. MUST return `true` on success or a `WP_Error` on failure.
-	 * MUST advance the WC order payment state (via `$order->payment_complete()`
-	 * or `$order->update_status()`) so WC and downstream webhook listeners
-	 * observe the transition.
-	 *
-	 * @param WC_Order $order   The already-built order.
-	 * @param array    $payment The UCP session's payment object.
-	 * @return true|WP_Error
-	 */
-	public function authorize( $order, array $payment );
-
-	/**
-	 * Discovery hint published at /.well-known/ucp so agents can pick a
-	 * gateway this store accepts before creating a session.
-	 *
-	 * @return array
-	 */
-	public function discovery_hint(): array;
-}
-
-/**
  * UCP_Payment_Router — central adapter lookup + dispatch.
+ *
+ * Implements the contract in interface-ucp-payment-adapter.php (loaded
+ * by the bootstrap before this class).
  */
 final class UCP_Payment_Router {
 
@@ -131,7 +96,7 @@ final class UCP_Payment_Router {
 	 */
 	public static function authorize( $order, array $payment ) {
 		$gateway = isset( $payment['gateway'] ) ? (string) $payment['gateway'] : '';
-		if ( $gateway === '' ) {
+		if ( '' === $gateway ) {
 			return new WP_Error(
 				'missing_gateway',
 				'payment.gateway is required — specify which WooCommerce payment gateway to use (e.g. "stripe").',

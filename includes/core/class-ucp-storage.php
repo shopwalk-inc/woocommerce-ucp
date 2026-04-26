@@ -44,11 +44,11 @@ final class UCP_Storage {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$clients          = self::table( 'oauth_clients' );
-		$tokens           = self::table( 'oauth_tokens' );
-		$sessions         = self::table( 'checkout_sessions' );
-		$subscriptions    = self::table( 'webhook_subscriptions' );
-		$queue            = self::table( 'webhook_queue' );
+		$clients       = self::table( 'oauth_clients' );
+		$tokens        = self::table( 'oauth_tokens' );
+		$sessions      = self::table( 'checkout_sessions' );
+		$subscriptions = self::table( 'webhook_subscriptions' );
+		$queue         = self::table( 'webhook_queue' );
 
 		dbDelta(
 			"CREATE TABLE {$clients} (

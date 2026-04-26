@@ -41,7 +41,7 @@ final class UCP_OAuth_Clients {
 		$ucp_profile_url = (string) ( $args['ucp_profile_url'] ?? '' );
 
 		// If a client already exists for this UCP profile, update it.
-		if ( $ucp_profile_url !== '' ) {
+		if ( '' !== $ucp_profile_url ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$existing = $wpdb->get_row(
 				$wpdb->prepare(
@@ -63,7 +63,10 @@ final class UCP_OAuth_Clients {
 					),
 					array( 'client_id' => $existing->client_id )
 				);
-				return array( 'client_id' => $existing->client_id, 'client_secret' => null );
+				return array(
+					'client_id'     => $existing->client_id,
+					'client_secret' => null,
+				);
 			}
 		}
 
@@ -87,7 +90,10 @@ final class UCP_OAuth_Clients {
 			)
 		);
 
-		return array( 'client_id' => $client_id, 'client_secret' => $client_secret );
+		return array(
+			'client_id'     => $client_id,
+			'client_secret' => $client_secret,
+		);
 	}
 
 	/**
@@ -108,7 +114,7 @@ final class UCP_OAuth_Clients {
 			),
 			ARRAY_A
 		);
-		return $row ?: null;
+		return $row ? $row : null;
 	}
 
 	/**

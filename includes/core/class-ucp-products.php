@@ -38,14 +38,16 @@ final class UCP_Products {
 		$page     = max( 1, (int) $request->get_param( 'page' ) );
 		$per_page = min( 250, max( 1, (int) $request->get_param( 'per_page' ) ) );
 
-		$query = wc_get_products( array(
-			'status'   => 'publish',
-			'limit'    => $per_page,
-			'page'     => $page,
-			'paginate' => true,
-			'orderby'  => 'ID',
-			'order'    => 'ASC',
-		) );
+		$query = wc_get_products(
+			array(
+				'status'   => 'publish',
+				'limit'    => $per_page,
+				'page'     => $page,
+				'paginate' => true,
+				'orderby'  => 'ID',
+				'order'    => 'ASC',
+			)
+		);
 
 		$products = array();
 		foreach ( $query->products as $product ) {

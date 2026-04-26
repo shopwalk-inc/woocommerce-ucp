@@ -30,13 +30,13 @@ final class Shopwalk_Dashboard_Panel {
 		?>
 		<div class="ucp-card">
 			<h2><?php esc_html_e( 'Shopwalk', 'woocommerce-ucp' ); ?> <span class="status-pill ok">✅ Connected</span></h2>
-			<?php if ( $licenseKey !== '' ) : ?>
+			<?php if ( '' !== $licenseKey ) : ?>
 				<p>
 					<strong><?php esc_html_e( 'License Key:', 'woocommerce-ucp' ); ?></strong>
 					<code><?php echo esc_html( $licenseKey ); ?></code>
 				</p>
 			<?php endif; ?>
-			<?php if ( $pid !== '' ) : ?>
+			<?php if ( '' !== $pid ) : ?>
 				<p>
 					<strong><?php esc_html_e( 'Partner ID:', 'woocommerce-ucp' ); ?></strong>
 					<code><?php echo esc_html( $pid ); ?></code>

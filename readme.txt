@@ -2,11 +2,11 @@
 Contributors: shopwalkinc
 Tags: woocommerce, ai, ucp, agent, commerce
 Requires at least: 6.0
-Tested up to: 6.7
-Requires PHP: 8.0
+Tested up to: 6.8
+Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.0.44
+Stable tag: 3.0.45
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -107,7 +107,23 @@ This data is used to index the store on the Shopwalk shopping network. **No data
 Shopwalk Terms of Service: https://shopwalk.com/terms
 Shopwalk Privacy Policy: https://shopwalk.com/privacy
 
+== Screenshots ==
+
+1. WooCommerce \u2192 UCP dashboard. UCP status panel with self-test diagnostic + the optional Shopwalk connection card.
+2. Self-test diagnostic results. 8 automated checks covering WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery doc.
+3. Payments section. The "Pay via UCP" gateway is registered automatically; merchants enable it from the standard WooCommerce \u2192 Settings \u2192 Payments screen.
+4. Optional Shopwalk connect flow. Enter a free Shopwalk license to enable real-time push sync, brand voice, and Premier listing on shopwalk.com.
+
 == Changelog ==
+
+= 3.0.45 =
+* WP.org compliance pass: bump WC tested up to 9.8, rename `shopwalk_ai_*` cron hooks to `shopwalk_ucp_*`, add WordPress Coding Standards (`phpcs.xml`), create `languages/` directory for translations.
+* Bump `Tested up to: 6.8`. Generate `languages/woocommerce-ucp.pot` for translators.
+* Add `Screenshots` section to readme.
+* Bump `Requires PHP: 8.1` (was 8.0). PHP 8.0 has been EOL since November 2023; the dev toolchain (PHPUnit 10+, sebastian/*) requires 8.1 as well. CI matrix now tests 8.1 / 8.2 / 8.3.
+* Cron refactor: drop the custom 60-sec interval. Queue flushers (`shopwalk_ucp_webhook_flush`, `shopwalk_flush_queue`) now use built-in `hourly` as the worst-case backstop and fire on demand via `wp_schedule_single_event` (~5 sec) on every enqueue. Organic events still drain within seconds; "Sync Now" stays synchronous.
+* Replace `@unlink()` calls in `uninstall.php` and the well-known cleanup with `WP_Filesystem`.
+* Split `UCP_Payment_Adapter_Interface` into `interface-ucp-payment-adapter.php` (one class/interface per file).
 
 = 3.0.0 =
 **Complete rewrite as a UCP-compliant adapter.** The plugin's primary identity is now "the UCP adapter for WooCommerce." Shopwalk integration is one of several features layered on top.

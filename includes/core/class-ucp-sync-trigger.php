@@ -115,9 +115,9 @@ class UCP_Sync_Trigger {
 
 		return new WP_REST_Response(
 			array(
-				'status'  => $scheduled ? 'scheduled' : 'failed',
-				'reason'  => $reason,
-				'method'  => 'wp_cron',
+				'status' => $scheduled ? 'scheduled' : 'failed',
+				'reason' => $reason,
+				'method' => 'wp_cron',
 			),
 			$scheduled ? 202 : 500
 		);

@@ -55,19 +55,24 @@ wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 
 // ── Remove /.well-known/ files ─────────────────────────────────────────────
-$well_known_dir = ABSPATH . '.well-known';
-foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
-	$path = $well_known_dir . '/' . $file;
-	if ( file_exists( $path ) ) {
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-		@unlink( $path );
+require_once ABSPATH . 'wp-admin/includes/file.php';
+WP_Filesystem();
+global $wp_filesystem;
+if ( $wp_filesystem ) {
+	$well_known_dir = ABSPATH . '.well-known';
+	foreach ( array( 'ucp.php', 'oauth-authorization-server.php' ) as $file ) {
+		$file_path = $well_known_dir . '/' . $file;
+		if ( $wp_filesystem->exists( $file_path ) ) {
+			$wp_filesystem->delete( $file_path );
+		}
 	}
-}
-$htaccess = $well_known_dir . '/.htaccess';
-// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess to check if managed by this plugin.
-if ( file_exists( $htaccess ) && ( false !== strpos( (string) file_get_contents( $htaccess ), 'woocommerce-ucp plugin' ) || false !== strpos( (string) file_get_contents( $htaccess ), 'shopwalk-ai plugin' ) ) ) {
-	// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-	@unlink( $htaccess );
+	$htaccess = $well_known_dir . '/.htaccess';
+	if ( $wp_filesystem->exists( $htaccess ) ) {
+		$contents = (string) $wp_filesystem->get_contents( $htaccess );
+		if ( false !== strpos( $contents, 'woocommerce-ucp plugin' ) || false !== strpos( $contents, 'shopwalk-ai plugin' ) ) {
+			$wp_filesystem->delete( $htaccess );
+		}
+	}
 }
 
 // Clear transients.

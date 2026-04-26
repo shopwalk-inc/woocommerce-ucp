@@ -25,13 +25,17 @@ final class SigningTest extends TestCase {
 		// In-memory option store so ensure_store_keypair() / store_secret()
 		// behave like WP options without a real DB.
 		$options = array();
-		Functions\when( 'get_option' )->alias( function ( $key, $default = false ) use ( &$options ) {
-			return $options[ $key ] ?? $default;
-		} );
-		Functions\when( 'update_option' )->alias( function ( $key, $value ) use ( &$options ) {
-			$options[ $key ] = $value;
-			return true;
-		} );
+		Functions\when( 'get_option' )->alias(
+			function ( $key, $default = false ) use ( &$options ) {
+				return $options[ $key ] ?? $default;
+			}
+		);
+		Functions\when( 'update_option' )->alias(
+			function ( $key, $value ) use ( &$options ) {
+				$options[ $key ] = $value;
+				return true;
+			}
+		);
 		Functions\when( 'wp_generate_password' )->alias( fn( $len = 12 ) => str_repeat( 'x', $len ) );
 	}
 

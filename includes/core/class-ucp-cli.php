@@ -49,11 +49,13 @@ class UCP_CLI {
 
 		$scope_array = array_map( 'trim', explode( ',', $scopes ) );
 
-		$result = UCP_OAuth_Clients::register( array(
-			'name'           => $name,
-			'redirect_uris'  => array( $redirect_uri ),
-			'scopes_allowed' => $scope_array,
-		) );
+		$result = UCP_OAuth_Clients::register(
+			array(
+				'name'           => $name,
+				'redirect_uris'  => array( $redirect_uri ),
+				'scopes_allowed' => $scope_array,
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			WP_CLI::error( $result->get_error_message() );
@@ -102,8 +104,8 @@ class UCP_CLI {
 			$rows[] = array(
 				'Client ID'    => $c['client_id'],
 				'Name'         => $c['name'],
-				'Redirect URI' => implode( ', ', $uris ?: array() ),
-				'Scopes'       => implode( ', ', $scopes ?: array() ),
+				'Redirect URI' => implode( ', ', $uris ? $uris : array() ),
+				'Scopes'       => implode( ', ', $scopes ? $scopes : array() ),
 				'Created'      => $c['created_at'],
 			);
 		}
@@ -145,12 +147,14 @@ class UCP_CLI {
 		// Also revoke all tokens for this client
 		$token_table = UCP_Storage::table( 'oauth_tokens' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query( $wpdb->prepare(
+		$wpdb->query(
+			$wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"UPDATE {$token_table} SET revoked_at = %s WHERE client_id = %s AND revoked_at IS NULL",
-			current_time( 'mysql', true ),
-			$client_id
-		) );
+				"UPDATE {$token_table} SET revoked_at = %s WHERE client_id = %s AND revoked_at IS NULL",
+				current_time( 'mysql', true ),
+				$client_id
+			)
+		);
 
 		WP_CLI::success( "Client '{$client_id}' deleted and all tokens revoked." );
 	}

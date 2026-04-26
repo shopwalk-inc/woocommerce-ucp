@@ -52,7 +52,7 @@ final class UCP_Signing {
 	 */
 	public static function store_secret(): string {
 		$secret = (string) get_option( self::STORE_SECRET_OPTION, '' );
-		if ( $secret === '' ) {
+		if ( '' === $secret ) {
 			self::ensure_store_keypair();
 			$secret = (string) get_option( self::STORE_SECRET_OPTION, '' );
 		}
@@ -95,10 +95,10 @@ final class UCP_Signing {
 	 */
 	public static function verify_request( WP_REST_Request $request, string $secret ): bool {
 		$signature = (string) $request->get_header( 'request_signature' );
-		if ( $signature === '' ) {
+		if ( '' === $signature ) {
 			$signature = (string) $request->get_header( 'x_request_signature' );
 		}
-		if ( $signature === '' ) {
+		if ( '' === $signature ) {
 			return true; // Caller decides whether unsigned requests are allowed.
 		}
 		return self::verify( $request->get_body(), $signature, $secret );
@@ -120,17 +120,17 @@ final class UCP_Signing {
 	 */
 	public static function verify_request_jwt( WP_REST_Request $request, string $secret, string $jwk_json = '' ): bool {
 		$signature = (string) $request->get_header( 'request_signature' );
-		if ( $signature === '' ) {
+		if ( '' === $signature ) {
 			$signature = (string) $request->get_header( 'x_request_signature' );
 		}
-		if ( $signature === '' ) {
+		if ( '' === $signature ) {
 			return true;
 		}
 
 		// Try JWT-RS256 first if JWK is available and signature looks like a JWT (3 dots)
-		if ( $jwk_json !== '' && substr_count( $signature, '.' ) === 2 ) {
+		if ( '' !== $jwk_json && substr_count( $signature, '.' ) === 2 ) {
 			$result = self::verify_jwt_rs256( $request->get_body(), $signature, $jwk_json );
-			if ( $result !== null ) {
+			if ( null !== $result ) {
 				return $result;
 			}
 			// If JWT verification inconclusive (malformed), fall through to HMAC
@@ -162,9 +162,9 @@ final class UCP_Signing {
 
 		// Build the signing input — for detached payload, use the raw payload
 		// encoded as base64url in the signing input position
-		$payload_b64 = rtrim( strtr( base64_encode( $payload ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for JWT detached payload per RFC 7797.
+		$payload_b64   = rtrim( strtr( base64_encode( $payload ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for JWT detached payload per RFC 7797.
 		$signing_input = $parts[0] . '.' . $payload_b64;
-		$sig = self::base64url_decode( $parts[2] );
+		$sig           = self::base64url_decode( $parts[2] );
 
 		// Parse JWK to PEM
 		$jwk = json_decode( $jwk_json, true );
@@ -173,7 +173,7 @@ final class UCP_Signing {
 		}
 
 		$pem = self::jwk_to_pem( $jwk );
-		if ( $pem === null ) {
+		if ( null === $pem ) {
 			return null;
 		}
 
@@ -183,7 +183,7 @@ final class UCP_Signing {
 		}
 
 		$valid = openssl_verify( $signing_input, $sig, $key, OPENSSL_ALGO_SHA256 );
-		return $valid === 1;
+		return 1 === $valid;
 	}
 
 	/**
@@ -206,9 +206,9 @@ final class UCP_Signing {
 		$seq   = self::der_sequence( $n_der . $e_der );
 
 		// Wrap in SubjectPublicKeyInfo
-		$algo_oid = hex2bin( '300d06092a864886f70d0101010500' ); // RSA OID
+		$algo_oid   = hex2bin( '300d06092a864886f70d0101010500' ); // RSA OID
 		$bit_string = chr( 0x03 ) . self::der_length( strlen( $seq ) + 1 ) . chr( 0x00 ) . $seq;
-		$spki = self::der_sequence( $algo_oid . $bit_string );
+		$spki       = self::der_sequence( $algo_oid . $bit_string );
 
 		return "-----BEGIN PUBLIC KEY-----\n" . chunk_split( base64_encode( $spki ), 64, "\n" ) . "-----END PUBLIC KEY-----\n"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PEM public key encoding per RFC 7468.
 	}
@@ -222,7 +222,7 @@ final class UCP_Signing {
 			return chr( $len );
 		}
 		$bytes = '';
-		$tmp = $len;
+		$tmp   = $len;
 		while ( $tmp > 0 ) {
 			$bytes = chr( $tmp & 0xff ) . $bytes;
 			$tmp >>= 8;

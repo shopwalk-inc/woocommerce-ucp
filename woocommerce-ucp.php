@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce UCP — Universal Commerce Protocol
  * Plugin URI:  https://github.com/shopwalk-inc/woocommerce-ucp
  * Description: Make any WooCommerce store fully purchasable by UCP-compliant AI shopping agents. Implements the Universal Commerce Protocol (ucp.dev) — checkout, OAuth identity, orders, webhooks. Optional Shopwalk network integration available with a free license.
- * Version:     3.0.44
+ * Version:     3.0.45
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -12,7 +12,7 @@
  * Text Domain: woocommerce-ucp
  * Domain Path: /languages
  * Requires at least: 6.0
- * Requires PHP: 8.0
+ * Requires PHP: 8.1
  * WC requires at least: 8.0
  * WC tested up to: 9.8
  *

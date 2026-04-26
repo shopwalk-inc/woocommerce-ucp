@@ -54,19 +54,19 @@ final class UCP_Discovery {
 		$version = UCP_Response::VERSION;
 
 		$services = array(
-			'dev.ucp.shopping.checkout' => array(
+			'dev.ucp.shopping.checkout'       => array(
 				'version'   => $version,
 				'spec'      => 'https://ucp.dev/latest/specification/checkout-rest/',
 				'transport' => 'rest',
 				'endpoint'  => $base,
 			),
-			'dev.ucp.shopping.order' => array(
+			'dev.ucp.shopping.order'          => array(
 				'version'   => $version,
 				'spec'      => 'https://ucp.dev/latest/specification/order/',
 				'transport' => 'rest',
 				'endpoint'  => $base,
 			),
-			'dev.ucp.shopping.catalog' => array(
+			'dev.ucp.shopping.catalog'        => array(
 				'version'   => $version,
 				'spec'      => 'https://ucp.dev/latest/specification/catalog/',
 				'transport' => 'rest',
@@ -95,7 +95,7 @@ final class UCP_Discovery {
 
 		return new WP_REST_Response(
 			array(
-				'ucp' => array(
+				'ucp'      => array(
 					'version'          => $version,
 					'services'         => $services,
 					'capabilities'     => $capabilities,
@@ -121,15 +121,15 @@ final class UCP_Discovery {
 		$base = get_rest_url( null, UCP_REST_NAMESPACE );
 		return new WP_REST_Response(
 			array(
-				'issuer'                          => (string) home_url(),
-				'authorization_endpoint'          => $base . '/oauth/authorize',
-				'token_endpoint'                  => $base . '/oauth/token',
-				'revocation_endpoint'             => $base . '/oauth/revoke',
-				'userinfo_endpoint'               => $base . '/oauth/userinfo',
-				'response_types_supported'        => array( 'code' ),
-				'grant_types_supported'           => array( 'authorization_code', 'refresh_token' ),
+				'issuer'                                => (string) home_url(),
+				'authorization_endpoint'                => $base . '/oauth/authorize',
+				'token_endpoint'                        => $base . '/oauth/token',
+				'revocation_endpoint'                   => $base . '/oauth/revoke',
+				'userinfo_endpoint'                     => $base . '/oauth/userinfo',
+				'response_types_supported'              => array( 'code' ),
+				'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
 				'token_endpoint_auth_methods_supported' => array( 'client_secret_post' ),
-				'scopes_supported' => array(
+				'scopes_supported'                      => array(
 					'ucp:checkout',
 					'ucp:orders',
 					'ucp:webhooks',

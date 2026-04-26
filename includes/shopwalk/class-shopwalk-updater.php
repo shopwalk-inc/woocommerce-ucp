@@ -127,7 +127,7 @@ final class Shopwalk_Updater {
 	 * @return false|object
 	 */
 	public function plugin_info( $result, $action, $args ) {
-		if ( $action !== 'plugin_information' || ( $args->slug ?? '' ) !== $this->plugin_slug ) {
+		if ( 'plugin_information' !== $action || ( $args->slug ?? '' ) !== $this->plugin_slug ) {
 			return $result;
 		}
 
