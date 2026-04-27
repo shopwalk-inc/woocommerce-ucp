@@ -1126,8 +1126,7 @@ JS;
 			$api_url . '/api/v1/plugin/status',
 			array(
 				'headers' => array(
-					'X-SW-License-Key' => $license_key,
-					'X-SW-Domain'      => $domain ? $domain : home_url(),
+					'X-API-Key' => $license_key,
 				),
 				'timeout' => 5,
 			)

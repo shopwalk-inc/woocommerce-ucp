@@ -162,7 +162,7 @@ final class Shopwalk_License {
 				'timeout' => 15,
 				'headers' => array(
 					'Content-Type'     => 'application/json',
-					'X-SW-License-Key' => $license_key,
+					'X-API-Key' => $license_key,
 					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 				'body'    => wp_json_encode(
@@ -289,7 +289,7 @@ final class Shopwalk_License {
 				'timeout' => 5,
 				'headers' => array(
 					'Content-Type'     => 'application/json',
-					'X-SW-License-Key' => $key,
+					'X-API-Key' => $key,
 				),
 				'body'    => wp_json_encode( array( 'plugin_key' => $key ) ),
 			)
@@ -313,7 +313,7 @@ final class Shopwalk_License {
 					'timeout' => 5,
 					'headers' => array(
 						'Content-Type'     => 'application/json',
-						'X-SW-License-Key' => $key,
+						'X-API-Key' => $key,
 					),
 					'body'    => wp_json_encode( array( 'site_url' => home_url() ) ),
 				)

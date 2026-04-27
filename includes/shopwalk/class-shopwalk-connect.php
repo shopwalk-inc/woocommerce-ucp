@@ -215,8 +215,7 @@ final class Shopwalk_Connect {
 			array(
 				'timeout' => 10,
 				'headers' => array(
-					'X-SW-License-Key' => $key,
-					'X-SW-Domain'      => wp_parse_url( home_url(), PHP_URL_HOST ),
+					'X-API-Key' => $key,
 					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 			)
@@ -263,8 +262,7 @@ final class Shopwalk_Connect {
 			array(
 				'timeout' => 10,
 				'headers' => array(
-					'X-SW-License-Key' => $key,
-					'X-SW-Domain'      => wp_parse_url( home_url(), PHP_URL_HOST ),
+					'X-API-Key' => $key,
 					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 			)

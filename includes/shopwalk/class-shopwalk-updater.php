@@ -268,13 +268,7 @@ final class Shopwalk_Updater {
 
 		// Include license key for authenticated version check.
 		if ( class_exists( 'Shopwalk_License' ) && Shopwalk_License::key() ) {
-			$headers['X-SW-License-Key'] = Shopwalk_License::key();
-		}
-
-		// Include domain for domain-bound license validation.
-		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
-		if ( $domain ) {
-			$headers['X-SW-Domain'] = $domain;
+			$headers['X-API-Key'] = Shopwalk_License::key();
 		}
 
 		$response = wp_remote_get(
