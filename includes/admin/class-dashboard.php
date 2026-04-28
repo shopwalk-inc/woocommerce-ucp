@@ -1218,7 +1218,7 @@ JS;
 		}
 
 		$resp = wp_remote_post(
-			SHOPWALK_API_BASE . '/plugin/probe',
+			SHOPWALK_API_BASE . '/plugin/connectivity',
 			array(
 				'timeout' => 15,
 				'headers' => array(
