@@ -71,6 +71,30 @@ final class Shopwalk_Updater {
 	}
 
 	/**
+	 * Read the current installed version from the plugin file's header.
+	 *
+	 * Using the header (what WP itself reads) instead of the
+	 * WOOCOMMERCE_UCP_VERSION constant means the two can't drift —
+	 * forgetting to bump one used to leave the update loop running
+	 * forever even after a successful upgrade.
+	 *
+	 * Falls back to the constant if get_plugin_data isn't available
+	 * (rare — plugin.php is always loaded in admin context).
+	 */
+	private function current_version(): string {
+		if ( ! function_exists( 'get_plugin_data' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( function_exists( 'get_plugin_data' ) ) {
+			$data = get_plugin_data( WOOCOMMERCE_UCP_PLUGIN_FILE, false, false );
+			if ( ! empty( $data['Version'] ) ) {
+				return (string) $data['Version'];
+			}
+		}
+		return WOOCOMMERCE_UCP_VERSION;
+	}
+
+	/**
 	 * Check for plugin updates.
 	 *
 	 * @param object $transient The update_plugins transient data.
@@ -86,7 +110,10 @@ final class Shopwalk_Updater {
 			return $transient;
 		}
 
-		$current_version = WOOCOMMERCE_UCP_VERSION;
+		// Read version from the plugin header — the source of truth WP itself
+		// uses. Reading the constant (WOOCOMMERCE_UCP_VERSION) instead caused
+		// stuck-update loops every time we forgot to bump both values.
+		$current_version = $this->current_version();
 
 		if ( version_compare( $remote['version'], $current_version, '>' ) ) {
 			// Build download URL with license key as query param so WP's
