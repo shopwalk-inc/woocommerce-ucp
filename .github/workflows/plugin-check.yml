@@ -28,7 +28,12 @@ jobs:
           # category covers i18n_usage; the rest are the same buckets the
           # WP.org reviewer enforces.
           categories: 'general,plugin_repo,security,performance,accessibility'
-          # Errors fail the job; warnings stay visible but don't block.
+          # Mirror .distignore — these files don't ship to WP.org, so
+          # findings against them are noise. tests/ ships nothing; dotfiles
+          # and *.md files are repo housekeeping; build dir + vendor never
+          # exist in production.
+          exclude-directories: 'tests,vendor,node_modules,.github,.git'
+          exclude-files: '.gitignore,.distignore,.editorconfig,.phpcs.xml.dist,phpunit.xml,phpunit.xml.dist,composer.json,composer.lock,package.json,package-lock.json,RELEASE.md,CHANGELOG.md,CONTRIBUTING.md'
           # Submission warnings still need a documented rationale (see
           # RELEASE.md) so the reviewer has our story.
           exclude-checks: ''
