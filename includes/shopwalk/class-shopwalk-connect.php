@@ -215,8 +215,8 @@ final class Shopwalk_Connect {
 			array(
 				'timeout' => 10,
 				'headers' => array(
-					'X-API-Key' => $key,
-					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'X-API-Key'  => $key,
+					'User-Agent' => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 			)
 		);
@@ -262,8 +262,8 @@ final class Shopwalk_Connect {
 			array(
 				'timeout' => 10,
 				'headers' => array(
-					'X-API-Key' => $key,
-					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'X-API-Key'  => $key,
+					'User-Agent' => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 			)
 		);
