@@ -27,9 +27,6 @@ final class Shopwalk_Connect {
 		// OAuth callback — merchant lands back here from shopwalk.com with ?code&state.
 		add_action( 'admin_init', array( __CLASS__, 'handle_oauth_callback' ) );
 
-		// AJAX: launch Stripe Checkout for Pro upgrade.
-		add_action( 'wp_ajax_shopwalk_upgrade_url', array( __CLASS__, 'ajax_upgrade_url' ) );
-
 		// Hourly tier refresh.
 		add_action( self::CRON_HOOK, array( __CLASS__, 'poll_status' ) );
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) && class_exists( 'Shopwalk_License' ) && Shopwalk_License::is_valid() ) {
@@ -184,61 +181,6 @@ final class Shopwalk_Connect {
 		return array(
 			'ok'      => true,
 			'message' => 'connected',
-		);
-	}
-
-	// ── Upgrade to Pro ──────────────────────────────────────────────────────
-
-	/**
-	 * AJAX: fetch a Stripe Checkout URL and return it to the browser.
-	 * Browser then window.location.href = url.
-	 * Body may include plan=monthly|annual (defaults to annual).
-	 */
-	public static function ajax_upgrade_url(): void {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => 'forbidden' ), 403 );
-		}
-		check_ajax_referer( 'shopwalk_upgrade_url', 'nonce' );
-
-		$plan = isset( $_POST['plan'] ) ? sanitize_text_field( wp_unslash( $_POST['plan'] ) ) : 'annual';
-		if ( 'monthly' !== $plan && 'annual' !== $plan ) {
-			$plan = 'annual';
-		}
-
-		$key = class_exists( 'Shopwalk_License' ) ? Shopwalk_License::key() : '';
-		if ( '' === $key ) {
-			wp_send_json_error( array( 'message' => 'not_licensed' ), 400 );
-		}
-
-		$response = wp_remote_get(
-			add_query_arg( array( 'plan' => $plan ), SHOPWALK_API_BASE . '/plugin/upgrade-url' ),
-			array(
-				'timeout' => 10,
-				'headers' => array(
-					'X-API-Key'  => $key,
-					'User-Agent' => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
-				),
-			)
-		);
-		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( array( 'message' => $response->get_error_message() ), 502 );
-		}
-		$status = (int) wp_remote_retrieve_response_code( $response );
-		$body   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		if ( $status >= 300 || empty( $body['url'] ) ) {
-			wp_send_json_error(
-				array(
-					'message' => $body['error'] ?? 'upstream_error',
-					'status'  => $status,
-				),
-				502
-			);
-		}
-		wp_send_json_success(
-			array(
-				'url'  => (string) $body['url'],
-				'plan' => $plan,
-			)
 		);
 	}
 

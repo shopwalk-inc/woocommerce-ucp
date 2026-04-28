@@ -66,7 +66,6 @@ final class WooCommerce_UCP_Admin_Dashboard {
 						'toggle_discovery' => wp_create_nonce( 'shopwalk_toggle_discovery' ),
 						'sync_status'      => wp_create_nonce( 'shopwalk_sync_status' ),
 						'payments_status'  => wp_create_nonce( 'shopwalk_payments_status' ),
-						'upgrade_url'      => wp_create_nonce( 'shopwalk_upgrade_url' ),
 					),
 				)
 			) . ';' . $this->admin_js()
@@ -417,16 +416,14 @@ final class WooCommerce_UCP_Admin_Dashboard {
 							<li><?php esc_html_e( 'Priority Support — phone + email support', 'woocommerce-ucp' ); ?></li>
 						</ul>
 						<p>
-							<button type="button" class="button button-primary sw-upgrade-btn" data-plan="annual">
-								<?php esc_html_e( 'Upgrade to Pro — $278.40/yr', 'woocommerce-ucp' ); ?>
-							</button>
-							<button type="button" class="button sw-upgrade-btn" data-plan="monthly">
-								<?php esc_html_e( 'Monthly — $29/mo', 'woocommerce-ucp' ); ?>
-							</button>
-							<span class="sw-muted" id="sw-upgrade-status" style="margin-left:8px;"></span>
+							<a class="button button-primary"
+							   href="<?php echo esc_url( SHOPWALK_PARTNERS_URL . '/subscribe' ); ?>"
+							   target="_blank" rel="noopener noreferrer">
+								<?php esc_html_e( 'Upgrade to Pro →', 'woocommerce-ucp' ); ?>
+							</a>
 						</p>
 						<p class="sw-muted" style="font-size:12px;margin:8px 0 0;">
-							<?php esc_html_e( '14-day free trial. Cancel any time before day 15 → no charge.', 'woocommerce-ucp' ); ?>
+							<?php esc_html_e( 'Choose your plan in the Shopwalk partner portal. 14-day free trial; cancel any time before day 15.', 'woocommerce-ucp' ); ?>
 						</p>
 					</div>
 				<?php endif; ?>
@@ -704,25 +701,6 @@ final class WooCommerce_UCP_Admin_Dashboard {
 			});
 		});
 	}
-
-	// ── Upgrade to Pro ──────────────────────────────────────────────────
-	var upgradeStatus = $('sw-upgrade-status');
-	document.querySelectorAll('.sw-upgrade-btn').forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			var plan = btn.getAttribute('data-plan') || 'annual';
-			if (upgradeStatus) upgradeStatus.textContent = 'Opening Stripe…';
-			document.querySelectorAll('.sw-upgrade-btn').forEach(function (b) { b.disabled = true; });
-			postAjax('shopwalk_upgrade_url', { nonce: s.nonces.upgrade_url, plan: plan }).then(function (resp) {
-				if (resp && resp.success && resp.data && resp.data.url) {
-					window.location.href = resp.data.url;
-					return;
-				}
-				document.querySelectorAll('.sw-upgrade-btn').forEach(function (b) { b.disabled = false; });
-				if (upgradeStatus) upgradeStatus.textContent = 'Could not start upgrade. ' +
-					((resp && resp.data && resp.data.message) ? '(' + resp.data.message + ')' : '');
-			});
-		});
-	});
 
 	// ── Disconnect ──────────────────────────────────────────────────────
 	var disconnectBtn = $('sw-disconnect-btn');
