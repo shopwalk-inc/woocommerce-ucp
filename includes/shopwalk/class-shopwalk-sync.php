@@ -283,9 +283,9 @@ final class Shopwalk_Sync {
 			array(
 				'timeout' => 30,
 				'headers' => array(
-					'Content-Type'     => 'application/json',
-					'X-API-Key' => Shopwalk_License::key(),
-					'User-Agent'       => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'Content-Type' => 'application/json',
+					'X-API-Key'    => Shopwalk_License::key(),
+					'User-Agent'   => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 				'body'    => wp_json_encode(
 					array(

@@ -100,7 +100,7 @@ final class WooCommerce_UCP_Admin_Dashboard {
 					),
 				)
 			);
-			$cached = '';
+			$cached   = '';
 			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 				$body = json_decode( wp_remote_retrieve_body( $response ), true );
 				if ( is_array( $body ) && ! empty( $body['active'] ) && ! empty( $body['message'] ) ) {
@@ -124,11 +124,23 @@ final class WooCommerce_UCP_Admin_Dashboard {
 		}
 
 		$palette = array(
-			'maintenance' => array( 'bg' => '#eff6ff', 'border' => '#bfdbfe', 'icon' => '🔧' ),
-			'warning'     => array( 'bg' => '#fefce8', 'border' => '#fef08a', 'icon' => '⚠️' ),
-			'info'        => array( 'bg' => '#f0f9ff', 'border' => '#bae6fd', 'icon' => 'ℹ️' ),
+			'maintenance' => array(
+				'bg'     => '#eff6ff',
+				'border' => '#bfdbfe',
+				'icon'   => '🔧',
+			),
+			'warning'     => array(
+				'bg'     => '#fefce8',
+				'border' => '#fef08a',
+				'icon'   => '⚠️',
+			),
+			'info'        => array(
+				'bg'     => '#f0f9ff',
+				'border' => '#bae6fd',
+				'icon'   => 'ℹ️',
+			),
 		);
-		$c = isset( $palette[ $type ] ) ? $palette[ $type ] : $palette['info'];
+		$c       = isset( $palette[ $type ] ) ? $palette[ $type ] : $palette['info'];
 
 		printf(
 			'<div style="background:%1$s;border:1px solid %2$s;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;">%3$s %4$s <a href="https://shopwalk.com/status" target="_blank" rel="noopener" style="margin-left:8px;">View status →</a></div>',
@@ -1200,12 +1212,18 @@ JS;
 			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ), 403 );
 		}
 
+		$license_key = get_option( 'shopwalk_license_key', '' );
+		if ( ! $license_key ) {
+			wp_send_json_error( array( 'message' => 'No license key configured.' ) );
+		}
+
 		$resp = wp_remote_post(
-			'https://api.shopwalk.com/api/v1/public/ucp/probe',
+			SHOPWALK_API_BASE . '/plugin/probe',
 			array(
 				'timeout' => 15,
 				'headers' => array(
 					'Content-Type' => 'application/json',
+					'X-API-Key'    => $license_key,
 					'User-Agent'   => 'woocommerce-ucp-plugin/' . WOOCOMMERCE_UCP_VERSION,
 				),
 				'body'    => wp_json_encode( array( 'store_url' => home_url() ) ),
