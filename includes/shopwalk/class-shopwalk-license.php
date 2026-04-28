@@ -228,6 +228,14 @@ final class Shopwalk_License {
 		);
 		update_option( self::OPTION_LAST_HEARTBEAT, time(), false );
 
+		// Fire /plugin/status right after activation. The api treats /status
+		// as an implicit heartbeat — this flips the partner portal from
+		// "plugin not installed" to installed within seconds instead of
+		// waiting for the next cron tick.
+		if ( class_exists( 'Shopwalk_Connect' ) ) {
+			Shopwalk_Connect::poll_status();
+		}
+
 		do_action( 'shopwalk_license_activated', $license_key, $pid );
 
 		return array(
