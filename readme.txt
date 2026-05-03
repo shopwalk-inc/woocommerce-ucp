@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,7 +73,7 @@ Yes. The discovery doc is served via a static `.well-known/ucp.php` shim with an
 
 = What WooCommerce version is required? =
 
-WooCommerce 8.0 or later. WordPress 6.0 or later. PHP 8.0 or later.
+WooCommerce 8.0 or later. WordPress 6.0 or later. PHP 8.1 or later.
 
 = Does the plugin have its own payment keys? =
 
@@ -93,14 +93,30 @@ Deactivating the plugin stops the WP-Cron jobs and removes the static `.well-kno
 
 == External Services ==
 
-When the optional Shopwalk integration is connected (a license key is entered in the dashboard), this plugin sends product data to Shopwalk's servers at `api.shopwalk.com` over authenticated HTTPS:
+When the optional Shopwalk integration is connected (a license key is entered in the dashboard), this plugin sends data to Shopwalk's servers at `api.shopwalk.com` over authenticated HTTPS. Until you connect, **zero data is sent to Shopwalk**.
 
-* Product names, descriptions, short descriptions, and SKUs
-* Product prices and regular/sale prices
-* Product image URLs (images themselves are not uploaded)
-* Product availability and stock quantity
-* Product categories
-* Product page URLs
+**Sent on each product sync** (one batch per change, plus periodic full re-sync):
+
+* The store URL (`site_url` — the public WordPress home URL).
+* The store currency code (e.g. `USD`).
+* The total published-product count (catalog size).
+* For each product:
+  * Internal product ID (the WordPress post ID, used as a stable correlator).
+  * Product name, description, short description, and SKU.
+  * Current price and original ("compare-at" / strike-through) price.
+  * Stock availability (in-stock boolean — no stock quantity is sent).
+  * Permalink URL.
+  * Category names.
+  * For each product image: the image URL, the image alt text, and the image's position in the product gallery. **Image binaries are never uploaded.**
+
+**Sent during license activation and deactivation:**
+
+* The license key (in the request header).
+* The store URL.
+
+**Sent during periodic license-status polling (hourly while connected):**
+
+* The license key (in the request header).
 
 This data is used to index the store on the Shopwalk shopping network. **No data is sent to Shopwalk when the plugin is installed without an active license.**
 
@@ -115,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Optional Shopwalk connect flow. Enter a free Shopwalk license to enable real-time push sync, brand voice, and Premier listing on shopwalk.com.
 
 == Changelog ==
+
+= 3.1.1 =
+* WordPress.org submission readiness pass. § External Services rewritten to disclose every field actually sent to api.shopwalk.com — adds `site_url`, store `currency`, `total_products` (catalog size), per-product `external_id`, and per-image `alt` / `position`; corrects "regular/sale prices" to "current price and original (compare-at) price"; removes the never-sent `stock_quantity` claim. FAQ corrected to require PHP 8.1 (was 8.0). Screenshot captions repaired (literal `→` escapes replaced with `→` arrows). `SYNC_COOLDOWN` restored to 3600s (was 0 — a development debug constant). No behavior change in the sync payload itself; this release only reconciles documentation and version metadata with what the code already does. Fixes for the broader audit (admin inline-style → enqueued CSS, license-key UI masking, mandatory PKCE, refresh-token rotation, webhook callback_url SSRF defense, dead-letter admin UI, Tier-separation refactor, etc.) ship in this version too — see git log for the detailed series.
 
 = 3.1.0 =
 * Expose per-variation data on `GET /wp-json/ucp/v1/products`. Variable products now carry a `variations[]` array with `variation_id`, `sku`, `price`, `regular_price`, `sale_price`, `stock_status`, `stock_quantity`, and a normalized `attributes` map (e.g. `color: "red"`, `size: "L"`). The `variation_id` is the WC variation post_id that the checkout endpoint expects in `DirectCheckoutItem.variant_id`. Simple/grouped/external products and variable products with no children are unchanged on the wire — the `variations` key is omitted entirely, not emitted as `[]`. This unblocks downstream variant ingestion in shopwalk-sync → Scylla and end-to-end variant ordering.

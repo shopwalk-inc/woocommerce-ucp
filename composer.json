@@ -3,7 +3,7 @@
     "description": "UCP for WooCommerce — Universal Commerce Protocol",
     "license": "GPL-2.0-or-later",
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.1"
     },
     "require-dev": {
         "woocommerce/qit-cli": "^0.7",
