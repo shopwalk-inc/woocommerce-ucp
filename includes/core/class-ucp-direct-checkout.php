@@ -80,8 +80,12 @@ final class UCP_Direct_Checkout {
 			);
 		}
 
-		$stored_key = get_option( 'shopwalk_license_key', '' );
-		if ( '' === $stored_key || $header_key !== $stored_key ) {
+		$stored_key = (string) get_option( 'shopwalk_license_key', '' );
+		// Constant-time compare so a timing oracle on this endpoint can't be used
+		// to recover the license key character-by-character. The empty-stored
+		// short-circuit must precede hash_equals (the function emits a warning
+		// when given an empty known-string, and we don't want to leak that path).
+		if ( '' === $stored_key || ! hash_equals( $stored_key, (string) $header_key ) ) {
 			return new WP_Error(
 				'invalid_license_key',
 				'License key does not match.',
