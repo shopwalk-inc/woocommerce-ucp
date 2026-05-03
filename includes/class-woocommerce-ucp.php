@@ -154,6 +154,7 @@ final class WooCommerce_UCP {
 		}
 		$dir = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/admin/';
 		require_once $dir . 'class-dashboard.php';
+		require_once $dir . 'class-ucp-deadletter-admin.php';
 
 		// Shopwalk_Connect drives OAuth connect + Pro upgrade + hourly tier
 		// poll. Loaded in admin always (unlicensed users need the Connect
@@ -166,6 +167,7 @@ final class WooCommerce_UCP {
 		}
 
 		WooCommerce_UCP_Admin_Dashboard::instance();
+		UCP_Deadletter_Admin::instance();
 	}
 
 	/**
