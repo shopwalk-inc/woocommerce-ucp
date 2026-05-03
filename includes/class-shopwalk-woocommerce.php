@@ -88,8 +88,11 @@ final class WooCommerce_Shopwalk {
 		require_once $dir . 'class-ucp-orders.php';
 
 		// Webhooks. URL guard is loaded first — both subscribe-time and
-		// delivery-time gate on it for SSRF defense.
+		// delivery-time gate on it for SSRF defense. Secret-crypto helper
+		// is loaded next — both subscriptions (encrypt at create) and
+		// delivery (decrypt at sign) depend on it (F-D-5).
 		require_once $dir . 'class-ucp-url-guard.php';
+		require_once $dir . 'class-ucp-webhook-secret-crypto.php';
 		require_once $dir . 'class-ucp-webhook-subscriptions.php';
 		require_once $dir . 'class-ucp-webhook-delivery.php';
 
