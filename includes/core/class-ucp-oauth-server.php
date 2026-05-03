@@ -97,6 +97,19 @@ final class UCP_OAuth_Server {
 	 * authorization code is minted directly. A real consent screen with
 	 * scope confirmation lives in Phase 2 work.
 	 *
+	 * PKCE is MANDATORY (OAuth 2.1 §4.1.2.1). The client MUST send a
+	 * `code_challenge` parameter; missing/empty values are rejected with
+	 * `pkce_required`. Only `S256` is accepted as `code_challenge_method`
+	 * — the legacy `plain` method is forbidden by OAuth 2.1, and the
+	 * comparison is case-sensitive (RFC 7636 specifies uppercase). When
+	 * `code_challenge_method` is omitted but a challenge is present, it
+	 * defaults to `S256` (NOT `plain`, which would silently re-introduce
+	 * the weakness this check exists to prevent).
+	 *
+	 * Breaking change in v3.1.1: any client previously sending no
+	 * `code_challenge` or `code_challenge_method=plain` will start
+	 * receiving 400s here. They must be updated to S256 PKCE.
+	 *
 	 * @param WP_REST_Request $request The incoming request.
 	 * @return WP_REST_Response|WP_Error
 	 */
@@ -132,14 +145,25 @@ final class UCP_OAuth_Server {
 			);
 		}
 
-		// PKCE — store code_challenge if provided (RFC 7636).
+		// PKCE — MANDATORY S256 only (OAuth 2.1 §4.1.2.1, RFC 7636).
+		// `plain` is forbidden; absence of `code_challenge` is a hard error.
 		$code_challenge        = (string) $request->get_param( 'code_challenge' );
 		$code_challenge_method = (string) $request->get_param( 'code_challenge_method' );
-		if ( '' !== $code_challenge && '' === $code_challenge_method ) {
-			$code_challenge_method = 'plain'; // RFC 7636 §4.3 default
+		if ( '' === $code_challenge ) {
+			return new WP_Error( 'pkce_required', 'code_challenge is required (PKCE is mandatory; OAuth 2.1 §4.1.2.1)', array( 'status' => 400 ) );
 		}
-		if ( '' !== $code_challenge_method && 'S256' !== $code_challenge_method && 'plain' !== $code_challenge_method ) {
-			return new WP_Error( 'invalid_request', 'code_challenge_method must be S256 or plain', array( 'status' => 400 ) );
+		// Default the method to S256 ONLY when the client omitted it but
+		// supplied a challenge. We must NOT default to `plain` here — that
+		// would silently downgrade and re-open the weakness PKCE exists
+		// to close.
+		if ( '' === $code_challenge_method ) {
+			$code_challenge_method = 'S256';
+		}
+		// Strict, case-sensitive S256 check. RFC 7636 §4.3 specifies the
+		// method names with this exact casing; accepting `s256` would let a
+		// buggy/forged client coast through with no method enforced.
+		if ( 'S256' !== $code_challenge_method ) {
+			return new WP_Error( 'pkce_method_unsupported', 'code_challenge_method must be S256 (case-sensitive); plain is forbidden by OAuth 2.1', array( 'status' => 400 ) );
 		}
 
 		// Mint an authorization_code (10 min TTL).
@@ -195,6 +219,21 @@ final class UCP_OAuth_Server {
 	/**
 	 * authorization_code grant exchange.
 	 *
+	 * PKCE is MANDATORY (OAuth 2.1 §4.1.2.1). Every authorization code
+	 * issued by handle_authorize() carries a stored `code_challenge` and
+	 * `code_challenge_method = S256`. The token request MUST include a
+	 * matching `code_verifier` and we ONLY verify under S256. The legacy
+	 * `plain` method is rejected outright — even if a row somehow still
+	 * carries `code_challenge_method = 'plain'` (legacy data from before
+	 * this fix landed; not expected in production), we treat it as a PKCE
+	 * failure rather than fall back to direct comparison. A row with no
+	 * stored challenge (also legacy) is likewise rejected: a code minted
+	 * post-fix always has one.
+	 *
+	 * Breaking change in v3.1.1 (F-C-2): clients that previously used
+	 * `plain` PKCE or no PKCE at all will now hit `pkce_verifier_required`
+	 * / `pkce_verification_failed` here.
+	 *
 	 * @param WP_REST_Request $request   The token request.
 	 * @param string          $client_id The validated client.
 	 * @return WP_REST_Response|WP_Error
@@ -206,24 +245,27 @@ final class UCP_OAuth_Server {
 			return new WP_Error( 'invalid_grant', 'Invalid or expired authorization code', array( 'status' => 400 ) );
 		}
 
-		// PKCE verification (RFC 7636) — if a code_challenge was stored,
-		// the token request MUST include a matching code_verifier.
-		$stored_challenge = $row['code_challenge'] ?? '';
-		$stored_method    = $row['code_challenge_method'] ?? '';
-		if ( '' !== $stored_challenge ) {
-			$code_verifier = (string) $request->get_param( 'code_verifier' );
-			if ( '' === $code_verifier ) {
-				return new WP_Error( 'invalid_grant', 'code_verifier required (PKCE)', array( 'status' => 400 ) );
-			}
-			if ( 'S256' === $stored_method ) {
-				$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PKCE S256 code challenge per RFC 7636.
-			} else {
-				$computed = $code_verifier; // plain
-			}
-			if ( ! hash_equals( $stored_challenge, $computed ) ) {
-				self::revoke_token( (int) $row['id'] );
-				return new WP_Error( 'invalid_grant', 'PKCE verification failed', array( 'status' => 400 ) );
-			}
+		// PKCE verification — mandatory and S256-only.
+		$stored_challenge = (string) ( $row['code_challenge'] ?? '' );
+		$stored_method    = (string) ( $row['code_challenge_method'] ?? '' );
+
+		// Defensive: a legacy row with no stored challenge, or a stored
+		// `plain` method (from before mandatory-PKCE shipped), is treated
+		// as a PKCE failure. Burn the code so it can't be retried.
+		if ( '' === $stored_challenge || 'S256' !== $stored_method ) {
+			self::revoke_token( (int) $row['id'] );
+			return new WP_Error( 'pkce_verification_failed', 'Authorization code is missing a usable S256 PKCE challenge', array( 'status' => 400 ) );
+		}
+
+		$code_verifier = (string) $request->get_param( 'code_verifier' );
+		if ( '' === $code_verifier ) {
+			return new WP_Error( 'pkce_verifier_required', 'code_verifier is required (PKCE)', array( 'status' => 400 ) );
+		}
+
+		$computed = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PKCE S256 code challenge per RFC 7636.
+		if ( ! hash_equals( $stored_challenge, $computed ) ) {
+			self::revoke_token( (int) $row['id'] );
+			return new WP_Error( 'pkce_verification_failed', 'PKCE verification failed', array( 'status' => 400 ) );
 		}
 
 		// One-time use — revoke the code immediately.
