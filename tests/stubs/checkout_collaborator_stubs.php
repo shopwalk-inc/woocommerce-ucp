@@ -22,6 +22,9 @@ if ( ! class_exists( 'UCP_OAuth_Clients' ) ) {
 			++self::$next;
 			return $prefix . 'fixed_' . self::$next;
 		}
+		public static function generate_secret(): string {
+			return bin2hex( random_bytes( 32 ) );
+		}
 	}
 }
 

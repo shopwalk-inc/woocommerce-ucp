@@ -282,8 +282,29 @@ final class UCP_Webhook_Delivery {
 			return;
 		}
 
-		$payload    = (string) $row['payload'];
-		$secret     = (string) $sub['secret'];
+		$payload = (string) $row['payload'];
+		// F-D-5: secret is stored encrypted at rest; decrypt-or-migrate
+		// returns the plaintext (and lazily re-encrypts legacy plaintext
+		// values left in the DB before the encryption rollout). If the
+		// helper returns empty the row is genuinely corrupted — mark
+		// failed and skip rather than sign with an empty key.
+		$secret = UCP_Webhook_Secret_Crypto::decrypt_or_migrate(
+			(string) $sub['id'],
+			(string) $sub['secret']
+		);
+		if ( '' === $secret ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array(
+					'failed_at'  => current_time( 'mysql', true ),
+					'attempts'   => (int) $row['attempts'] + 1,
+					'last_error' => 'subscription secret unreadable',
+				),
+				array( 'id' => (int) $row['id'] )
+			);
+			return;
+		}
 		$timestamp  = time();
 		$webhook_id = 'evt_' . wp_generate_uuid4();
 
