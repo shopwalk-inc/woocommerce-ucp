@@ -107,12 +107,21 @@ final class UCP_Payment_Adapter_Stripe implements UCP_Payment_Adapter_Interface 
 			$body['customer'] = $customer_id;
 		}
 
+		// Idempotency-Key prevents duplicate PaymentIntents on retry. Derived
+		// from order id + payment-method id so genuine retries of the same
+		// (order, pm) tuple collapse to one charge, but a different pm (e.g.
+		// the buyer corrected card details after a decline) gets a fresh
+		// intent. Stripe stores the idempotency response for 24h and replays
+		// it on subsequent identical requests.
+		$idempotency_key = 'ucp_' . $order->get_id() . '_' . $pm_id;
+
 		$response = wp_remote_post(
 			'https://api.stripe.com/v1/payment_intents',
 			array(
 				'headers' => array(
-					'Authorization' => 'Bearer ' . $secret_key,
-					'Content-Type'  => 'application/x-www-form-urlencoded',
+					'Authorization'   => 'Bearer ' . trim( $secret_key ),
+					'Content-Type'    => 'application/x-www-form-urlencoded',
+					'Idempotency-Key' => $idempotency_key,
 				),
 				'body'    => $body,
 				'timeout' => 30,
