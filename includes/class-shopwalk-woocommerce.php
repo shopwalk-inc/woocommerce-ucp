@@ -154,6 +154,7 @@ final class WooCommerce_Shopwalk {
 		}
 		$dir = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/admin/';
 		require_once $dir . 'class-dashboard.php';
+		require_once $dir . 'class-deadletter-admin.php';
 
 		// Shopwalk_Connect drives OAuth connect + Pro upgrade + hourly tier
 		// poll. Loaded in admin always (unlicensed users need the Connect
@@ -166,6 +167,7 @@ final class WooCommerce_Shopwalk {
 		}
 
 		WooCommerce_Shopwalk_Admin_Dashboard::instance();
+		WooCommerce_Shopwalk_Admin_Deadletter::instance();
 	}
 
 	/**
