@@ -335,6 +335,12 @@ final class Shopwalk_License {
 		update_option( self::OPTION_LICENSE_STATUS, 'unlicensed', false );
 		delete_option( self::OPTION_LAST_HEARTBEAT );
 		delete_option( self::OPTION_DISCOVERY_PAUSED );
+		// Unschedule the hourly license-status poll. Without this the cron
+		// entry persists after disconnect (it's harmless because poll_status()
+		// early-returns on empty key, but it's dead weight in wp_cron).
+		if ( class_exists( 'Shopwalk_Connect' ) ) {
+			Shopwalk_Connect::on_deactivate();
+		}
 		do_action( 'shopwalk_license_deactivated' );
 	}
 }

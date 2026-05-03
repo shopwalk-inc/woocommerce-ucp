@@ -242,6 +242,7 @@ final class WooCommerce_UCP {
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( 'shopwalk_ucp_session_cleanup' );
 		wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
+		wp_clear_scheduled_hook( 'shopwalk_ucp_direct_checkout_cleanup' );
 		wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 		wp_clear_scheduled_hook( 'shopwalk_status_poll' );
 		self::remove_well_known_files();
