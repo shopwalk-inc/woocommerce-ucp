@@ -107,22 +107,24 @@ final class UCP_Products {
 				$data['brand'] = $brand;
 			}
 
-			// Variable products — emit one entry per variation.
-			//
-			// Performance choice: full detail inline (SKU, price, stock,
-			// attributes), not a separate endpoint. Rationale:
-			//   - The `/products` listing is paginated (default 100, max 250)
-			//     and is called once per page during a sync run, not per
-			//     request. shopwalk-sync would otherwise have to make N+1
-			//     calls to a `/products/:id/variations` route, which is
-			//     strictly worse for both wall-clock and HTTP overhead.
-			//   - `WC_Product_Variable::get_children()` + per-child
-			//     `wc_get_product()` is the same N queries either way.
-			//   - Sites with thousands of variations per product can lower
-			//     `per_page` to amortize; this matches existing pagination
-			//     guidance for the catalog sync.
-			// Non-variable products skip this branch entirely so the response
-			// shape is unchanged for the simple-product 99% case.
+			/*
+			 * Variable products — emit one entry per variation.
+			 *
+			 * Performance choice: full detail inline (SKU, price, stock,
+			 * attributes), not a separate endpoint. Rationale:
+			 *   - The `/products` listing is paginated (default 100, max 250)
+			 *     and is called once per page during a sync run, not per
+			 *     request. shopwalk-sync would otherwise have to make N+1
+			 *     calls to a `/products/:id/variations` route, which is
+			 *     strictly worse for both wall-clock and HTTP overhead.
+			 *   - `WC_Product_Variable::get_children()` + per-child
+			 *     `wc_get_product()` is the same N queries either way.
+			 *   - Sites with thousands of variations per product can lower
+			 *     `per_page` to amortize; this matches existing pagination
+			 *     guidance for the catalog sync.
+			 * Non-variable products skip this branch entirely so the response
+			 * shape is unchanged for the simple-product 99% case.
+			 */
 			if ( $product instanceof WC_Product_Variable ) {
 				$variations = self::extract_variations( $product );
 				if ( ! empty( $variations ) ) {
