@@ -3,7 +3,7 @@
     "description": "Shopwalk for WooCommerce — UCP-compliant agent commerce plugin",
     "license": "GPL-2.0-or-later",
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.1"
     },
     "require-dev": {
         "woocommerce/qit-cli": "^0.7",
