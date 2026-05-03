@@ -250,28 +250,74 @@ final class UCP_OAuth_Server {
 	/**
 	 * refresh_token grant exchange.
 	 *
+	 * Implements refresh-token rotation with reuse-detection family
+	 * revocation per OAuth 2.1 / draft-ietf-oauth-security-topics §4.12.
+	 *
+	 * Behavior:
+	 *  - A successful exchange revokes the supplied refresh row and mints a
+	 *    NEW access+refresh pair. The old refresh row's client_id + user_id
+	 *    are carried over so the family stays linked. Previously-issued
+	 *    access tokens are NOT revoked (they expire on their own short TTL).
+	 *  - If the supplied refresh token is found in revoked state, this is a
+	 *    reuse-detection event: someone is replaying an already-rotated
+	 *    refresh token. The entire token family for (client_id, user_id) is
+	 *    revoked and 401 `refresh_token_revoked` is returned. Aggressive but
+	 *    correct — either the legitimate client lost the rotation race or
+	 *    the token was leaked; the safe response is to log out the whole
+	 *    session and force re-auth.
+	 *  - If no row matches at all, return 401 `invalid_grant`.
+	 *  - If the row's client_id doesn't match the authenticated caller's
+	 *    client_id, return 401 `invalid_grant` (regression-tested: refresh
+	 *    tokens are bound to the issuing client).
+	 *
 	 * @param WP_REST_Request $request   The token request.
 	 * @param string          $client_id The validated client.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private static function exchange_refresh_token( WP_REST_Request $request, string $client_id ) {
 		$refresh = (string) $request->get_param( 'refresh_token' );
-		$row     = self::lookup_token( $refresh, 'refresh' );
-		if ( ! $row || $row['client_id'] !== $client_id ) {
-			return new WP_Error( 'invalid_grant', 'Invalid or expired refresh token', array( 'status' => 400 ) );
+
+		// First try the live (non-revoked, non-expired) lookup.
+		$row = self::lookup_token( $refresh, 'refresh' );
+
+		if ( ! $row ) {
+			// Reuse-detection: was this refresh token previously issued and
+			// then revoked (rotated)? If so, treat as a leak and revoke the
+			// entire family for that (client_id, user_id) pair.
+			$revoked_row = self::lookup_revoked_token( $refresh, 'refresh' );
+			if ( $revoked_row ) {
+				if ( (string) $revoked_row['client_id'] !== $client_id ) {
+					return new WP_Error( 'invalid_grant', 'Refresh token does not belong to this client', array( 'status' => 401 ) );
+				}
+				self::revoke_token_family( (string) $revoked_row['client_id'], (int) $revoked_row['user_id'] );
+				return new WP_Error( 'refresh_token_revoked', 'Refresh token has already been used; session revoked', array( 'status' => 401 ) );
+			}
+			return new WP_Error( 'invalid_grant', 'Invalid or expired refresh token', array( 'status' => 401 ) );
+		}
+
+		if ( (string) $row['client_id'] !== $client_id ) {
+			return new WP_Error( 'invalid_grant', 'Refresh token does not belong to this client', array( 'status' => 401 ) );
 		}
 
 		$scopes  = json_decode( (string) $row['scopes'], true ) ?: array();
 		$user_id = (int) $row['user_id'];
 
-		$access = self::issue_token( 'access', $client_id, $user_id, $scopes, self::ACCESS_TTL );
+		// Rotate: revoke the old refresh row, mint a NEW refresh+access
+		// pair. We do NOT revoke the family here — the legitimate caller
+		// still holds valid access tokens that should keep working until
+		// they expire on their own short TTL.
+		self::revoke_token( (int) $row['id'] );
+
+		$access  = self::issue_token( 'access', $client_id, $user_id, $scopes, self::ACCESS_TTL );
+		$refresh = self::issue_token( 'refresh', $client_id, $user_id, $scopes, self::REFRESH_TTL );
 
 		return new WP_REST_Response(
 			array(
-				'access_token' => $access['plaintext'],
-				'token_type'   => 'Bearer',
-				'expires_in'   => self::ACCESS_TTL,
-				'scope'        => implode( ' ', $scopes ),
+				'access_token'  => $access['plaintext'],
+				'token_type'    => 'Bearer',
+				'expires_in'    => self::ACCESS_TTL,
+				'refresh_token' => $refresh['plaintext'],
+				'scope'         => implode( ' ', $scopes ),
 			),
 			200
 		);
@@ -446,6 +492,71 @@ final class UCP_OAuth_Server {
 			array( 'revoked_at' => current_time( 'mysql', true ) ),
 			array( 'id' => $id )
 		);
+	}
+
+	/**
+	 * Look up a token of a given type that has already been revoked. Used
+	 * by refresh-token rotation to detect reuse of a previously-rotated
+	 * refresh token (which signals either a lost rotation race or a leak).
+	 *
+	 * Mirrors lookup_token() but inverts the revoked_at filter and ignores
+	 * expiry — a revoked refresh token presented after its TTL is still a
+	 * reuse attempt worth catching.
+	 *
+	 * @param string $plaintext The token from the wire.
+	 * @param string $type      Required token type.
+	 * @return array<string,mixed>|null
+	 */
+	public static function lookup_revoked_token( string $plaintext, string $type ): ?array {
+		global $wpdb;
+		$table = UCP_Storage::table( 'oauth_tokens' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table} WHERE token_type = %s AND revoked_at IS NOT NULL",
+				$type
+			),
+			ARRAY_A
+		);
+		if ( ! $rows ) {
+			return null;
+		}
+		foreach ( $rows as $row ) {
+			if ( password_verify( $plaintext, (string) $row['token_hash'] ) ) {
+				return $row;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Revoke every non-revoked token (any type) belonging to the given
+	 * (client_id, user_id) pair. Used by the refresh-token reuse-detection
+	 * path to forcibly tear down an entire OAuth session when a leaked or
+	 * already-rotated refresh token is replayed.
+	 *
+	 * @param string $client_id Owning client.
+	 * @param int    $user_id   Owning user.
+	 * @return int Number of rows revoked.
+	 */
+	public static function revoke_token_family( string $client_id, int $user_id ): int {
+		global $wpdb;
+		$table = UCP_Storage::table( 'oauth_tokens' );
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$affected = $wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"UPDATE {$table} SET revoked_at = %s WHERE client_id = %s AND user_id = %d AND revoked_at IS NULL",
+				$now,
+				$client_id,
+				$user_id
+			)
+		);
+		return (int) $affected;
 	}
 
 	// ── Authentication helper for resource endpoints ────────────────────
