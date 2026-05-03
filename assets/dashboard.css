@@ -1,0 +1,145 @@
+/* UCP for WooCommerce — admin dashboard styles.
+ * Loaded only on the toplevel_page_ucp-for-woocommerce admin page via
+ * WooCommerce_UCP_Admin_Dashboard::enqueue_assets.
+ */
+
+.sw-wrap { max-width: 760px; }
+
+.sw-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 20px;
+}
+.sw-card h2 {
+	margin-top: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.sw-card h3 {
+	margin-bottom: 8px;
+}
+
+.sw-connected {
+	color: #065f46;
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.sw-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+.sw-badge-pro { background: #11CF52; color: #fff; }
+.sw-badge-free { background: #e5e7eb; color: #374151; }
+
+.sw-muted {
+	color: #6b7280;
+	font-size: 13px;
+}
+
+.sw-stats {
+	display: flex;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+.sw-stat {
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 12px 16px;
+	text-align: center;
+	min-width: 80px;
+}
+.sw-stat-value {
+	font-size: 24px;
+	font-weight: 700;
+	color: #111;
+}
+.sw-stat-label {
+	font-size: 12px;
+	color: #6b7280;
+	margin-top: 2px;
+}
+
+.sw-details {
+	border-collapse: collapse;
+	width: 100%;
+	margin-bottom: 12px;
+}
+.sw-details td {
+	padding: 6px 12px 6px 0;
+	border-bottom: 1px solid #f3f4f6;
+	font-size: 13px;
+}
+.sw-details td:first-child {
+	color: #6b7280;
+	white-space: nowrap;
+	width: 120px;
+}
+
+.sw-progress-bar {
+	background: #e5e7eb;
+	border-radius: 6px;
+	height: 8px;
+	overflow: hidden;
+	margin-bottom: 8px;
+}
+.sw-progress-fill {
+	background: #11CF52;
+	height: 100%;
+	width: 0%;
+	transition: width 0.3s;
+	border-radius: 6px;
+}
+
+.sw-upgrade-cta {
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	border-radius: 8px;
+	padding: 16px;
+	margin: 16px 0;
+}
+
+.sw-disconnect-link {
+	color: #991b1b;
+	text-decoration: none;
+	margin-left: 12px;
+	font-size: 13px;
+}
+.sw-disconnect-link:hover { text-decoration: underline; }
+
+.sw-discovery-toggle {
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 12px 16px;
+	margin: 16px 0;
+}
+.sw-toggle-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+}
+.sw-toggle-row input[type="checkbox"] { transform: scale(1.2); }
+.sw-toggle-label { font-weight: 500; }
+.sw-toggle-help {
+	margin: 6px 0 0;
+	font-size: 12px;
+}
+
+.sw-check-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0;
+	border-bottom: 1px solid #f3f4f6;
+	font-size: 13px;
+}
+.sw-check-row:last-child { border-bottom: 0; }
