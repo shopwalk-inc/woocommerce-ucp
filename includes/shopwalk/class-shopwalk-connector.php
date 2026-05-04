@@ -5,7 +5,7 @@
  * Tier 2 (Shopwalk integration) only. Owns the AJAX endpoints that the
  * dashboard CTA uses for license entry, activation, and disconnect.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -54,11 +54,11 @@ final class Shopwalk_Connector {
 	public function ajax_activate(): void {
 		check_ajax_referer( 'shopwalk_activate', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ucp-for-woocommerce' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-for-woocommerce' ) ), 403 );
 		}
 		$key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
 		if ( '' === $key ) {
-			wp_send_json_error( array( 'message' => __( 'License key is required.', 'ucp-for-woocommerce' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'License key is required.', 'shopwalk-for-woocommerce' ) ), 400 );
 		}
 		$result = Shopwalk_License::activate( $key );
 		if ( ! $result['ok'] ) {
@@ -66,7 +66,7 @@ final class Shopwalk_Connector {
 		}
 		wp_send_json_success(
 			array(
-				'message'    => __( 'Connected to Shopwalk.', 'ucp-for-woocommerce' ),
+				'message'    => __( 'Connected to Shopwalk.', 'shopwalk-for-woocommerce' ),
 				'partner_id' => $result['partner_id'] ?? '',
 			)
 		);
@@ -80,10 +80,10 @@ final class Shopwalk_Connector {
 	public function ajax_disconnect(): void {
 		check_ajax_referer( 'shopwalk_disconnect', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ucp-for-woocommerce' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-for-woocommerce' ) ), 403 );
 		}
 		Shopwalk_License::deactivate();
-		wp_send_json_success( array( 'message' => __( 'Disconnected.', 'ucp-for-woocommerce' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Disconnected.', 'shopwalk-for-woocommerce' ) ) );
 	}
 
 	/**
@@ -104,7 +104,7 @@ final class Shopwalk_Connector {
 	public function ajax_full_sync(): void {
 		check_ajax_referer( 'shopwalk_full_sync', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ucp-for-woocommerce' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-for-woocommerce' ) ), 403 );
 		}
 
 		// Cooldown check — prevent spamming sync requests.
@@ -118,7 +118,7 @@ final class Shopwalk_Connector {
 				array(
 					'message'            => sprintf(
 						/* translators: %d: seconds remaining */
-						__( 'Please wait %d seconds before syncing again.', 'ucp-for-woocommerce' ),
+						__( 'Please wait %d seconds before syncing again.', 'shopwalk-for-woocommerce' ),
 						$remaining
 					),
 					'cooldown_remaining' => $remaining,
@@ -184,7 +184,7 @@ final class Shopwalk_Connector {
 			array(
 				'message' => sprintf(
 					/* translators: %d: number of products synced */
-					__( '%1$d products synced in %2$d batches.', 'ucp-for-woocommerce' ),
+					__( '%1$d products synced in %2$d batches.', 'shopwalk-for-woocommerce' ),
 					$queued,
 					$batches
 				),

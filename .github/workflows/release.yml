@@ -35,7 +35,7 @@ jobs:
 
       - name: Verify plugin version matches tag
         run: |
-          HEADER=$(grep -m1 "^ \* Version:" ucp-for-woocommerce.php | sed 's/.*Version:[[:space:]]*//; s/[[:space:]].*//')
+          HEADER=$(grep -m1 "^ \* Version:" shopwalk-for-woocommerce.php | sed 's/.*Version:[[:space:]]*//; s/[[:space:]].*//')
           STABLE=$(grep -m1 "^Stable tag:"   readme.txt          | sed 's/.*Stable tag:[[:space:]]*//; s/[[:space:]].*//')
           VERSION="${{ steps.tag.outputs.version }}"
           echo "tag=$VERSION  header=$HEADER  stable=$STABLE"
@@ -45,7 +45,7 @@ jobs:
       - name: Assemble dist tree
         run: |
           SRC="$GITHUB_WORKSPACE"
-          OUT="${RUNNER_TEMP}/dist/ucp-for-woocommerce"
+          OUT="${RUNNER_TEMP}/dist/shopwalk-for-woocommerce"
           mkdir -p "$OUT"
           # Honour .distignore entries explicitly.
           rsync -a \
@@ -72,9 +72,9 @@ jobs:
         id: zip
         run: |
           cd "${RUNNER_TEMP}/dist"
-          zip -rq ucp-for-woocommerce.zip ucp-for-woocommerce/
-          echo "path=${RUNNER_TEMP}/dist/ucp-for-woocommerce.zip" >> "$GITHUB_OUTPUT"
-          ls -la ucp-for-woocommerce.zip
+          zip -rq shopwalk-for-woocommerce.zip shopwalk-for-woocommerce/
+          echo "path=${RUNNER_TEMP}/dist/shopwalk-for-woocommerce.zip" >> "$GITHUB_OUTPUT"
+          ls -la shopwalk-for-woocommerce.zip
 
       - name: Upload to release (create if missing)
         env:
@@ -88,7 +88,7 @@ jobs:
           else
             gh release create "$TAG" "$ASSET" \
               --repo "$GITHUB_REPOSITORY" \
-              --title "UCP for WooCommerce v${VERSION}" \
+              --title "Shopwalk for WooCommerce v${VERSION}" \
               --notes "Release from tag ${TAG}." \
               --latest
           fi

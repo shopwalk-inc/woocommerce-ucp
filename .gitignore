@@ -14,10 +14,10 @@ node_modules/
 # Dev tools
 .env
 .env.*
-ucp-for-woocommerce.zip
+shopwalk-for-woocommerce.zip
 .phpunit.result.cache
 .phpunit.cache/
 
 # License config injected at download time — contains partner key
-ucp-for-woocommerce-config.php
-ucp-for-woocommerce-config.php
+shopwalk-for-woocommerce-config.php
+shopwalk-for-woocommerce-config.php

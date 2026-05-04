@@ -10,7 +10,7 @@
  * checkout endpoint can resolve `variant_id` → WC variation post_id.
  * Non-variable products omit the `variations` key entirely.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

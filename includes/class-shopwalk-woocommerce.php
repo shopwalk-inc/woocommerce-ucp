@@ -12,19 +12,19 @@
  * - admin/ is the only place both tiers are surfaced in one view (the
  *   dashboard shows UCP status AND the Shopwalk CTA).
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WooCommerce_UCP bootstrap.
+ * WooCommerce_Shopwalk bootstrap.
  *
  * Loaded once on `plugins_loaded`. Owns the activation/deactivation
  * lifecycle, registers all subsystems, and decides whether the optional
  * Shopwalk integration is loaded based on WP option state.
  */
-final class WooCommerce_UCP {
+final class WooCommerce_Shopwalk {
 
 	/**
 	 * Singleton instance.
@@ -62,7 +62,7 @@ final class WooCommerce_UCP {
 	 * @return void
 	 */
 	private function load_core(): void {
-		$dir = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/core/';
+		$dir = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/core/';
 
 		// Storage layer is loaded first — every other class queries it.
 		require_once $dir . 'class-ucp-storage.php';
@@ -115,7 +115,7 @@ final class WooCommerce_UCP {
 	 * @return void
 	 */
 	private function load_shopwalk(): void {
-		$dir = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/shopwalk/';
+		$dir = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/shopwalk/';
 
 		require_once $dir . 'class-shopwalk-license.php';
 		require_once $dir . 'class-shopwalk-sync.php';
@@ -147,22 +147,22 @@ final class WooCommerce_UCP {
 		if ( ! is_admin() ) {
 			return;
 		}
-		$dir = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/admin/';
+		$dir = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/admin/';
 		require_once $dir . 'class-dashboard.php';
 		require_once $dir . 'class-self-test.php';
 
 		// Shopwalk_Connect drives OAuth connect + Pro upgrade + hourly tier
 		// poll. Loaded in admin always (unlicensed users need the Connect
 		// button; licensed users need the upgrade button / cron).
-		$connect = WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-connect.php';
+		$connect = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-connect.php';
 		if ( file_exists( $connect ) ) {
-			require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-license.php';
+			require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/shopwalk/class-shopwalk-license.php';
 			require_once $connect;
 			Shopwalk_Connect::init();
 		}
 
-		WooCommerce_UCP_Admin_Dashboard::instance();
-		WooCommerce_UCP_Admin_Self_Test::instance();
+		WooCommerce_Shopwalk_Admin_Dashboard::instance();
+		WooCommerce_Shopwalk_Admin_Self_Test::instance();
 	}
 
 	/**
@@ -186,11 +186,11 @@ final class WooCommerce_UCP {
 	 * @return void
 	 */
 	public static function activate(): void {
-		require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/core/class-ucp-storage.php';
+		require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/core/class-ucp-storage.php';
 		UCP_Storage::install();
 
 		// Generate the store signing keypair if it doesn't exist yet.
-		require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'includes/core/class-ucp-signing.php';
+		require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/core/class-ucp-signing.php';
 		UCP_Signing::ensure_store_keypair();
 
 		// Schedule hourly cron backstops for session cleanup + queue flushers.
@@ -199,11 +199,11 @@ final class WooCommerce_UCP {
 		// Shopwalk_Sync::push_to_queue() — so organic events drain within
 		// seconds. The hourly recurrence is purely a worst-case backstop
 		// for events queued during a WP-Cron outage.
-		if ( ! wp_next_scheduled( 'shopwalk_ucp_session_cleanup' ) ) {
-			wp_schedule_event( time() + 600, 'hourly', 'shopwalk_ucp_session_cleanup' );
+		if ( ! wp_next_scheduled( 'shopwalk_session_cleanup' ) ) {
+			wp_schedule_event( time() + 600, 'hourly', 'shopwalk_session_cleanup' );
 		}
-		if ( ! wp_next_scheduled( 'shopwalk_ucp_webhook_flush' ) ) {
-			wp_schedule_event( time() + 300, 'hourly', 'shopwalk_ucp_webhook_flush' );
+		if ( ! wp_next_scheduled( 'shopwalk_webhook_flush' ) ) {
+			wp_schedule_event( time() + 300, 'hourly', 'shopwalk_webhook_flush' );
 		}
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) ) {
 			wp_schedule_event( time() + 300, 'hourly', 'shopwalk_flush_queue' );
@@ -217,18 +217,18 @@ final class WooCommerce_UCP {
 		// filter is wired by the bootstrap on every load; activation just
 		// needs the option set so existing stores see "Pay via UCP" enabled
 		// out of the box.
-		if ( false === get_option( 'shopwalk_ucp_gateway_enabled' ) ) {
-			update_option( 'shopwalk_ucp_gateway_enabled', 'yes' );
+		if ( false === get_option( 'shopwalk_gateway_enabled' ) ) {
+			update_option( 'shopwalk_gateway_enabled', 'yes' );
 		}
 
 		// Auto-populate license key from optional bundled config file.
 		// Store the key now; activation against shopwalk-api happens on
 		// plugins_loaded (see init_instance) when Shopwalk_License is available.
-		if ( file_exists( WOOCOMMERCE_UCP_PLUGIN_DIR . 'ucp-for-woocommerce-config.php' ) ) {
-			require_once WOOCOMMERCE_UCP_PLUGIN_DIR . 'ucp-for-woocommerce-config.php';
+		if ( file_exists( WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'shopwalk-for-woocommerce-config.php' ) ) {
+			require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'shopwalk-for-woocommerce-config.php';
 		}
-		if ( defined( 'WOOCOMMERCE_UCP_PREFILLED_LICENSE' ) && ! get_option( 'shopwalk_license_key' ) ) {
-			update_option( 'shopwalk_license_key', WOOCOMMERCE_UCP_PREFILLED_LICENSE );
+		if ( defined( 'WOOCOMMERCE_SHOPWALK_PREFILLED_LICENSE' ) && ! get_option( 'shopwalk_license_key' ) ) {
+			update_option( 'shopwalk_license_key', WOOCOMMERCE_SHOPWALK_PREFILLED_LICENSE );
 			// Flag that activation is pending — handled on next page load.
 			update_option( 'shopwalk_license_needs_activation', '1' );
 		}
@@ -240,8 +240,8 @@ final class WooCommerce_UCP {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		wp_clear_scheduled_hook( 'shopwalk_ucp_session_cleanup' );
-		wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
+		wp_clear_scheduled_hook( 'shopwalk_session_cleanup' );
+		wp_clear_scheduled_hook( 'shopwalk_webhook_flush' );
 		wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 		wp_clear_scheduled_hook( 'shopwalk_status_poll' );
 		self::remove_well_known_files();
@@ -267,7 +267,7 @@ final class WooCommerce_UCP {
 <?php
 /**
  * UCP discovery — served at /.well-known/ucp
- * Created by ucp-for-woocommerce plugin. Safe to delete if plugin is removed.
+ * Created by shopwalk-for-woocommerce plugin. Safe to delete if plugin is removed.
  */
 if ( ! file_exists( dirname( __FILE__, 2 ) . '/wp-load.php' ) ) { exit; }
 require_once dirname( __FILE__, 2 ) . '/wp-load.php';
@@ -287,7 +287,7 @@ PHP;
 <?php
 /**
  * OAuth 2.0 server metadata — served at /.well-known/oauth-authorization-server (RFC 8414)
- * Created by ucp-for-woocommerce plugin. Safe to delete if plugin is removed.
+ * Created by shopwalk-for-woocommerce plugin. Safe to delete if plugin is removed.
  */
 if ( ! file_exists( dirname( __FILE__, 2 ) . '/wp-load.php' ) ) { exit; }
 require_once dirname( __FILE__, 2 ) . '/wp-load.php';
@@ -304,7 +304,7 @@ exit;
 PHP;
 
 		$htaccess = <<<'HTACCESS'
-# Managed by ucp-for-woocommerce plugin
+# Managed by shopwalk-for-woocommerce plugin
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule ^ucp/?$ ucp.php [L]
@@ -343,7 +343,7 @@ HTACCESS;
 		$htaccess = $dir . '/.htaccess';
 		if ( $wp_filesystem->exists( $htaccess ) ) {
 			$contents = (string) $wp_filesystem->get_contents( $htaccess );
-			if ( str_contains( $contents, 'ucp-for-woocommerce plugin' ) || str_contains( $contents, 'shopwalk-ai plugin' ) ) {
+			if ( str_contains( $contents, 'shopwalk-for-woocommerce plugin' ) || str_contains( $contents, 'shopwalk-ai plugin' ) ) {
 				$wp_filesystem->delete( $htaccess );
 			}
 		}

@@ -8,7 +8,7 @@
  * The admin AJAX runner (admin/class-self-test.php) calls run_all() and
  * streams results to the dashboard one row at a time.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -157,12 +157,12 @@ final class UCP_Self_Test {
 	 * @return array{check:string, status:string, message:string}
 	 */
 	private static function check_wp_cron_alive(): array {
-		$next = wp_next_scheduled( 'shopwalk_ucp_webhook_flush' );
+		$next = wp_next_scheduled( 'shopwalk_webhook_flush' );
 		if ( ! $next ) {
 			return array(
 				'check'   => 'WP-Cron scheduled',
 				'status'  => 'fail',
-				'message' => 'shopwalk_ucp_webhook_flush is not scheduled.',
+				'message' => 'shopwalk_webhook_flush is not scheduled.',
 			);
 		}
 		return array(

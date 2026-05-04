@@ -7,7 +7,7 @@
  * verification requires openssl + a real JWK and is covered by integration
  * tests.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 use Brain\Monkey;

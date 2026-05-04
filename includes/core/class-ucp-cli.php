@@ -8,7 +8,7 @@
  *   wp shopwalk client delete <client_id>
  *   wp shopwalk client rotate-secret <client_id>
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {

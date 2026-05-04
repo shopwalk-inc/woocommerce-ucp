@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="Shopwalk UCP">
-	<description>WordPress Coding Standards for UCP for WooCommerce</description>
+	<description>WordPress Coding Standards for Shopwalk for WooCommerce</description>
 
 	<rule ref="WordPress"/>
 
@@ -10,7 +10,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="ucp-for-woocommerce"/>
+				<element value="shopwalk-for-woocommerce"/>
 			</property>
 		</properties>
 	</rule>
@@ -43,7 +43,7 @@
 	<!--
 		File-naming sniffs flag class files that don't match
 		`class-<slug>.php`. Our `class-*.php` files comply; the
-		non-class entry points (ucp-for-woocommerce.php, uninstall.php)
+		non-class entry points (shopwalk-for-woocommerce.php, uninstall.php)
 		intentionally don't.
 	-->
 	<rule ref="WordPress.Files.FileName.InvalidClassFileName"><severity>0</severity></rule>

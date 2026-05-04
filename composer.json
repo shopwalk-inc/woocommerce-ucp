@@ -1,6 +1,6 @@
 {
-    "name": "shopwalk-inc/ucp-for-woocommerce",
-    "description": "UCP for WooCommerce — Universal Commerce Protocol",
+    "name": "shopwalk-inc/shopwalk-woocommerce",
+    "description": "Shopwalk for WooCommerce — UCP-compliant agent commerce plugin",
     "license": "GPL-2.0-or-later",
     "require": {
         "php": ">=8.0"
@@ -16,8 +16,8 @@
         }
     },
     "scripts": {
-        "qit:security": "qit run:security ucp-for-woocommerce",
-        "qit:phpcs": "qit run:phpcs ucp-for-woocommerce",
-        "qit:activation": "qit run:activation ucp-for-woocommerce"
+        "qit:security": "qit run:security shopwalk-for-woocommerce",
+        "qit:phpcs": "qit run:phpcs shopwalk-for-woocommerce",
+        "qit:activation": "qit run:activation shopwalk-for-woocommerce"
     }
 }
