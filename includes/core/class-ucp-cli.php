@@ -209,7 +209,8 @@ WP_CLI::add_command( 'shopwalk client', 'UCP_CLI' );
  * The admin UI at Tools → Failed Webhooks shows the most recent 50; the
  * CLI is the bulk-ops path for ops engineers.
  */
-class UCP_Webhook_Deadletter_CLI { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- Co-located with the primary CLI command class for the same subsystem.
+class UCP_Webhook_Deadletter_CLI {
 
 	/**
 	 * List failed webhook deliveries.
@@ -250,11 +251,10 @@ class UCP_Webhook_Deadletter_CLI { // phpcs:ignore Generic.Files.OneObjectStruct
 		$limit = (int) ( $assoc_args['limit'] ?? 100 );
 		$fmt   = (string) ( $assoc_args['format'] ?? 'table' );
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue from UCP_Storage::table().
 		if ( $limit > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue from UCP_Storage::table().
 					"SELECT id, subscription_id, event_type, attempts, failed_at, last_error
 					 FROM {$queue}
 					 WHERE failed_at IS NOT NULL
@@ -265,7 +265,6 @@ class UCP_Webhook_Deadletter_CLI { // phpcs:ignore Generic.Files.OneObjectStruct
 				ARRAY_A
 			);
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$rows = $wpdb->get_results(
 				"SELECT id, subscription_id, event_type, attempts, failed_at, last_error
 				 FROM {$queue}
@@ -274,6 +273,7 @@ class UCP_Webhook_Deadletter_CLI { // phpcs:ignore Generic.Files.OneObjectStruct
 				ARRAY_A
 			);
 		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( empty( $rows ) ) {
 			WP_CLI::line( __( 'No failed webhook deliveries.', 'shopwalk-for-woocommerce' ) );

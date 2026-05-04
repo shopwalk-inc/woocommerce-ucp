@@ -76,6 +76,7 @@ final class DeadletterAdminTest extends TestCase {
 			}
 		);
 		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'esc_html__' )->returnArg();
 

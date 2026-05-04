@@ -1062,14 +1062,17 @@ final class UCP_OAuth_Server {
 
 		// Minimal, self-contained HTML — no theme dependency. The OAuth
 		// consent gate must work even on stores running broken themes.
-		return <<<HTML
+		// Nowdoc + strtr (not heredoc) keeps WP.org Plugin Check happy:
+		// it forbids <<<HEREDOC syntax with variable interpolation; nowdoc
+		// is treated as a literal string and is fine.
+		$tpl = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
-<title>{$title}</title>
+<title>{TITLE}</title>
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 480px; margin: 4em auto; padding: 0 1em; color: #1d2327; }
 h1 { font-size: 1.5em; margin-bottom: 0.5em; }
@@ -1084,23 +1087,39 @@ button.deny { background: #fff; color: #50575e; border-color: #c3c4c7; }
 </style>
 </head>
 <body>
-<h1>{$title}</h1>
-<p>{$intro}</p>
-<p><strong>{$scopes_lbl}</strong></p>
-<ul>{$scope_lis}</ul>
-<p><strong>{$redirect_lbl}</strong></p>
-<p class="redirect">{$redirect_html}</p>
-<form method="post" action="{$consent_action}">
-{$nonce_field}
-{$hidden}
+<h1>{TITLE}</h1>
+<p>{INTRO}</p>
+<p><strong>{SCOPES_LBL}</strong></p>
+<ul>{SCOPE_LIS}</ul>
+<p><strong>{REDIRECT_LBL}</strong></p>
+<p class="redirect">{REDIRECT_HTML}</p>
+<form method="post" action="{CONSENT_ACTION}">
+{NONCE_FIELD}
+{HIDDEN}
 <div class="actions">
-<button class="approve" type="submit" name="decision" value="approve">{$approve_label}</button>
-<button class="deny" type="submit" name="decision" value="deny">{$deny_label}</button>
+<button class="approve" type="submit" name="decision" value="approve">{APPROVE_LABEL}</button>
+<button class="deny" type="submit" name="decision" value="deny">{DENY_LABEL}</button>
 </div>
 </form>
 </body>
 </html>
 HTML;
+		return strtr(
+			$tpl,
+			array(
+				'{TITLE}'           => $title,
+				'{INTRO}'           => $intro,
+				'{SCOPES_LBL}'      => $scopes_lbl,
+				'{SCOPE_LIS}'       => $scope_lis,
+				'{REDIRECT_LBL}'    => $redirect_lbl,
+				'{REDIRECT_HTML}'   => $redirect_html,
+				'{CONSENT_ACTION}'  => $consent_action,
+				'{NONCE_FIELD}'     => $nonce_field,
+				'{HIDDEN}'          => $hidden,
+				'{APPROVE_LABEL}'   => $approve_label,
+				'{DENY_LABEL}'      => $deny_label,
+			)
+		);
 	}
 
 	// ── F-C-4: real wp_redirect (not WP_REST_Response 302) + test seam ──

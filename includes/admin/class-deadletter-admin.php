@@ -80,10 +80,9 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 		global $wpdb;
 		$queue = UCP_Storage::table( 'webhook_queue' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue is from UCP_Storage::table(), not user input.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue is from UCP_Storage::table(), not user input.
 				"SELECT id, subscription_id, event_type, attempts, failed_at, last_error, created_at
 				 FROM {$queue}
 				 WHERE failed_at IS NOT NULL
@@ -93,6 +92,7 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return is_array( $rows ) ? $rows : array();
 	}
@@ -141,16 +141,16 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 		global $wpdb;
 		$queue = UCP_Storage::table( 'webhook_queue' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue is from UCP_Storage::table(), not user input.
 		$affected = $wpdb->query(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue is from UCP_Storage::table(), not user input.
 				"UPDATE {$queue}
 				 SET failed_at = NULL, attempts = 0, next_attempt_at = %s, last_error = NULL
 				 WHERE failed_at IS NOT NULL",
 				current_time( 'mysql', true )
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return (int) $affected;
 	}
@@ -355,7 +355,7 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-for-woocommerce' ) ), 403 );
 		}
 
-		$row_id = isset( $_POST['id'] ) ? (int) wp_unslash( $_POST['id'] ) : 0;
+		$row_id = isset( $_POST['id'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['id'] ) ) : 0;
 		if ( $row_id <= 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Missing or invalid row id.', 'shopwalk-for-woocommerce' ) ), 400 );
 		}
@@ -383,7 +383,7 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'shopwalk-for-woocommerce' ) ), 403 );
 		}
 
-		$row_id = isset( $_POST['id'] ) ? (int) wp_unslash( $_POST['id'] ) : 0;
+		$row_id = isset( $_POST['id'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['id'] ) ) : 0;
 		if ( $row_id <= 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Missing or invalid row id.', 'shopwalk-for-woocommerce' ) ), 400 );
 		}
