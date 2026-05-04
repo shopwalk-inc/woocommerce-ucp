@@ -65,7 +65,7 @@ register_deactivation_hook( __FILE__, array( 'WooCommerce_Shopwalk', 'deactivate
 
 // ─── Bootstrap ──────────────────────────────────────────────────────────────
 
-require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/class-woocommerce-ucp.php';
+require_once WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/class-shopwalk-woocommerce.php';
 
 add_action( 'plugins_loaded', array( 'WooCommerce_Shopwalk', 'instance' ), 5 );
 
