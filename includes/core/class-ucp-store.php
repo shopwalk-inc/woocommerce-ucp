@@ -5,7 +5,7 @@
  * Returns store metadata: name, description, product count, currency,
  * Shopwalk connection status. Used by the Shopwalk probe and sync pipeline.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -52,7 +52,7 @@ final class UCP_Store {
 				'shopwalk_connected'  => ! empty( $license_key ),
 				'shopwalk_partner_id' => get_option( 'shopwalk_partner_id', '' ),
 				'ucp_version'         => '1.0',
-				'plugin_version'      => defined( 'WOOCOMMERCE_UCP_VERSION' ) ? WOOCOMMERCE_UCP_VERSION : '',
+				'plugin_version'      => defined( 'WOOCOMMERCE_SHOPWALK_VERSION' ) ? WOOCOMMERCE_SHOPWALK_VERSION : '',
 			),
 			200
 		);

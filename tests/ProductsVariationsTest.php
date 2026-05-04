@@ -12,7 +12,7 @@
  * helper is the only piece with non-trivial logic that's worth pinning
  * here, and it's pure (modulo wc_get_product, which we stub).
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 use Brain\Monkey;

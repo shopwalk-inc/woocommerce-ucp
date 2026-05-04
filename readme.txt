@@ -1,4 +1,4 @@
-=== UCP for WooCommerce ===
+=== Shopwalk for WooCommerce ===
 Contributors: shopwalkinc
 Tags: woocommerce, ai, ucp, agent, commerce
 Requires at least: 6.0
@@ -47,7 +47,7 @@ This plugin implements the UCP spec from [ucp.dev](https://ucp.dev) exactly. It 
 
 == Installation ==
 
-1. Upload the `ucp-for-woocommerce` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "UCP for WooCommerce"**
+1. Upload the `shopwalk-for-woocommerce` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "Shopwalk for WooCommerce"**
 2. Activate the plugin
 3. Visit **UCP** in the WP Admin sidebar
 4. Click **"Run self-test"** to verify your environment supports the UCP layer
@@ -130,7 +130,7 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 
 = 3.0.45 =
 * WP.org compliance pass: bump WC tested up to 9.8, rename `shopwalk_ai_*` cron hooks to `shopwalk_ucp_*`, add WordPress Coding Standards (`phpcs.xml`), create `languages/` directory for translations.
-* Bump `Tested up to: 6.8`. Generate `languages/ucp-for-woocommerce.pot` for translators.
+* Bump `Tested up to: 6.8`. Generate `languages/shopwalk-for-woocommerce.pot` for translators.
 * Add `Screenshots` section to readme.
 * Bump `Requires PHP: 8.1` (was 8.0). PHP 8.0 has been EOL since November 2023; the dev toolchain (PHPUnit 10+, sebastian/*) requires 8.1 as well. CI matrix now tests 8.1 / 8.2 / 8.3.
 * Cron refactor: drop the custom 60-sec interval. Queue flushers (`shopwalk_ucp_webhook_flush`, `shopwalk_flush_queue`) now use built-in `hourly` as the worst-case backstop and fire on demand via `wp_schedule_single_event` (~5 sec) on every enqueue. Organic events still drain within seconds; "Sync Now" stays synchronous.

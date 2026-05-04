@@ -1,4 +1,4 @@
-# Release checklist — UCP for WooCommerce
+# Release checklist — Shopwalk for WooCommerce
 
 How to ship a new version, and (the bigger one) how to submit to
 wordpress.org. Excluded from the plugin zip via `.distignore`.
@@ -9,7 +9,7 @@ wordpress.org. Excluded from the plugin zip via `.distignore`.
 
 1. **Bump version in the same commit as the change** (per the long-standing
    rule — auto-version workflow was retired 2026-04-20):
-   - `ucp-for-woocommerce.php` header `Version:`
+   - `shopwalk-for-woocommerce.php` header `Version:`
    - `readme.txt` header `Stable tag:`
    - `readme.txt` `== Changelog ==` — add a new entry at the top
 2. **Open PR**, wait for green CI (`PHPCS`, `PHPUnit (PHP 8.1/8.2/8.3)`).
@@ -38,10 +38,10 @@ Do this once, ever. After approval, every release goes through the SVN loop.
 - [ ] `Tested up to:` in `readme.txt` matches the latest stable WP release.
 - [ ] `Requires PHP:` in `readme.txt` and the plugin header agree, and CI
       actually tests them all.
-- [ ] `languages/ucp-for-woocommerce.pot` is up to date:
+- [ ] `languages/shopwalk-for-woocommerce.pot` is up to date:
       ```bash
-      wp i18n make-pot . languages/ucp-for-woocommerce.pot \
-          --domain=ucp-for-woocommerce \
+      wp i18n make-pot . languages/shopwalk-for-woocommerce.pot \
+          --domain=shopwalk-for-woocommerce \
           --exclude=vendor,node_modules,tests,assets,languages
       ```
 - [ ] `assets/screenshot-1.png` … `screenshot-N.png` exist and match the
@@ -66,10 +66,10 @@ WP.org review?". To run locally as a sanity check:
 ```bash
 # In a local WP install with WooCommerce active:
 wp plugin install plugin-check --activate
-wp plugin install ./ucp-for-woocommerce.zip          # or upload via Plugins → Add New
-# UI: Tools → Plugin Check → pick "UCP for WooCommerce" → Check it!
+wp plugin install ./shopwalk-for-woocommerce.zip          # or upload via Plugins → Add New
+# UI: Tools → Plugin Check → pick "Shopwalk for WooCommerce" → Check it!
 # CLI:
-wp plugin check ucp-for-woocommerce
+wp plugin check shopwalk-for-woocommerce
 ```
 
 Triage the report:
@@ -96,7 +96,7 @@ Items currently expected to warn (with our story for each):
 4. Address any feedback by pushing a new release (steps above), then
    reply to the review email with the new zip URL.
 5. On approval, you'll get **SVN credentials** at
-   `https://plugins.svn.wordpress.org/ucp-for-woocommerce/`.
+   `https://plugins.svn.wordpress.org/shopwalk-for-woocommerce/`.
 
 ---
 
@@ -104,13 +104,13 @@ Items currently expected to warn (with our story for each):
 
 ```bash
 # 1. Check out the SVN repo (one-time)
-svn co https://plugins.svn.wordpress.org/ucp-for-woocommerce wp-svn
+svn co https://plugins.svn.wordpress.org/shopwalk-for-woocommerce wp-svn
 cd wp-svn
 
 # 2. Pull the GitHub release zip for v<X.Y.Z> and unpack into trunk/
 rm -rf trunk
-unzip ~/Downloads/ucp-for-woocommerce-<X.Y.Z>.zip -d /tmp/wcucp
-mv /tmp/wcucp/ucp-for-woocommerce trunk
+unzip ~/Downloads/shopwalk-for-woocommerce-<X.Y.Z>.zip -d /tmp/wcucp
+mv /tmp/wcucp/shopwalk-for-woocommerce trunk
 svn add --force trunk
 
 # 3. Add the same content as a new SVN tag

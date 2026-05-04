@@ -2,10 +2,10 @@
 /**
  * Shopwalk_License — license key validation + heartbeat.
  *
- * Tier 2 (Shopwalk integration) only. Loaded by WooCommerce_UCP::load_shopwalk()
+ * Tier 2 (Shopwalk integration) only. Loaded by WooCommerce_Shopwalk::load_shopwalk()
  * when a valid `shopwalk_license_key` option is present.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -163,7 +163,7 @@ final class Shopwalk_License {
 				'headers' => array(
 					'Content-Type' => 'application/json',
 					'X-API-Key'    => $license_key,
-					'User-Agent'   => 'ucp-for-woocommerce-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'User-Agent'   => 'shopwalk-for-woocommerce-plugin/' . WOOCOMMERCE_SHOPWALK_VERSION,
 				),
 				'body'    => wp_json_encode(
 					array(

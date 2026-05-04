@@ -7,7 +7,7 @@
  * still work). The shims include wp-load.php and dispatch to the REST
  * routes registered here.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -104,8 +104,8 @@ final class UCP_Discovery {
 				),
 				'platform' => 'woocommerce',
 				'plugin'   => array(
-					'name'    => 'UCP for WooCommerce Adapter',
-					'version' => WOOCOMMERCE_UCP_VERSION,
+					'name'    => 'Shopwalk for WooCommerce Adapter',
+					'version' => WOOCOMMERCE_SHOPWALK_VERSION,
 				),
 			),
 			200

@@ -9,7 +9,7 @@
  *   - shopwalk-api GET  /api/v1/plugin/status      (tier + status)
  *   - shopwalk-web /partners/oauth/plugin/authorize (merchant approves)
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -54,7 +54,7 @@ final class Shopwalk_Connect {
 		$state = wp_generate_password( 32, false, false );
 		set_transient( self::STATE_TRANSIENT, $state, self::STATE_TTL );
 
-		$callback = admin_url( 'admin.php?page=ucp-for-woocommerce&action=oauth-callback' );
+		$callback = admin_url( 'admin.php?page=shopwalk-for-woocommerce&action=oauth-callback' );
 		$params   = array(
 			'site_url' => home_url(),
 			'state'    => $state,
@@ -74,7 +74,7 @@ final class Shopwalk_Connect {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- state nonce is the CSRF guard here.
 		$page   = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
-		if ( 'ucp-for-woocommerce' !== $page ) {
+		if ( 'shopwalk-for-woocommerce' !== $page ) {
 			return;
 		}
 		if ( 'oauth-callback' !== $action ) {
@@ -89,7 +89,7 @@ final class Shopwalk_Connect {
 		delete_transient( self::STATE_TRANSIENT );
 
 		$redirect = add_query_arg(
-			array( 'page' => 'ucp-for-woocommerce' ),
+			array( 'page' => 'shopwalk-for-woocommerce' ),
 			admin_url( 'admin.php' )
 		);
 
@@ -136,7 +136,7 @@ final class Shopwalk_Connect {
 				'timeout' => 15,
 				'headers' => array(
 					'Content-Type' => 'application/json',
-					'User-Agent'   => 'ucp-for-woocommerce-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'User-Agent'   => 'shopwalk-for-woocommerce-plugin/' . WOOCOMMERCE_SHOPWALK_VERSION,
 				),
 				'body'    => wp_json_encode(
 					array(
@@ -205,7 +205,7 @@ final class Shopwalk_Connect {
 				'timeout' => 10,
 				'headers' => array(
 					'X-API-Key'  => $key,
-					'User-Agent' => 'ucp-for-woocommerce-plugin/' . WOOCOMMERCE_UCP_VERSION,
+					'User-Agent' => 'shopwalk-for-woocommerce-plugin/' . WOOCOMMERCE_SHOPWALK_VERSION,
 				),
 			)
 		);

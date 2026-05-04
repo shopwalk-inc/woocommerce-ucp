@@ -2,7 +2,7 @@
 /**
  * UCP Bootstrap — registers every UCP route + the WC payment gateway.
  *
- * Single entry point called from `WooCommerce_UCP::load_core()`. Wires:
+ * Single entry point called from `WooCommerce_Shopwalk::load_core()`. Wires:
  *   - Discovery (/.well-known/ucp + oauth-authorization-server)
  *   - OAuth 2.0 server (authorize/token/revoke/userinfo)
  *   - Checkout sessions
@@ -11,7 +11,7 @@
  *   - Webhook delivery (event capture + cron worker)
  *   - WC payment gateway "Pay via UCP"
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall UCP for WooCommerce.
+ * Uninstall Shopwalk for WooCommerce.
  *
  * Removes the plugin's local state cleanly:
  *  - All wp_ucp_* tables (oauth_clients, oauth_tokens, checkout_sessions,
@@ -11,7 +11,7 @@
  *  - The static /.well-known/ucp.php and oauth-authorization-server.php
  *    files written on activation
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 // Only run if WordPress triggered this uninstall.
@@ -42,16 +42,16 @@ $options = array(
 	'shopwalk_synced_count',
 	'shopwalk_last_sync_at',
 	'shopwalk_notice_dismissed',
-	'shopwalk_ucp_gateway_enabled',
-	'shopwalk_ucp_store_signing_secret',
+	'shopwalk_gateway_enabled',
+	'shopwalk_store_signing_secret',
 );
 foreach ( $options as $option ) {
 	delete_option( $option );
 }
 
 // ── Clear scheduled crons ───────────────────────────────────────────────────
-wp_clear_scheduled_hook( 'shopwalk_ucp_session_cleanup' );
-wp_clear_scheduled_hook( 'shopwalk_ucp_webhook_flush' );
+wp_clear_scheduled_hook( 'shopwalk_session_cleanup' );
+wp_clear_scheduled_hook( 'shopwalk_webhook_flush' );
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 
 // ── Remove /.well-known/ files ─────────────────────────────────────────────
@@ -69,7 +69,7 @@ if ( $wp_filesystem ) {
 	$htaccess = $well_known_dir . '/.htaccess';
 	if ( $wp_filesystem->exists( $htaccess ) ) {
 		$contents = (string) $wp_filesystem->get_contents( $htaccess );
-		if ( false !== strpos( $contents, 'ucp-for-woocommerce plugin' ) || false !== strpos( $contents, 'shopwalk-ai plugin' ) ) {
+		if ( false !== strpos( $contents, 'shopwalk-for-woocommerce plugin' ) || false !== strpos( $contents, 'shopwalk-ai plugin' ) ) {
 			$wp_filesystem->delete( $htaccess );
 		}
 	}

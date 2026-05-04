@@ -7,7 +7,7 @@
  * payment gateway. The Shopwalk agent receives a payment_url that it presents
  * to the buyer.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -26,7 +26,7 @@ final class UCP_Direct_Checkout {
 	/**
 	 * Cron hook name for cancelling expired orders.
 	 */
-	private const CRON_HOOK = 'shopwalk_ucp_direct_checkout_cleanup';
+	private const CRON_HOOK = 'shopwalk_direct_checkout_cleanup';
 
 	/**
 	 * Register REST routes, hooks, and cron.

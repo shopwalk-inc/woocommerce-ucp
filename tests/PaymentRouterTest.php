@@ -3,7 +3,7 @@
  * Tests for UCP_Payment_Router — adapter lookup, dispatch, and the
  * `shopwalk_ucp_payment_adapters` filter surface.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 use Brain\Monkey;
@@ -65,7 +65,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_authorize_requires_gateway(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )->andReturn( array() );
+		Filters\expectApplied( 'shopwalk_payment_adapters' )->andReturn( array() );
 
 		$err = UCP_Payment_Router::authorize( new stdClass(), array() );
 
@@ -74,7 +74,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_authorize_rejects_unregistered_gateway(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
+		Filters\expectApplied( 'shopwalk_payment_adapters' )
 			->andReturn( array( 'ready_test' => ReadyTestAdapter::class ) );
 
 		$err = UCP_Payment_Router::authorize( new stdClass(), array( 'gateway' => 'nope' ) );
@@ -86,7 +86,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_authorize_rejects_not_ready_adapter(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
+		Filters\expectApplied( 'shopwalk_payment_adapters' )
 			->andReturn( array( 'not_ready_test' => NotReadyTestAdapter::class ) );
 
 		$err = UCP_Payment_Router::authorize( new stdClass(), array( 'gateway' => 'not_ready_test' ) );
@@ -96,7 +96,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_authorize_dispatches_to_matching_adapter(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
+		Filters\expectApplied( 'shopwalk_payment_adapters' )
 			->andReturn( array( 'ready_test' => ReadyTestAdapter::class ) );
 
 		$order   = new stdClass();
@@ -114,7 +114,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_registry_drops_non_existent_classes(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
+		Filters\expectApplied( 'shopwalk_payment_adapters' )
 			->andReturn(
 				array(
 					'ready_test' => ReadyTestAdapter::class,
@@ -129,7 +129,7 @@ final class PaymentRouterTest extends TestCase {
 	}
 
 	public function test_discovery_hints_only_include_ready_adapters(): void {
-		Filters\expectApplied( 'shopwalk_ucp_payment_adapters' )
+		Filters\expectApplied( 'shopwalk_payment_adapters' )
 			->andReturn(
 				array(
 					'ready_test'     => ReadyTestAdapter::class,

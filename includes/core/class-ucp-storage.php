@@ -12,7 +12,7 @@
  * Schema is created on plugin activation via dbDelta(). install() is
  * idempotent — safe to call repeatedly.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

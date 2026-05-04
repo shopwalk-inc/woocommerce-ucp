@@ -6,7 +6,7 @@
  * stub get_option / update_option / delete_option as a per-test in-memory
  * options store; no WordPress runtime required.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 use Brain\Monkey;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 defined( 'HOUR_IN_SECONDS' ) || define( 'HOUR_IN_SECONDS', 3600 );
 defined( 'MINUTE_IN_SECONDS' ) || define( 'MINUTE_IN_SECONDS', 60 );
 defined( 'SHOPWALK_API_BASE' ) || define( 'SHOPWALK_API_BASE', 'https://api.shopwalk.test/api/v1' );
-defined( 'WOOCOMMERCE_UCP_VERSION' ) || define( 'WOOCOMMERCE_UCP_VERSION', '3.0.46-test' );
+defined( 'WOOCOMMERCE_SHOPWALK_VERSION' ) || define( 'WOOCOMMERCE_SHOPWALK_VERSION', '3.0.46-test' );
 
 require_once __DIR__ . '/../includes/shopwalk/class-shopwalk-license.php';
 

@@ -11,7 +11,7 @@
  * agent on issuance — subsequent verifications hash the candidate and
  * compare against the stored hash.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

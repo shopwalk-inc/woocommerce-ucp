@@ -7,7 +7,7 @@
  *                                   → canceled
  *                                   → requires_escalation (error)
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -73,7 +73,7 @@ final class UCP_Checkout {
 		);
 
 		// Cron handler — clean up expired sessions hourly.
-		add_action( 'shopwalk_ucp_session_cleanup', array( __CLASS__, 'cleanup_expired' ) );
+		add_action( 'shopwalk_session_cleanup', array( __CLASS__, 'cleanup_expired' ) );
 	}
 
 	/**

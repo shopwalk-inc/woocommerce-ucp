@@ -24,12 +24,12 @@ jobs:
       - name: Run Plugin Check
         uses: WordPress/plugin-check-action@v1
         with:
-          # Plugin was renamed to "UCP for WooCommerce" / slug
-          # ucp-for-woocommerce in the WP.org trademark-compliance pass.
+          # Plugin was renamed to "Shopwalk for WooCommerce" / slug
+          # shopwalk-for-woocommerce in the WP.org trademark-compliance pass.
           # Without this the action falls back to the checkout dir name
           # (woocommerce-ucp = repo name) and fails every i18n_usage
-          # check ("Expected 'woocommerce-ucp' but got 'ucp-for-woocommerce'").
-          slug: ucp-for-woocommerce
+          # check ("Expected 'woocommerce-ucp' but got 'shopwalk-for-woocommerce'").
+          slug: shopwalk-for-woocommerce
           # Match the categories WP.org actually gates on. The `general`
           # category covers i18n_usage; the rest are the same buckets the
           # WP.org reviewer enforces.

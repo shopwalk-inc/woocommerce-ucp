@@ -15,7 +15,7 @@
  * so third parties can add support for additional gateways without
  * touching plugin core.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -52,14 +52,14 @@ final class UCP_Payment_Router {
 		 *
 		 * Example — add a PayPal adapter:
 		 *
-		 *     add_filter( 'shopwalk_ucp_payment_adapters', function ( $a ) {
+		 *     add_filter( 'shopwalk_payment_adapters', function ( $a ) {
 		 *         $a['ppcp'] = 'My_PPCP_UCP_Adapter';
 		 *         return $a;
 		 *     } );
 		 *
 		 * @param array<string,string> $adapters gateway id → class name.
 		 */
-		$adapters = apply_filters( 'shopwalk_ucp_payment_adapters', self::defaults() );
+		$adapters = apply_filters( 'shopwalk_payment_adapters', self::defaults() );
 
 		// Drop anything that doesn't actually resolve to a loadable class.
 		return array_filter( (array) $adapters, 'class_exists' );

@@ -12,7 +12,7 @@
  * via the agent's published JWK is a follow-up — both verifiers can run
  * side-by-side, with the JWT path tried first and HMAC as a fallback.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -25,7 +25,7 @@ final class UCP_Signing {
 	/**
 	 * Option name where the store's signing secret is persisted.
 	 */
-	private const STORE_SECRET_OPTION = 'shopwalk_ucp_store_signing_secret';
+	private const STORE_SECRET_OPTION = 'shopwalk_store_signing_secret';
 
 	/**
 	 * Lazily generates a 32-byte signing secret for this store. Persists

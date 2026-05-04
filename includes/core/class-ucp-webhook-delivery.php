@@ -11,7 +11,7 @@
  *     subscription's HMAC secret, POSTs to the agent's callback URL,
  *     and retries with exponential backoff on 5xx.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -45,7 +45,7 @@ final class UCP_Webhook_Delivery {
 		add_action( 'woocommerce_order_refunded', array( __CLASS__, 'on_order_refunded' ), 10, 2 );
 
 		// Cron worker.
-		add_action( 'shopwalk_ucp_webhook_flush', array( __CLASS__, 'flush_queue' ) );
+		add_action( 'shopwalk_webhook_flush', array( __CLASS__, 'flush_queue' ) );
 	}
 
 	// ── Event capture (WC hooks → enqueue) ───────────────────────────────
@@ -140,8 +140,8 @@ final class UCP_Webhook_Delivery {
 		// next pageload — typically within seconds — instead of waiting up
 		// to 5 minutes for the recurring backstop. Built-in dedup folds
 		// rapid bursts into one fire.
-		if ( ! wp_next_scheduled( 'shopwalk_ucp_webhook_flush' ) || wp_next_scheduled( 'shopwalk_ucp_webhook_flush' ) > time() + 30 ) {
-			wp_schedule_single_event( time() + 5, 'shopwalk_ucp_webhook_flush' );
+		if ( ! wp_next_scheduled( 'shopwalk_webhook_flush' ) || wp_next_scheduled( 'shopwalk_webhook_flush' ) > time() + 30 ) {
+			wp_schedule_single_event( time() + 5, 'shopwalk_webhook_flush' );
 		}
 	}
 

@@ -8,7 +8,7 @@
  *      client record with the agent's redirect URIs and signing keys.
  *   2. Manually via WP-CLI for development/testing.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

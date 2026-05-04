@@ -1,6 +1,6 @@
-# UCP for WooCommerce Adapter
+# Shopwalk for WooCommerce
 
-[![Plugin Version](https://img.shields.io/badge/version-3.0.40-blue)](https://github.com/shopwalk-inc/ucp-for-woocommerce/releases)
+[![Plugin Version](https://img.shields.io/badge/version-3.0.40-blue)](https://github.com/shopwalk-inc/shopwalk-woocommerce/releases)
 [![WooCommerce](https://img.shields.io/badge/WooCommerce-8.0%2B-a46497)](https://woocommerce.com)
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)](https://php.net)
@@ -119,7 +119,7 @@ No buyer hand-off. No duplicate configuration. If the agent can't auto-authorize
 Third parties (or merchants) can register adapters via filter without touching plugin core:
 
 ```php
-add_filter( 'shopwalk_ucp_payment_adapters', function ( $adapters ) {
+add_filter( 'shopwalk_payment_adapters', function ( $adapters ) {
     $adapters['ppcp'] = 'My_PPCP_UCP_Adapter'; // must implement UCP_Payment_Adapter_Interface
     return $adapters;
 } );
@@ -152,14 +152,14 @@ A WooCommerce payment method named **"Pay via UCP"** is registered for labeling 
 
 ### From the WordPress Plugin Directory (recommended)
 
-1. **Plugins → Add New**, search for **UCP for WooCommerce**
+1. **Plugins → Add New**, search for **Shopwalk for WooCommerce**
 2. **Install Now**, then **Activate**
 3. Visit **UCP** in the WP Admin sidebar
 4. Click **Test Connectivity** and **Local Self-Test** to verify your environment
 
 ### Manual installation
 
-1. Download the latest release zip from the [Releases page](https://github.com/shopwalk-inc/ucp-for-woocommerce/releases)
+1. Download the latest release zip from the [Releases page](https://github.com/shopwalk-inc/shopwalk-woocommerce/releases)
 2. **Plugins → Add New → Upload Plugin**, select the zip, activate
 3. Visit **UCP** to run the self-test
 
@@ -189,8 +189,8 @@ Deactivating the plugin stops WP-Cron jobs and removes the static `.well-known` 
 ## Contributing
 
 ```bash
-git clone https://github.com/shopwalk-inc/ucp-for-woocommerce.git
-cd ucp-for-woocommerce
+git clone https://github.com/shopwalk-inc/shopwalk-woocommerce.git
+cd shopwalk-woocommerce
 composer install
 
 # WordPress coding standards

@@ -7,7 +7,7 @@
  * `order.refunded`). Each subscription stores its own HMAC secret used by
  * the delivery worker (UCP_Webhook_Delivery) to sign outbound payloads.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;

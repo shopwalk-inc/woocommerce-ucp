@@ -4,7 +4,7 @@
  * implements. Lives in its own file per WordPress convention; loaded by
  * the bootstrap before class-ucp-payment-router.php which uses it.
  *
- * @package WooCommerceUCP
+ * @package ShopwalkWooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
