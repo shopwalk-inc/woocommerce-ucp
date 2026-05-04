@@ -230,10 +230,10 @@ final class WooCommerce_Shopwalk_Admin_Deadletter {
 					<tbody>
 						<?php foreach ( $rows as $row ) : ?>
 							<?php
-							$row_id     = (int) ( $row['id'] ?? 0 );
-							$failed_at  = (string) ( $row['failed_at'] ?? '' );
-							$failed_ts  = strtotime( $failed_at );
-							$ago        = $failed_ts
+							$row_id    = (int) ( $row['id'] ?? 0 );
+							$failed_at = (string) ( $row['failed_at'] ?? '' );
+							$failed_ts = strtotime( $failed_at );
+							$ago       = $failed_ts
 								? sprintf(
 									/* translators: %s: human-readable time difference, e.g. "2 hours". */
 									esc_html__( '%s ago', 'shopwalk-for-woocommerce' ),

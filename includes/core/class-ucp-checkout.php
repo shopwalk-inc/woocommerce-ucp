@@ -731,19 +731,19 @@ final class UCP_Checkout {
 				? self::sanitize_assoc(
 					$body['buyer'],
 					array(
-						'name'         => 'string',
-						'first_name'   => 'string',
-						'last_name'    => 'string',
-						'display_name' => 'string',
-						'email'        => 'email',
-						'phone'        => 'string',
-						'note'         => 'string',
+						'name'          => 'string',
+						'first_name'    => 'string',
+						'last_name'     => 'string',
+						'display_name'  => 'string',
+						'email'         => 'email',
+						'phone'         => 'string',
+						'note'          => 'string',
 						'address_line1' => 'string',
 						'address_line2' => 'string',
-						'city'         => 'string',
-						'state'        => 'string',
-						'postcode'     => 'string',
-						'country'      => 'country',
+						'city'          => 'string',
+						'state'         => 'string',
+						'postcode'      => 'string',
+						'country'       => 'country',
 					)
 				)
 				: null;
@@ -829,15 +829,15 @@ final class UCP_Checkout {
 			$out['shipping_address'] = self::sanitize_assoc(
 				$f['shipping_address'],
 				array(
-					'address_1' => 'string',
-					'address_2' => 'string',
-					'line1'     => 'string',
-					'line2'     => 'string',
-					'city'      => 'string',
-					'state'     => 'string',
-					'postcode'  => 'string',
+					'address_1'   => 'string',
+					'address_2'   => 'string',
+					'line1'       => 'string',
+					'line2'       => 'string',
+					'city'        => 'string',
+					'state'       => 'string',
+					'postcode'    => 'string',
 					'postal_code' => 'string',
-					'country'   => 'country',
+					'country'     => 'country',
 				)
 			);
 		}

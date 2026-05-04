@@ -609,8 +609,8 @@ final class UCP_OAuth_Server {
 			// /authorize + /token + /userinfo — not on every page load.
 			update_option( self::PEPPER_OPTION, $stored, false );
 		}
-		$raw                  = (string) hex2bin( $stored );
-		self::$cached_pepper  = '' !== $raw ? $raw : (string) $stored;
+		$raw                 = (string) hex2bin( $stored );
+		self::$cached_pepper = '' !== $raw ? $raw : (string) $stored;
 		return self::$cached_pepper;
 	}
 
@@ -991,12 +991,12 @@ final class UCP_OAuth_Server {
 	 */
 	private static function scope_labels(): array {
 		return array(
-			'openid'        => __( 'Verify your account identity', 'shopwalk-for-woocommerce' ),
-			'profile'       => __( 'Read your basic profile (name, email)', 'shopwalk-for-woocommerce' ),
-			'email'         => __( 'Read your email address', 'shopwalk-for-woocommerce' ),
-			'ucp:checkout'  => __( 'Place orders on your behalf at this store', 'shopwalk-for-woocommerce' ),
-			'ucp:orders'    => __( 'Read your order history at this store', 'shopwalk-for-woocommerce' ),
-			'ucp:webhooks'  => __( 'Receive notifications about your orders', 'shopwalk-for-woocommerce' ),
+			'openid'       => __( 'Verify your account identity', 'shopwalk-for-woocommerce' ),
+			'profile'      => __( 'Read your basic profile (name, email)', 'shopwalk-for-woocommerce' ),
+			'email'        => __( 'Read your email address', 'shopwalk-for-woocommerce' ),
+			'ucp:checkout' => __( 'Place orders on your behalf at this store', 'shopwalk-for-woocommerce' ),
+			'ucp:orders'   => __( 'Read your order history at this store', 'shopwalk-for-woocommerce' ),
+			'ucp:webhooks' => __( 'Receive notifications about your orders', 'shopwalk-for-woocommerce' ),
 		);
 	}
 
@@ -1046,8 +1046,8 @@ final class UCP_OAuth_Server {
 			$hidden .= '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
 		}
 
-		$title         = esc_html__( 'Authorize access', 'shopwalk-for-woocommerce' );
-		$intro         = esc_html(
+		$title = esc_html__( 'Authorize access', 'shopwalk-for-woocommerce' );
+		$intro = esc_html(
 			sprintf(
 				/* translators: %s: agent / client display name */
 				__( '%s is requesting access to your account at this store.', 'shopwalk-for-woocommerce' ),
@@ -1107,17 +1107,17 @@ HTML;
 		return strtr(
 			$tpl,
 			array(
-				'{TITLE}'           => $title,
-				'{INTRO}'           => $intro,
-				'{SCOPES_LBL}'      => $scopes_lbl,
-				'{SCOPE_LIS}'       => $scope_lis,
-				'{REDIRECT_LBL}'    => $redirect_lbl,
-				'{REDIRECT_HTML}'   => $redirect_html,
-				'{CONSENT_ACTION}'  => $consent_action,
-				'{NONCE_FIELD}'     => $nonce_field,
-				'{HIDDEN}'          => $hidden,
-				'{APPROVE_LABEL}'   => $approve_label,
-				'{DENY_LABEL}'      => $deny_label,
+				'{TITLE}'          => $title,
+				'{INTRO}'          => $intro,
+				'{SCOPES_LBL}'     => $scopes_lbl,
+				'{SCOPE_LIS}'      => $scope_lis,
+				'{REDIRECT_LBL}'   => $redirect_lbl,
+				'{REDIRECT_HTML}'  => $redirect_html,
+				'{CONSENT_ACTION}' => $consent_action,
+				'{NONCE_FIELD}'    => $nonce_field,
+				'{HIDDEN}'         => $hidden,
+				'{APPROVE_LABEL}'  => $approve_label,
+				'{DENY_LABEL}'     => $deny_label,
 			)
 		);
 	}
