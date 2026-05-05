@@ -35,8 +35,8 @@ Open an issue first if you're unsure — saves everyone time.
 
 ```bash
 # Clone the repo
-git clone https://github.com/shopwalk-inc/shopwalk-woocommerce.git
-cd shopwalk-woocommerce
+git clone https://github.com/shopwalk-inc/shopwalk-for-woocommerce.git
+cd shopwalk-for-woocommerce
 
 # Install dev dependencies (phpcs, qit-cli)
 composer install
@@ -149,7 +149,7 @@ The text domain is `shopwalk-for-woocommerce`. All user-facing strings must use 
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/shopwalk-inc/shopwalk-woocommerce/issues) using the Bug Report template.
+Open a [GitHub Issue](https://github.com/shopwalk-inc/shopwalk-for-woocommerce/issues) using the Bug Report template.
 
 Include:
 - WordPress version

@@ -31,7 +31,7 @@ Thank you for your interest in contributing! This plugin implements the [Univers
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/shopwalk-inc/shopwalk-woocommerce/issues) with:
+Open a [GitHub Issue](https://github.com/shopwalk-inc/shopwalk-for-woocommerce/issues) with:
 - WordPress version
 - WooCommerce version  
 - PHP version

@@ -1,5 +1,5 @@
 {
-    "name": "shopwalk-inc/shopwalk-woocommerce",
+    "name": "shopwalk-inc/shopwalk-for-woocommerce",
     "description": "Shopwalk for WooCommerce — UCP-compliant agent commerce plugin",
     "license": "GPL-2.0-or-later",
     "require": {
