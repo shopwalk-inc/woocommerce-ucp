@@ -16,7 +16,7 @@ Make any WooCommerce store fully purchasable by AI shopping agents. Free, standa
 
 This plugin makes any WooCommerce store **fully purchasable by AI shopping agents** that speak the [Universal Commerce Protocol (UCP)](https://ucp.dev). Install it and your store can be discovered, browsed, and transacted by any UCP-compliant client — with **no account, no signup, no external service required**.
 
-Optional Shopwalk network integration is available for merchants who want real-time push sync to the Shopwalk network and Premier listing on shopwalk.com.
+Optional Shopwalk network integration is available for merchants who want real-time push sync to the Shopwalk network and listing on shopwalk.com.
 
 = What you get out of the box (no account needed) =
 
@@ -35,7 +35,7 @@ Optional Shopwalk network integration is available for merchants who want real-t
 = With an optional Shopwalk account =
 
 * Real-time push sync of products to the Shopwalk network
-* Premier placement on shopwalk.com
+* Listing on shopwalk.com
 * Analytics dashboard at shopwalk.com/partners
 * Faster index updates than the UCP pull path alone provides
 
@@ -125,12 +125,15 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 
 == Screenshots ==
 
-1. WooCommerce \u2192 UCP dashboard. UCP status panel with self-test diagnostic + the optional Shopwalk connection card.
-2. Self-test diagnostic results. 8 automated checks covering WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery doc.
-3. Payments section. The "Pay via UCP" gateway is registered automatically; merchants enable it from the standard WooCommerce \u2192 Settings \u2192 Payments screen.
-4. Optional Shopwalk connect flow. Enter a free Shopwalk license to enable real-time push sync, brand voice, and Premier listing on shopwalk.com.
+1. WP Admin → UCP dashboard. UCP status panel showing endpoint health, the self-test diagnostic launcher, and the optional Shopwalk connection card.
+2. Self-test diagnostic results. Eight automated checks covering the WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery document.
+3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
+4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.2 =
+* WordPress.org submission readiness, second pass. Slug-alignment release: GitHub repo, main plugin filename, and core class file all renamed to match the existing `Text Domain: shopwalk-for-woocommerce` so the plugin slug is consistent end-to-end before submission. Readme cleanup: literal `→` escape sequences in screenshot captions replaced with real `→` arrows (the 3.1.1 changelog claimed this fix but missed it); Screenshots captions rewritten to match the four shipped images; "Premier placement" / "Premier listing" wording softened to "listing on shopwalk.com" so the optional integration reads as a capability rather than an upsell. No code or behavior changes.
 
 = 3.1.1 =
 * WordPress.org submission readiness pass. § External Services rewritten to disclose every field actually sent to api.shopwalk.com — adds `site_url`, store `currency`, `total_products` (catalog size), per-product `external_id`, and per-image `alt` / `position`; corrects "regular/sale prices" to "current price and original (compare-at) price"; removes the never-sent `stock_quantity` claim. FAQ corrected to require PHP 8.1 (was 8.0). Screenshot captions repaired (literal `→` escapes replaced with `→` arrows). `SYNC_COOLDOWN` restored to 3600s (was 0 — a development debug constant). No behavior change in the sync payload itself; this release only reconciles documentation and version metadata with what the code already does. Fixes for the broader audit (admin inline-style → enqueued CSS, license-key UI masking, mandatory PKCE, refresh-token rotation, webhook callback_url SSRF defense, dead-letter admin UI, Tier-separation refactor, etc.) ship in this version too — see git log for the detailed series.
