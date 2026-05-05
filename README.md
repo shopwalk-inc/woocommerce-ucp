@@ -1,6 +1,6 @@
 # Shopwalk for WooCommerce
 
-[![Plugin Version](https://img.shields.io/badge/version-3.0.40-blue)](https://github.com/shopwalk-inc/shopwalk-woocommerce/releases)
+[![Plugin Version](https://img.shields.io/badge/version-3.1.2-blue)](https://github.com/shopwalk-inc/shopwalk-for-woocommerce/releases)
 [![WooCommerce](https://img.shields.io/badge/WooCommerce-8.0%2B-a46497)](https://woocommerce.com)
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)](https://php.net)
@@ -159,7 +159,7 @@ A WooCommerce payment method named **"Pay via UCP"** is registered for labeling 
 
 ### Manual installation
 
-1. Download the latest release zip from the [Releases page](https://github.com/shopwalk-inc/shopwalk-woocommerce/releases)
+1. Download the latest release zip from the [Releases page](https://github.com/shopwalk-inc/shopwalk-for-woocommerce/releases)
 2. **Plugins → Add New → Upload Plugin**, select the zip, activate
 3. Visit **UCP** to run the self-test
 
@@ -189,8 +189,8 @@ Deactivating the plugin stops WP-Cron jobs and removes the static `.well-known` 
 ## Contributing
 
 ```bash
-git clone https://github.com/shopwalk-inc/shopwalk-woocommerce.git
-cd shopwalk-woocommerce
+git clone https://github.com/shopwalk-inc/shopwalk-for-woocommerce.git
+cd shopwalk-for-woocommerce
 composer install
 
 # WordPress coding standards
