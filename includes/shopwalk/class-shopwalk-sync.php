@@ -194,7 +194,13 @@ final class Shopwalk_Sync {
 	 * @return void
 	 */
 	public function flush(): void {
-		if ( ! Shopwalk_License::is_valid() ) {
+		// Gate on server-reported status, not just key presence. is_valid() is
+		// a string-format check on the stored key; it does not flip when the
+		// server marks the license `expired` or `revoked`. status() returns
+		// the persisted server value (or back-compat 'active' when the key is
+		// present but no status has been received yet). Revoked/expired
+		// licenses must not push product data outbound.
+		if ( 'active' !== Shopwalk_License::status() ) {
 			return;
 		}
 		$queue = (array) get_option( self::QUEUE_OPTION, array() );

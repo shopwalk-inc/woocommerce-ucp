@@ -31,7 +31,7 @@ final class UCP_Orders {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'list_orders' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( 'UCP_OAuth_Server', 'permission_require_oauth' ),
 			)
 		);
 		register_rest_route(
@@ -40,7 +40,7 @@ final class UCP_Orders {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_order' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( 'UCP_OAuth_Server', 'permission_require_oauth' ),
 			)
 		);
 		register_rest_route(
@@ -49,7 +49,7 @@ final class UCP_Orders {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_order_events' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( 'UCP_OAuth_Server', 'permission_require_oauth' ),
 			)
 		);
 	}

@@ -196,3 +196,290 @@ class UCP_CLI {
 }
 
 WP_CLI::add_command( 'shopwalk client', 'UCP_CLI' );
+
+/**
+ * WP-CLI commands for inspecting and managing the outbound webhook
+ * dead-letter queue (F-D-6).
+ *
+ * Commands:
+ *   wp shopwalk webhooks deadletter list [--limit=<N>] [--format=<table|json|csv>]
+ *   wp shopwalk webhooks deadletter retry <id-or-all>
+ *   wp shopwalk webhooks deadletter discard <id-or-all>
+ *
+ * The admin UI at Tools → Failed Webhooks shows the most recent 50; the
+ * CLI is the bulk-ops path for ops engineers.
+ */
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- Co-located with the primary CLI command class for the same subsystem.
+class UCP_Webhook_Deadletter_CLI {
+
+	/**
+	 * List failed webhook deliveries.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--limit=<n>]
+	 * : Max rows to return. Default: 100. Pass 0 for "no limit".
+	 * ---
+	 * default: 100
+	 * ---
+	 *
+	 * [--format=<format>]
+	 * : Output format. Accepts table, json, csv, yaml, ids. Default: table.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - csv
+	 *   - yaml
+	 *   - ids
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp shopwalk webhooks deadletter list
+	 *     wp shopwalk webhooks deadletter list --limit=500 --format=json
+	 *
+	 * @subcommand deadletter-list
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Named arguments.
+	 */
+	public function deadletter_list( array $args, array $assoc_args ): void {
+		global $wpdb;
+		$queue = UCP_Storage::table( 'webhook_queue' );
+		$limit = (int) ( $assoc_args['limit'] ?? 100 );
+		$fmt   = (string) ( $assoc_args['format'] ?? 'table' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $queue from UCP_Storage::table().
+		if ( $limit > 0 ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, subscription_id, event_type, attempts, failed_at, last_error
+					 FROM {$queue}
+					 WHERE failed_at IS NOT NULL
+					 ORDER BY failed_at DESC
+					 LIMIT %d",
+					$limit
+				),
+				ARRAY_A
+			);
+		} else {
+			$rows = $wpdb->get_results(
+				"SELECT id, subscription_id, event_type, attempts, failed_at, last_error
+				 FROM {$queue}
+				 WHERE failed_at IS NOT NULL
+				 ORDER BY failed_at DESC",
+				ARRAY_A
+			);
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( empty( $rows ) ) {
+			WP_CLI::line( __( 'No failed webhook deliveries.', 'shopwalk-for-woocommerce' ) );
+			return;
+		}
+
+		WP_CLI\Utils\format_items(
+			$fmt,
+			$rows,
+			array( 'id', 'subscription_id', 'event_type', 'attempts', 'failed_at', 'last_error' )
+		);
+	}
+
+	/**
+	 * Retry one or all failed webhook deliveries.
+	 *
+	 * Clears failed_at, resets attempts to 0, sets next_attempt_at = NOW
+	 * so the next cron tick (or the single-event scheduled here) picks
+	 * the row up.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <id>
+	 * : The queue row id to retry, or "all" to retry every failed row.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp shopwalk webhooks deadletter retry 42
+	 *     wp shopwalk webhooks deadletter retry all
+	 *
+	 * @subcommand deadletter-retry
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Named arguments.
+	 */
+	public function deadletter_retry( array $args, array $assoc_args ): void {
+		$target = $args[0] ?? '';
+		if ( '' === $target ) {
+			WP_CLI::error( __( 'Pass a queue row id, or "all".', 'shopwalk-for-woocommerce' ) );
+		}
+
+		if ( 'all' === $target ) {
+			$n = WooCommerce_Shopwalk_Admin_Deadletter::retry_all();
+			if ( function_exists( 'wp_schedule_single_event' ) ) {
+				wp_schedule_single_event( time() + 5, 'shopwalk_ucp_webhook_flush' );
+			}
+			WP_CLI::success(
+				sprintf(
+					/* translators: %d: number of rows requeued. */
+					_n( 'Requeued %d row.', 'Requeued %d rows.', $n, 'shopwalk-for-woocommerce' ),
+					$n
+				)
+			);
+			return;
+		}
+
+		$row_id = (int) $target;
+		if ( $row_id <= 0 ) {
+			WP_CLI::error( __( 'Invalid row id.', 'shopwalk-for-woocommerce' ) );
+		}
+		$n = WooCommerce_Shopwalk_Admin_Deadletter::retry_row( $row_id );
+		if ( $n < 1 ) {
+			WP_CLI::error(
+				sprintf(
+					/* translators: %d: queue row id. */
+					__( 'Row %d not found (or already live).', 'shopwalk-for-woocommerce' ),
+					$row_id
+				)
+			);
+		}
+		if ( function_exists( 'wp_schedule_single_event' ) ) {
+			wp_schedule_single_event( time() + 5, 'shopwalk_ucp_webhook_flush' );
+		}
+		WP_CLI::success(
+			sprintf(
+				/* translators: %d: queue row id. */
+				__( 'Row %d requeued.', 'shopwalk-for-woocommerce' ),
+				$row_id
+			)
+		);
+	}
+
+	/**
+	 * Discard one or all failed webhook deliveries.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <id>
+	 * : The queue row id to delete, or "all" to delete every failed row.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp shopwalk webhooks deadletter discard 42
+	 *     wp shopwalk webhooks deadletter discard all
+	 *
+	 * @subcommand deadletter-discard
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Named arguments.
+	 */
+	public function deadletter_discard( array $args, array $assoc_args ): void {
+		$target = $args[0] ?? '';
+		if ( '' === $target ) {
+			WP_CLI::error( __( 'Pass a queue row id, or "all".', 'shopwalk-for-woocommerce' ) );
+		}
+
+		if ( 'all' === $target ) {
+			$n = WooCommerce_Shopwalk_Admin_Deadletter::discard_all();
+			WP_CLI::success(
+				sprintf(
+					/* translators: %d: number of rows deleted. */
+					_n( 'Discarded %d row.', 'Discarded %d rows.', $n, 'shopwalk-for-woocommerce' ),
+					$n
+				)
+			);
+			return;
+		}
+
+		$row_id = (int) $target;
+		if ( $row_id <= 0 ) {
+			WP_CLI::error( __( 'Invalid row id.', 'shopwalk-for-woocommerce' ) );
+		}
+		$n = WooCommerce_Shopwalk_Admin_Deadletter::discard_row( $row_id );
+		if ( $n < 1 ) {
+			WP_CLI::error(
+				sprintf(
+					/* translators: %d: queue row id. */
+					__( 'Row %d not found.', 'shopwalk-for-woocommerce' ),
+					$row_id
+				)
+			);
+		}
+		WP_CLI::success(
+			sprintf(
+				/* translators: %d: queue row id. */
+				__( 'Row %d discarded.', 'shopwalk-for-woocommerce' ),
+				$row_id
+			)
+		);
+	}
+}
+
+// Register each subcommand against an instance method via a closure so
+// the user-facing path is `wp shopwalk webhooks deadletter <verb>`
+// rather than the `class-method` shape WP-CLI auto-routes.
+$ucp_dlq_cli = new UCP_Webhook_Deadletter_CLI();
+
+WP_CLI::add_command(
+	'shopwalk webhooks deadletter list',
+	function ( array $args, array $assoc_args ) use ( $ucp_dlq_cli ): void {
+		$ucp_dlq_cli->deadletter_list( $args, $assoc_args );
+	},
+	array(
+		'shortdesc' => 'List failed webhook deliveries (rows with failed_at NOT NULL).',
+		'synopsis'  => array(
+			array(
+				'type'        => 'assoc',
+				'name'        => 'limit',
+				'description' => 'Max rows to return (0 for no limit).',
+				'optional'    => true,
+				'default'     => 100,
+			),
+			array(
+				'type'        => 'assoc',
+				'name'        => 'format',
+				'description' => 'Output format.',
+				'optional'    => true,
+				'default'     => 'table',
+				'options'     => array( 'table', 'json', 'csv', 'yaml', 'ids' ),
+			),
+		),
+	)
+);
+
+WP_CLI::add_command(
+	'shopwalk webhooks deadletter retry',
+	function ( array $args, array $assoc_args ) use ( $ucp_dlq_cli ): void {
+		$ucp_dlq_cli->deadletter_retry( $args, $assoc_args );
+	},
+	array(
+		'shortdesc' => 'Requeue one failed webhook delivery (or all of them).',
+		'synopsis'  => array(
+			array(
+				'type'        => 'positional',
+				'name'        => 'id',
+				'description' => 'Queue row id, or "all" for every failed row.',
+				'optional'    => false,
+			),
+		),
+	)
+);
+
+WP_CLI::add_command(
+	'shopwalk webhooks deadletter discard',
+	function ( array $args, array $assoc_args ) use ( $ucp_dlq_cli ): void {
+		$ucp_dlq_cli->deadletter_discard( $args, $assoc_args );
+	},
+	array(
+		'shortdesc' => 'Permanently delete one failed webhook delivery (or all of them).',
+		'synopsis'  => array(
+			array(
+				'type'        => 'positional',
+				'name'        => 'id',
+				'description' => 'Queue row id, or "all" for every failed row.',
+				'optional'    => false,
+			),
+		),
+	)
+);

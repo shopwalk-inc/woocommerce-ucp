@@ -110,7 +110,7 @@ final class UCP_Checkout {
 			}
 		}
 
-		$body       = $request->get_json_params() ?: array();
+		$body       = self::sanitize_session_payload( $request->get_json_params() ?: array() );
 		$line_items = $body['line_items'] ?? array();
 		if ( ! is_array( $line_items ) || count( $line_items ) === 0 ) {
 			return UCP_Response::error( 'invalid_request', 'line_items[] is required', 'recoverable', 400 );
@@ -194,11 +194,15 @@ final class UCP_Checkout {
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
 		}
+		$forbidden = self::assert_session_access( $row, $request );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
 		if ( 'incomplete' !== $row['status'] && 'ready_for_complete' !== $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Session cannot be updated in its current status', 'recoverable', 409 );
 		}
 
-		$body    = $request->get_json_params() ?: array();
+		$body    = self::sanitize_session_payload( $request->get_json_params() ?: array() );
 		$updates = array(
 			'updated_at' => current_time( 'mysql', true ),
 		);
@@ -241,6 +245,10 @@ final class UCP_Checkout {
 		$row = self::find( $id );
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
+		}
+		$forbidden = self::assert_session_access( $row, $request );
+		if ( $forbidden ) {
+			return $forbidden;
 		}
 		if ( 'ready_for_complete' !== $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Session is not ready_for_complete', 'recoverable', 409 );
@@ -290,6 +298,10 @@ final class UCP_Checkout {
 		$row = self::find( $id );
 		if ( ! $row ) {
 			return UCP_Response::error( 'not_found', 'Session not found', 'recoverable', 404 );
+		}
+		$forbidden = self::assert_session_access( $row, $request );
+		if ( $forbidden ) {
+			return $forbidden;
 		}
 		if ( 'completed' === $row['status'] ) {
 			return UCP_Response::error( 'invalid_state', 'Cannot cancel a completed session', 'recoverable', 409 );
@@ -635,5 +647,260 @@ final class UCP_Checkout {
 			return 0;
 		}
 		return (int) $ctx['user_id'];
+	}
+
+	/**
+	 * Per-handler ownership check (F-B-2). Anyone who knows or guesses a
+	 * session id MUST NOT be able to update / complete / cancel another
+	 * agent's session.
+	 *
+	 * Semantics:
+	 *   - Sessions whose stored client_id is `agt_anonymous` (or empty)
+	 *     remain reachable by any caller — preserves the existing anonymous
+	 *     create-flow where the same anonymous agent expects to update + cancel.
+	 *   - Sessions bound to a real client_id are reachable ONLY by that
+	 *     client_id. Anonymous + other-agent callers receive 403.
+	 *
+	 * @param array<string,mixed> $row     The session row from find().
+	 * @param WP_REST_Request     $request The incoming request.
+	 * @return WP_Error|null WP_Error 403 on rejection; null on allow.
+	 */
+	private static function assert_session_access( array $row, WP_REST_Request $request ): ?WP_Error {
+		$row_client = (string) ( $row['client_id'] ?? '' );
+		// Anonymous sessions: anyone may touch them. Preserves the existing
+		// semantic so an anonymous create can still be updated + cancelled
+		// by the same (uncredentialed) caller.
+		if ( '' === $row_client || 'agt_anonymous' === $row_client ) {
+			return null;
+		}
+		$ctx = UCP_OAuth_Server::authenticate_request( $request );
+		if ( is_wp_error( $ctx ) ) {
+			return UCP_Response::error( 'forbidden_session_access', 'Session is owned by another client', 'fatal', 403 );
+		}
+		if ( (string) ( $ctx['client_id'] ?? '' ) !== $row_client ) {
+			return UCP_Response::error( 'forbidden_session_access', 'Session is owned by another client', 'fatal', 403 );
+		}
+		return null;
+	}
+
+	/**
+	 * Per-field sanitizer at the create + update boundary (F-B-5). Drops
+	 * unknown keys, casts knowns to their expected type, sanitizes strings
+	 * with sanitize_text_field / sanitize_email, normalizes country codes,
+	 * and recurses on nested arrays.
+	 *
+	 * The schema is intentionally narrow — anything not in the allowlist is
+	 * dropped rather than passed through. Defense in depth against stored-XSS
+	 * + downstream injection if a future consumer renders the buyer/payment
+	 * blob without escaping.
+	 *
+	 * @param array<string,mixed> $body Raw request body.
+	 * @return array<string,mixed>
+	 */
+	private static function sanitize_session_payload( array $body ): array {
+		$out = array();
+
+		if ( isset( $body['line_items'] ) && is_array( $body['line_items'] ) ) {
+			$items = array();
+			foreach ( $body['line_items'] as $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+				$items[] = self::sanitize_assoc(
+					$item,
+					array(
+						'product_id' => 'int_id',
+						'variant_id' => 'int_id',
+						'quantity'   => 'int_qty',
+						'sku'        => 'string',
+						'name'       => 'string',
+						'title'      => 'string',
+						'unit_price' => 'money',
+						'price'      => 'money',
+						'total'      => 'money',
+						'tax'        => 'money',
+						'currency'   => 'currency',
+					)
+				);
+			}
+			$out['line_items'] = $items;
+		}
+
+		if ( array_key_exists( 'buyer', $body ) ) {
+			$out['buyer'] = is_array( $body['buyer'] )
+				? self::sanitize_assoc(
+					$body['buyer'],
+					array(
+						'name'          => 'string',
+						'first_name'    => 'string',
+						'last_name'     => 'string',
+						'display_name'  => 'string',
+						'email'         => 'email',
+						'phone'         => 'string',
+						'note'          => 'string',
+						'address_line1' => 'string',
+						'address_line2' => 'string',
+						'city'          => 'string',
+						'state'         => 'string',
+						'postcode'      => 'string',
+						'country'       => 'country',
+					)
+				)
+				: null;
+		}
+
+		if ( array_key_exists( 'fulfillment', $body ) ) {
+			$out['fulfillment'] = is_array( $body['fulfillment'] )
+				? self::sanitize_fulfillment( $body['fulfillment'] )
+				: null;
+		}
+
+		if ( array_key_exists( 'payment', $body ) ) {
+			$out['payment'] = is_array( $body['payment'] )
+				? self::sanitize_assoc(
+					$body['payment'],
+					array(
+						'gateway'           => 'string',
+						'token'             => 'string',
+						'payment_method_id' => 'string',
+						'currency'          => 'currency',
+						'amount'            => 'money',
+					)
+				)
+				: null;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Sanitize a single fulfillment payload — supports both the new UCP
+	 * model (methods[].destinations[]) and legacy flat shipping_address.
+	 *
+	 * @param array<string,mixed> $f Raw fulfillment payload.
+	 * @return array<string,mixed>
+	 */
+	private static function sanitize_fulfillment( array $f ): array {
+		$out = array();
+		if ( isset( $f['methods'] ) && is_array( $f['methods'] ) ) {
+			$methods = array();
+			foreach ( $f['methods'] as $m ) {
+				if ( ! is_array( $m ) ) {
+					continue;
+				}
+				$dests = array();
+				if ( isset( $m['destinations'] ) && is_array( $m['destinations'] ) ) {
+					foreach ( $m['destinations'] as $d ) {
+						if ( ! is_array( $d ) ) {
+							continue;
+						}
+						$dests[] = self::sanitize_assoc(
+							$d,
+							array(
+								'id'               => 'string',
+								'street_address'   => 'string',
+								'address_locality' => 'string',
+								'address_region'   => 'string',
+								'postal_code'      => 'string',
+								'address_country'  => 'country',
+								'name'             => 'string',
+								'phone'            => 'string',
+							)
+						);
+					}
+				}
+				$methods[] = array_merge(
+					self::sanitize_assoc(
+						$m,
+						array(
+							'id'                      => 'string',
+							'type'                    => 'string',
+							'selected_destination_id' => 'string',
+						)
+					),
+					array(
+						'destinations' => $dests,
+					)
+				);
+			}
+			$out['methods'] = $methods;
+		}
+		if ( isset( $f['shipping_address'] ) && is_array( $f['shipping_address'] ) ) {
+			$out['shipping_address'] = self::sanitize_assoc(
+				$f['shipping_address'],
+				array(
+					'address_1'   => 'string',
+					'address_2'   => 'string',
+					'line1'       => 'string',
+					'line2'       => 'string',
+					'city'        => 'string',
+					'state'       => 'string',
+					'postcode'    => 'string',
+					'postal_code' => 'string',
+					'country'     => 'country',
+				)
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Sanitize an associative array against a small typed schema. Unknown
+	 * keys are dropped.
+	 *
+	 * Types: 'string', 'email', 'country', 'int_id', 'int_qty', 'money'.
+	 *
+	 * @param array<string,mixed> $in     Raw input.
+	 * @param array<string,string> $schema field => type.
+	 * @return array<string,mixed>
+	 */
+	private static function sanitize_assoc( array $in, array $schema ): array {
+		$out = array();
+		foreach ( $schema as $key => $type ) {
+			if ( ! array_key_exists( $key, $in ) ) {
+				continue;
+			}
+			$out[ $key ] = self::coerce_value( $in[ $key ], $type );
+		}
+		return $out;
+	}
+
+	/**
+	 * Coerce a single scalar to a typed value per the sanitizer schema.
+	 *
+	 * @param mixed  $v    Raw value.
+	 * @param string $type One of: string, email, country, int_id, int_qty, money.
+	 * @return mixed
+	 */
+	private static function coerce_value( $v, string $type ) {
+		switch ( $type ) {
+			case 'string':
+				return is_scalar( $v ) ? sanitize_text_field( (string) $v ) : '';
+			case 'email':
+				return is_scalar( $v ) ? sanitize_email( (string) $v ) : '';
+			case 'country':
+				$s = is_scalar( $v ) ? strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $v ) ) : '';
+				return substr( $s, 0, 2 );
+			case 'currency':
+				$s = is_scalar( $v ) ? strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $v ) ) : '';
+				return substr( $s, 0, 3 );
+			case 'int_id':
+				$n = is_scalar( $v ) ? (int) $v : 0;
+				return $n < 0 ? 0 : $n;
+			case 'int_qty':
+				$n = is_scalar( $v ) ? (int) $v : 0;
+				if ( $n < 0 ) {
+					return 0;
+				}
+				return $n > 10000 ? 10000 : $n;
+			case 'money':
+				if ( ! is_scalar( $v ) ) {
+					return 0.0;
+				}
+				$f = (float) $v;
+				return ( is_nan( $f ) || is_infinite( $f ) ) ? 0.0 : $f;
+			default:
+				return null;
+		}
 	}
 }

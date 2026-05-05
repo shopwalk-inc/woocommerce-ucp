@@ -5,8 +5,9 @@
  * Each check returns:
  *   array{ check:string, status: 'pass'|'warn'|'fail', message:string }
  *
- * The admin AJAX runner (admin/class-self-test.php) calls run_all() and
- * streams results to the dashboard one row at a time.
+ * The admin AJAX handler (WooCommerce_Shopwalk_Admin_Dashboard::ajax_self_test in
+ * admin/class-dashboard.php) calls run_all() and streams results to the
+ * dashboard one row at a time.
  *
  * @package ShopwalkWooCommerce
  */

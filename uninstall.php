@@ -35,10 +35,32 @@ foreach ( $tables as $name ) {
 }
 
 // ── Delete WP options ───────────────────────────────────────────────────────
+//
+// Keep this list in sync with every option key written by the plugin. The
+// readme FAQ promises "deletes every shopwalk_* WP option"; drift here means
+// orphaned rows in wp_options after uninstall.
 $options = array(
+	// Tier 1 (UCP core).
+	'shopwalk_ucp_gateway_enabled',
+	'shopwalk_ucp_store_signing_secret',
+	// Tier 2 (Shopwalk integration) — license + heartbeat.
 	'shopwalk_license_key',
+	'shopwalk_license_status',
+	'shopwalk_license_needs_activation',
+	'shopwalk_last_heartbeat_at',
 	'shopwalk_partner_id',
+	'shopwalk_plan',
+	'shopwalk_plan_label',
+	'shopwalk_next_billing_at',
+	'shopwalk_subscription_status',
+	'shopwalk_last_status_poll',
+	'shopwalk_discovery_paused',
+	// Tier 2 — sync state.
 	'shopwalk_sync_queue',
+	'shopwalk_sync_state',
+	'shopwalk_sync_history',
+	// Legacy keys from earlier versions — kept for defensive cleanup on
+	// upgrades from <3.0.0; no current writer.
 	'shopwalk_synced_count',
 	'shopwalk_last_sync_at',
 	'shopwalk_notice_dismissed',
@@ -50,9 +72,15 @@ foreach ( $options as $option ) {
 }
 
 // ── Clear scheduled crons ───────────────────────────────────────────────────
+//
+// Keep in sync with every wp_schedule_(event|single_event) hook the plugin
+// registers. Mirror of WooCommerce_Shopwalk::deactivate() plus any crons whose
+// scheduling lives outside the deactivate path.
 wp_clear_scheduled_hook( 'shopwalk_session_cleanup' );
 wp_clear_scheduled_hook( 'shopwalk_webhook_flush' );
+wp_clear_scheduled_hook( 'shopwalk_direct_checkout_cleanup' );
 wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
+wp_clear_scheduled_hook( 'shopwalk_status_poll' );
 
 // ── Remove /.well-known/ files ─────────────────────────────────────────────
 require_once ABSPATH . 'wp-admin/includes/file.php';

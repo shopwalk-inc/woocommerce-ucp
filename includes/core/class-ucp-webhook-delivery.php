@@ -282,8 +282,29 @@ final class UCP_Webhook_Delivery {
 			return;
 		}
 
-		$payload    = (string) $row['payload'];
-		$secret     = (string) $sub['secret'];
+		$payload = (string) $row['payload'];
+		// F-D-5: secret is stored encrypted at rest; decrypt-or-migrate
+		// returns the plaintext (and lazily re-encrypts legacy plaintext
+		// values left in the DB before the encryption rollout). If the
+		// helper returns empty the row is genuinely corrupted — mark
+		// failed and skip rather than sign with an empty key.
+		$secret = UCP_Webhook_Secret_Crypto::decrypt_or_migrate(
+			(string) $sub['id'],
+			(string) $sub['secret']
+		);
+		if ( '' === $secret ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$queue,
+				array(
+					'failed_at'  => current_time( 'mysql', true ),
+					'attempts'   => (int) $row['attempts'] + 1,
+					'last_error' => 'subscription secret unreadable',
+				),
+				array( 'id' => (int) $row['id'] )
+			);
+			return;
+		}
 		$timestamp  = time();
 		$webhook_id = 'evt_' . wp_generate_uuid4();
 
@@ -294,11 +315,26 @@ final class UCP_Webhook_Delivery {
 		$signed_content = $webhook_id . '.' . $timestamp . '.' . $payload;
 		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $secret, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for HMAC-SHA256 webhook signature.
 
+		// TOCTOU defense: DNS for the callback host may have flipped between
+		// subscribe and delivery (intentional rebinding attack, or just a
+		// CNAME swap). Re-validate against the current resolution before
+		// every POST.
+		$guard_err = UCP_Url_Guard::check_webhook_callback( (string) $sub['callback_url'] );
+		if ( null !== $guard_err ) {
+			self::record_failure( (int) $row['id'], (int) $row['attempts'] + 1, $guard_err->get_error_message() );
+			return;
+		}
+
 		$response = wp_remote_post(
 			(string) $sub['callback_url'],
 			array(
-				'timeout' => 15,
-				'headers' => array(
+				'timeout'     => 15,
+				// SSRF defense: never follow redirects. WP HTTP defaults to
+				// 5 follow-throughs, which would let a strict subscribe-time
+				// check be bypassed by an https URL that 302s to
+				// http://169.254.169.254/.
+				'redirection' => 0,
+				'headers'     => array(
 					'Content-Type'      => 'application/json',
 					'Webhook-Timestamp' => strval( $timestamp ),
 					'Webhook-Id'        => $webhook_id,
@@ -307,7 +343,7 @@ final class UCP_Webhook_Delivery {
 					'Signature-Input'   => 'sig1=("content-digest" "webhook-id" "webhook-timestamp");keyid="store-hmac";alg="hmac-sha256"',
 					'Signature'         => 'sig1=:' . $signature . ':',
 				),
-				'body'    => $payload,
+				'body'        => $payload,
 			)
 		);
 

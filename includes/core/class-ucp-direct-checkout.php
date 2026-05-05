@@ -80,8 +80,12 @@ final class UCP_Direct_Checkout {
 			);
 		}
 
-		$stored_key = get_option( 'shopwalk_license_key', '' );
-		if ( '' === $stored_key || $header_key !== $stored_key ) {
+		$stored_key = (string) get_option( 'shopwalk_license_key', '' );
+		// Constant-time compare so a timing oracle on this endpoint can't be used
+		// to recover the license key character-by-character. The empty-stored
+		// short-circuit must precede hash_equals (the function emits a warning
+		// when given an empty known-string, and we don't want to leak that path).
+		if ( '' === $stored_key || ! hash_equals( $stored_key, (string) $header_key ) ) {
 			return new WP_Error(
 				'invalid_license_key',
 				'License key does not match.',
@@ -263,7 +267,18 @@ final class UCP_Direct_Checkout {
 		$order->update_meta_data( '_shopwalk_source', 'direct_checkout' );
 		$order->update_meta_data( '_shopwalk_agent_id', sanitize_text_field( $body['shopwalk_agent_id'] ?? '' ) );
 		$order->update_meta_data( '_shopwalk_order_id', sanitize_text_field( $body['shopwalk_order_id'] ?? '' ) );
-		$order->update_meta_data( '_shopwalk_return_url', esc_url_raw( $body['return_url'] ?? '' ) );
+		// F-B-7: return_url is the post-payment redirect target. Only store
+		// it if it points at an allowlisted Shopwalk-owned host over https
+		// with no userinfo / non-443 port — otherwise the order completes
+		// fine but the redirect falls back to default WC behavior.
+		$return_url = (string) ( $body['return_url'] ?? '' );
+		if ( '' !== $return_url ) {
+			if ( self::is_allowed_return_url( $return_url ) ) {
+				$order->update_meta_data( '_shopwalk_return_url', esc_url_raw( $return_url ) );
+			} elseif ( function_exists( 'error_log' ) ) {
+				error_log( sprintf( '[shopwalk-ucp] Rejected return_url for order %d (host not in allowlist)', $order->get_id() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
 		$order->update_meta_data( '_shopwalk_expires_at', gmdate( 'Y-m-d\TH:i:s\Z', time() + self::ORDER_TTL ) );
 
 		// ── Totals ──────────────────────────────────────────────────────
@@ -295,11 +310,25 @@ final class UCP_Direct_Checkout {
 		);
 	}
 
-	// ── Order Status Webhook ────────────────────────────────────────────────
+	// ── Order Status Hook (Tier-1 generic emit) ─────────────────────────────
 
 	/**
-	 * Fires when a WooCommerce order changes status. If the order originated
-	 * from Shopwalk Direct Checkout, POST a webhook to shopwalk-api.
+	 * Fires when a WooCommerce order changes status. Tier 1 owns nothing
+	 * about how listeners notify their own backends — it just emits a generic
+	 * action with the order data subscribers need.
+	 *
+	 * Tier 2 (Shopwalk integration) subscribes to this action via
+	 * `Shopwalk_Direct_Checkout_Notifier` in includes/shopwalk/. Removing the
+	 * shopwalk/ directory leaves Tier 1 functional with zero outbound HTTP.
+	 *
+	 * The action signature `(WC_Order $order, int $order_id, string $old_status,
+	 * string $new_status, string $external_order_id)` is the contract — keep
+	 * it stable.
+	 *
+	 * Note: `$external_order_id` is read from the order meta key
+	 * `_shopwalk_order_id` for data-continuity reasons, but it represents the
+	 * agent-side external_order_id any UCP-compliant agent would store. The
+	 * meta key name is preserved deliberately; renaming is a separate cleanup.
 	 *
 	 * @param int      $order_id   WC order ID.
 	 * @param string   $from       Previous status (without wc- prefix).
@@ -308,70 +337,38 @@ final class UCP_Direct_Checkout {
 	 * @return void
 	 */
 	public static function on_order_status_changed( int $order_id, string $from, string $to, $order ): void {
-		$shopwalk_order_id = $order->get_meta( '_shopwalk_order_id' );
-		$shopwalk_source   = $order->get_meta( '_shopwalk_source' );
-
-		// Only fire for Shopwalk-originated orders.
-		if ( 'direct_checkout' !== $shopwalk_source || '' === $shopwalk_order_id ) {
+		if ( ! $order || ! is_object( $order ) || ! method_exists( $order, 'get_meta' ) ) {
 			return;
 		}
 
-		$license_key = get_option( 'shopwalk_license_key', '' );
-		if ( '' === $license_key ) {
+		$external_order_id = (string) $order->get_meta( '_shopwalk_order_id' );
+		$source            = (string) $order->get_meta( '_shopwalk_source' );
+
+		// Only emit for Direct Checkout-originated orders. Tier 1 owns the
+		// "is this our order?" guard because the meta keys are written by
+		// create_order() in this same class.
+		if ( 'direct_checkout' !== $source || '' === $external_order_id ) {
 			return;
 		}
 
-		$api_url = defined( 'SHOPWALK_API_URL' ) ? SHOPWALK_API_URL : 'https://api.shopwalk.com';
-
-		// Attempt to get tracking info from common tracking plugins.
-		$tracking_number = '';
-		$carrier         = '';
-
-		// Support WooCommerce Shipment Tracking plugin.
-		$tracking_items = $order->get_meta( '_wc_shipment_tracking_items' );
-		if ( is_array( $tracking_items ) && ! empty( $tracking_items ) ) {
-			$last            = end( $tracking_items );
-			$tracking_number = $last['tracking_number'] ?? '';
-			$carrier         = $last['tracking_provider'] ?? '';
-		}
-
-		$payload = array(
-			'event'             => 'order.status_changed',
-			'order_id'          => $order_id,
-			'shopwalk_order_id' => $shopwalk_order_id,
-			'from_status'       => $from,
-			'to_status'         => $to,
-			'total'             => self::to_cents( (float) $order->get_total() ),
-			'currency'          => $order->get_currency(),
-			'tracking_number'   => $tracking_number,
-			'carrier'           => $carrier,
-		);
-
-		$body       = wp_json_encode( $payload );
-		$timestamp  = time();
-		$webhook_id = 'evt_' . wp_generate_uuid4();
-		$digest     = base64_encode( hash( 'sha256', $body, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for Content-Digest header per RFC 9530.
-
-		// HMAC signature over the signed content using the license key.
-		$signed_content = $webhook_id . '.' . $timestamp . '.' . $body;
-		$signature      = base64_encode( hash_hmac( 'sha256', $signed_content, $license_key, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for HMAC-SHA256 webhook signature.
-
-		wp_remote_post(
-			$api_url . '/api/v1/ucp/webhooks/orders',
-			array(
-				'timeout' => 15,
-				'headers' => array(
-					'Content-Type'      => 'application/json',
-					'X-License-Key'     => $license_key,
-					'Webhook-Timestamp' => strval( $timestamp ),
-					'Webhook-Id'        => $webhook_id,
-					'UCP-Agent'         => 'profile="' . get_site_url() . '/.well-known/ucp"',
-					'Content-Digest'    => 'sha-256=:' . $digest . ':',
-					'Signature-Input'   => 'sig1=("content-digest" "webhook-id" "webhook-timestamp");keyid="store-hmac";alg="hmac-sha256"',
-					'Signature'         => 'sig1=:' . $signature . ':',
-				),
-				'body'    => $body,
-			)
+		/**
+		 * Notify any listeners (Tier 2 Shopwalk integration subscribes via
+		 * includes/shopwalk/class-shopwalk-direct-checkout-notifier.php). Tier 1
+		 * owns nothing about how subscribers notify their backends.
+		 *
+		 * @param WC_Order $order             The order object.
+		 * @param int      $order_id          WC order ID.
+		 * @param string   $from              Previous WC status (without wc- prefix).
+		 * @param string   $to                New WC status (without wc- prefix).
+		 * @param string   $external_order_id The agent-side order id stored on the order.
+		 */
+		do_action(
+			'ucp_direct_checkout_order_status_changed',
+			$order,
+			$order_id,
+			$from,
+			$to,
+			$external_order_id
 		);
 	}
 
@@ -391,8 +388,11 @@ final class UCP_Direct_Checkout {
 			return $return_url;
 		}
 
-		$shopwalk_return = $order->get_meta( '_shopwalk_return_url' );
-		if ( '' !== $shopwalk_return ) {
+		$shopwalk_return = (string) $order->get_meta( '_shopwalk_return_url' );
+		// F-B-7: defense in depth — re-validate at filter time too, in case
+		// the meta was written before allowlisting was in place or via a
+		// path that bypasses create_order().
+		if ( '' !== $shopwalk_return && self::is_allowed_return_url( $shopwalk_return ) ) {
 			// Append order_id + status as query params for the Shopwalk UI.
 			$shopwalk_return = add_query_arg(
 				array(
@@ -405,6 +405,68 @@ final class UCP_Direct_Checkout {
 		}
 
 		return $return_url;
+	}
+
+	// ── Return URL Allowlist (F-B-7) ────────────────────────────────────────
+
+	/**
+	 * Is the given URL a safe post-payment redirect target?
+	 *
+	 * Restrictions:
+	 *   - Scheme MUST be https.
+	 *   - No userinfo (`user:pass@host`).
+	 *   - No port other than 443.
+	 *   - Host MUST be exact-match `myshopwalk.com`, exact-match
+	 *     `shopwalk.com`, or an immediate `*.shopwalk.com` subdomain.
+	 *     Override via `SHOPWALK_RETURN_URL_ALLOWED_HOSTS` constant
+	 *     (array of hostnames; exact-match only).
+	 *
+	 * Suffix-style attacks (`shopwalk.com.evil.com`) are rejected because
+	 * the matcher requires either exact host equality or `endswith('.shopwalk.com')`
+	 * — never `contains` or substring.
+	 *
+	 * @param string $url Candidate return URL.
+	 * @return bool
+	 */
+	private static function is_allowed_return_url( string $url ): bool {
+		if ( '' === $url ) {
+			return false;
+		}
+		$parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+		if ( ! is_array( $parts ) ) {
+			return false;
+		}
+		// Scheme.
+		if ( ( $parts['scheme'] ?? '' ) !== 'https' ) {
+			return false;
+		}
+		// Userinfo.
+		if ( isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
+			return false;
+		}
+		// Port — accept omitted or explicit 443.
+		if ( isset( $parts['port'] ) && 443 !== (int) $parts['port'] ) {
+			return false;
+		}
+		$host = strtolower( (string) ( $parts['host'] ?? '' ) );
+		if ( '' === $host ) {
+			return false;
+		}
+		// Default exact-match list.
+		$exact = array( 'myshopwalk.com', 'shopwalk.com' );
+		if ( defined( 'SHOPWALK_RETURN_URL_ALLOWED_HOSTS' ) && is_array( SHOPWALK_RETURN_URL_ALLOWED_HOSTS ) ) {
+			foreach ( SHOPWALK_RETURN_URL_ALLOWED_HOSTS as $h ) {
+				$exact[] = strtolower( (string) $h );
+			}
+		}
+		if ( in_array( $host, $exact, true ) ) {
+			return true;
+		}
+		// Subdomain wildcard: only `*.shopwalk.com` (NOT `*.myshopwalk.com`).
+		if ( str_ends_with( $host, '.shopwalk.com' ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	// ── Expired Order Cleanup ───────────────────────────────────────────────

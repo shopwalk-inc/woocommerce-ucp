@@ -54,11 +54,19 @@ final class PkceTest extends TestCase {
 		$this->assertFalse( hash_equals( $stored_challenge, $attacker_computed ) );
 	}
 
-	public function test_plain_method_compares_verifier_to_challenge_directly(): void {
-		// RFC 7636 §4.2 "plain" — challenge = verifier.
-		$verifier = 'raw-verifier';
+	public function test_plain_method_is_no_longer_a_valid_compare_path(): void {
+		// As of v3.1.1 / F-C-2, the server rejects `plain` PKCE entirely
+		// (OAuth 2.1 §4.1.2.1 forbids it). The `plain` semantics — that
+		// `challenge === verifier` — would still hold mathematically, but
+		// nothing in the server is allowed to take that branch. This test
+		// pins the reference S256 derivation as the only acceptable
+		// verification path going forward.
+		$verifier  = 'raw-verifier';
+		$s256_only = self::compute_s256( $verifier );
 
-		$this->assertTrue( hash_equals( $verifier, $verifier ) );
-		$this->assertFalse( hash_equals( $verifier, 'other' ) );
+		// The S256 challenge MUST NOT collide with the raw verifier — if it
+		// did, a stored "plain" challenge would silently pass an S256
+		// verification check after a partial migration.
+		$this->assertNotSame( $verifier, $s256_only );
 	}
 }

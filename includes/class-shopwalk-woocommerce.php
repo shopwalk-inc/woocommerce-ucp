@@ -87,7 +87,12 @@ final class WooCommerce_Shopwalk {
 		require_once $dir . 'class-ucp-direct-checkout.php';
 		require_once $dir . 'class-ucp-orders.php';
 
-		// Webhooks.
+		// Webhooks. URL guard is loaded first — both subscribe-time and
+		// delivery-time gate on it for SSRF defense. Secret-crypto helper
+		// is loaded next — both subscriptions (encrypt at create) and
+		// delivery (decrypt at sign) depend on it (F-D-5).
+		require_once $dir . 'class-ucp-url-guard.php';
+		require_once $dir . 'class-ucp-webhook-secret-crypto.php';
 		require_once $dir . 'class-ucp-webhook-subscriptions.php';
 		require_once $dir . 'class-ucp-webhook-delivery.php';
 
@@ -121,9 +126,11 @@ final class WooCommerce_Shopwalk {
 		require_once $dir . 'class-shopwalk-sync.php';
 		require_once $dir . 'class-shopwalk-connector.php';
 		require_once $dir . 'class-shopwalk-dashboard-panel.php';
+		require_once $dir . 'class-shopwalk-direct-checkout-notifier.php';
 
 		Shopwalk_Sync::instance();
 		Shopwalk_Connector::instance();
+		Shopwalk_Direct_Checkout_Notifier::instance();
 
 		// Auto-activate prefilled license if pending (set during plugin activation
 		// hook when Shopwalk_License wasn't loaded yet).
@@ -149,7 +156,7 @@ final class WooCommerce_Shopwalk {
 		}
 		$dir = WOOCOMMERCE_SHOPWALK_PLUGIN_DIR . 'includes/admin/';
 		require_once $dir . 'class-dashboard.php';
-		require_once $dir . 'class-self-test.php';
+		require_once $dir . 'class-deadletter-admin.php';
 
 		// Shopwalk_Connect drives OAuth connect + Pro upgrade + hourly tier
 		// poll. Loaded in admin always (unlicensed users need the Connect
@@ -162,7 +169,7 @@ final class WooCommerce_Shopwalk {
 		}
 
 		WooCommerce_Shopwalk_Admin_Dashboard::instance();
-		WooCommerce_Shopwalk_Admin_Self_Test::instance();
+		WooCommerce_Shopwalk_Admin_Deadletter::instance();
 	}
 
 	/**
@@ -242,6 +249,7 @@ final class WooCommerce_Shopwalk {
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( 'shopwalk_session_cleanup' );
 		wp_clear_scheduled_hook( 'shopwalk_webhook_flush' );
+		wp_clear_scheduled_hook( 'shopwalk_direct_checkout_cleanup' );
 		wp_clear_scheduled_hook( 'shopwalk_flush_queue' );
 		wp_clear_scheduled_hook( 'shopwalk_status_poll' );
 		self::remove_well_known_files();

@@ -41,7 +41,7 @@ final class Shopwalk_Dashboard_Panel {
 			<?php if ( '' !== $license_key ) : ?>
 				<p>
 					<strong><?php esc_html_e( 'License Key:', 'shopwalk-for-woocommerce' ); ?></strong>
-					<code><?php echo esc_html( $license_key ); ?></code>
+					<code title="<?php esc_attr_e( 'License key is hidden. Find your full key in your Shopwalk partner portal.', 'shopwalk-for-woocommerce' ); ?>"><?php echo esc_html( self::mask_license_key( $license_key ) ); ?></code>
 				</p>
 			<?php endif; ?>
 			<?php if ( '' !== $pid ) : ?>
@@ -70,5 +70,23 @@ final class Shopwalk_Dashboard_Panel {
 			</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Mask a license key for display. Shows first 8 chars + ellipsis + last 4.
+	 *
+	 * The key is a bearer credential — never display it in full. A merchant
+	 * who needs the full key looks it up in the Shopwalk partner portal,
+	 * not here.
+	 *
+	 * @param string $key The license key.
+	 * @return string Masked representation safe to display.
+	 */
+	private static function mask_license_key( string $key ): string {
+		$len = strlen( $key );
+		if ( $len <= 12 ) {
+			return str_repeat( '•', max( 4, $len - 4 ) ) . substr( $key, -4 );
+		}
+		return substr( $key, 0, 8 ) . '…' . substr( $key, -4 );
 	}
 }
