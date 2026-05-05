@@ -46,6 +46,7 @@ final class UCP_Url_Guard {
 		array( '198.18.0.0', 15 ),     // Network benchmark — RFC 2544.
 		array( '198.51.100.0', 24 ),   // TEST-NET-2 (docs).
 		array( '203.0.113.0', 24 ),    // TEST-NET-3 (docs).
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- "224.0.0.0/4" in the trailing comment is prose, not commented-out code.
 		array( '224.0.0.0', 4 ),       // Multicast (224.0.0.0/4).
 		array( '240.0.0.0', 4 ),       // Reserved (240.0.0.0/4 — incl. broadcast).
 	);
@@ -294,13 +295,15 @@ final class UCP_Url_Guard {
 	 * @return string|null
 	 */
 	private static function classify_ipv6( string $ip ): ?string {
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- inet_pton emits an E_WARNING on malformed input; we deliberately suppress and check the false return on the next line.
 		$packed = @inet_pton( $ip );
 		if ( false === $packed || strlen( $packed ) !== 16 ) {
 			return 'invalid';
 		}
 		$hex = bin2hex( $packed );
 
-		// ::1 (loopback) and :: (unspecified).
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- "::1" and "::" in the next comment are IPv6 literals, not commented-out code.
+		// IPv6 ::1 (loopback) and :: (unspecified).
 		if ( '00000000000000000000000000000001' === $hex ) {
 			return 'loopback';
 		}
