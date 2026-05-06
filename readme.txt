@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.2
+Stable tag: 3.1.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.3 =
+* Hotfix: fatal error on activation. The 3.0 brand-rename pass swept `shopwalk_ucp_*` to `shopwalk_*` in one `add_action()` callback string but left the underlying function definition unchanged, leaving a dangling reference (`add_action( 'woocommerce_init', 'shopwalk_define_payment_gateway_class' )` pointed at a function that doesn't exist). When WooCommerce fired `woocommerce_init`, WordPress hit the missing callback and threw `TypeError: function "shopwalk_define_payment_gateway_class" not found`, taking down WP Admin until the plugin was deactivated via FTP. Restored the original callback name `shopwalk_ucp_define_payment_gateway_class` so the action registration matches the function definition. No other behavior change. Affects 3.1.0, 3.1.1, and 3.1.2 — anyone already on those should upgrade immediately.
 
 = 3.1.2 =
 * WordPress.org submission readiness, second pass. Slug-alignment release: GitHub repo, main plugin filename, and core class file all renamed to match the existing `Text Domain: shopwalk-for-woocommerce` so the plugin slug is consistent end-to-end before submission. Admin dashboard rebrand: WP Admin sidebar entry now reads "Shopwalk" (was "UCP"), and the dashboard page title + H1 read "Shopwalk for WooCommerce" (were "UCP Commerce") — the term "UCP" remains where it correctly refers to the open protocol (e.g. the dashboard's UCP endpoints card, REST namespace, `/.well-known/ucp` discovery doc). Readme cleanup: literal `→` escape sequences in screenshot captions replaced with real `→` arrows (the 3.1.1 changelog claimed this fix but missed it); Screenshots captions rewritten to match the four shipped images; "Premier placement" / "Premier listing" wording softened to "listing on shopwalk.com" so the optional integration reads as a capability rather than an upsell. Release-asset naming: the GitHub release zip is now `shopwalk-for-woocommerce-X.Y.Z.zip` (was unversioned) so multiple releases on the Releases page are distinguishable; the directory inside the zip stays `shopwalk-for-woocommerce/` so manual installs land at the correct plugin path.
