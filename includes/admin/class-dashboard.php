@@ -225,8 +225,8 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 			<?php $this->render_connect_notice(); ?>
 			<?php $this->render_status_banner(); ?>
 			<?php $this->render_ucp_tool( $tier ); ?>
-			<?php $this->render_payments_tool(); ?>
 			<?php if ( 'unlicensed' !== $tier ) : ?>
+				<?php $this->render_payments_tool(); ?>
 				<?php $this->render_sync_tool( $tier ); ?>
 			<?php endif; ?>
 			<?php $this->render_license_tool( $tier ); ?>
@@ -319,7 +319,7 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 		}
 		$next_bill = get_option( 'shopwalk_next_billing_at', get_option( 'shopwalk_next_billing', '' ) );
 		?>
-		<div class="sw-card">
+		<div class="sw-card" id="sw-license-card">
 			<h2>
 				<?php esc_html_e( 'License', 'shopwalk-for-woocommerce' ); ?>
 				<?php if ( 'pro' === $tier ) : ?>
@@ -480,6 +480,9 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 			'cannotReachApi'            => __( 'Cannot reach Shopwalk API', 'shopwalk-for-woocommerce' ),
 			'apiUnavailable'            => __( 'This means the Shopwalk platform is temporarily unavailable. Your store and products are not affected.', 'shopwalk-for-woocommerce' ),
 			'checkStatusOrRetry'        => __( 'Check <a href="https://shopwalk.com/status" target="_blank">shopwalk.com/status</a> or try again in a few minutes.', 'shopwalk-for-woocommerce' ),
+			'connectFirstHeader'        => __( 'Connect your store to Shopwalk', 'shopwalk-for-woocommerce' ),
+			'connectFirstBody'          => __( 'Test Connectivity checks the live link between your store and Shopwalk\'s network. Connect your store with a free Shopwalk license below to enable it.', 'shopwalk-for-woocommerce' ),
+			'connectFirstCta'           => __( 'Go to License section', 'shopwalk-for-woocommerce' ),
 			'unknownError'              => __( 'unknown error', 'shopwalk-for-woocommerce' ),
 			'ucpEndpoints'              => __( 'UCP Endpoints', 'shopwalk-for-woocommerce' ),
 			'storeInfoLabel'            => __( 'Store Info — /ucp/store', 'shopwalk-for-woocommerce' ),
@@ -510,12 +513,9 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 			'networkErrorDesc'          => __( 'could not connect. Check your internet connection and try again.', 'shopwalk-for-woocommerce' ),
 			'localSelfTest'             => __( 'Local Self-Test', 'shopwalk-for-woocommerce' ),
 			'selfTestFailed'            => __( 'Self-test failed', 'shopwalk-for-woocommerce' ),
-			'serverIssuesDetected'      => __( 'Server issues detected', 'shopwalk-for-woocommerce' ),
-			'serverIssuesDesc'          => __( 'these require changes by your hosting provider.', 'shopwalk-for-woocommerce' ),
+			'issuesFound'               => __( 'Issues found:', 'shopwalk-for-woocommerce' ),
 			/* translators: %s: detected hosting provider name. */
-			'yourHostLabel'             => __( 'Your host: %s', 'shopwalk-for-woocommerce' ),
-			'contactToResolve'          => __( 'Contact them and ask to resolve:', 'shopwalk-for-woocommerce' ),
-			'contactHostingToResolve'   => __( 'Contact your hosting provider and ask them to resolve:', 'shopwalk-for-woocommerce' ),
+			'hostingInfoLabel'          => __( 'Hosting: %s', 'shopwalk-for-woocommerce' ),
 			'licenseKeyRequired'        => __( 'License key is required.', 'shopwalk-for-woocommerce' ),
 			'validating'                => __( 'Validating…', 'shopwalk-for-woocommerce' ),
 			'licenseActivated'          => __( 'License activated', 'shopwalk-for-woocommerce' ),
@@ -585,6 +585,16 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 				probeBtn.disabled = false;
 				probeBtn.textContent = t.testConnectivity;
 				if (!resp || !resp.success) {
+					var errCode = resp && resp.data && resp.data.code || '';
+					if (errCode === 'no_license') {
+						var html = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;font-size:13px;">';
+						html += '<strong>' + t.connectFirstHeader + '</strong><br><br>';
+						html += t.connectFirstBody + '<br><br>';
+						html += '<a href="#sw-license-card" class="button button-primary">' + t.connectFirstCta + '</a>';
+						html += '</div>';
+						out.innerHTML = html;
+						return;
+					}
 					var errMsg = resp && resp.data && resp.data.message || t.unknownError;
 					var html = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px;font-size:13px;">';
 					html += '<strong>' + t.cannotReachApi + '</strong> — ' + esc(errMsg) + '<br><br>';
@@ -685,20 +695,15 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 				if (hasFail) {
 					var h = resp.data.host || {};
 					html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px;margin:8px 0;font-size:13px;">';
-					html += '<strong>' + t.serverIssuesDetected + '</strong> — ' + t.serverIssuesDesc + '<br><br>';
+					html += '<strong>' + t.issuesFound + '</strong><br>';
+					html += '<ul style="margin:4px 0 8px 16px;">';
+					failMessages.forEach(function (m) { html += '<li>' + esc(m) + '</li>'; });
+					html += '</ul>';
 					if (h.name) {
-						html += '<strong>' + t.yourHostLabel.replace('%s', esc(h.name)) + '</strong><br>';
-						html += t.contactToResolve + '<br>';
-						html += '<ul style="margin:4px 0 8px 16px;">';
-						failMessages.forEach(function (m) { html += '<li>' + esc(m) + '</li>'; });
-						html += '</ul>';
-						if (h.phone) html += t.phoneLabel + ' <strong>' + esc(h.phone) + '</strong><br>';
-						if (h.support) html += t.supportLabel + ' <strong>' + esc(h.support) + '</strong><br>';
-					} else {
-						html += t.contactHostingToResolve + '<br>';
-						html += '<ul style="margin:4px 0 0 16px;">';
-						failMessages.forEach(function (m) { html += '<li>' + esc(m) + '</li>'; });
-						html += '</ul>';
+						html += '<p style="margin:8px 0 0;color:#475569;font-size:12px;">' + t.hostingInfoLabel.replace('%s', esc(h.name));
+						if (h.phone) html += ' · ' + esc(h.phone);
+						if (h.support) html += ' · ' + esc(h.support);
+						html += '</p>';
 					}
 					html += '</div>';
 				}
@@ -902,15 +907,7 @@ JS;
 			'message' => $rest_ok ? 'Enabled' : 'Disabled — check for plugins blocking REST API',
 		);
 
-		// 4. License key
-		$license  = get_option( 'shopwalk_license_key', '' );
-		$checks[] = array(
-			'check'   => 'License key',
-			'status'  => ! empty( $license ) ? 'pass' : 'fail',
-			'message' => ! empty( $license ) ? substr( $license, 0, 8 ) . '...' : 'Not set',
-		);
-
-		// 5. Product count
+		// 4. Product count
 		$product_counts = wp_count_posts( 'product' );
 		$total          = (int) ( $product_counts->publish ?? 0 );
 		$checks[]       = array(
@@ -1255,7 +1252,12 @@ JS;
 
 		$license_key = get_option( 'shopwalk_license_key', '' );
 		if ( ! $license_key ) {
-			wp_send_json_error( array( 'message' => __( 'No license key configured.', 'shopwalk-for-woocommerce' ) ) );
+			wp_send_json_error(
+				array(
+					'code'    => 'no_license',
+					'message' => __( 'No license key configured.', 'shopwalk-for-woocommerce' ),
+				)
+			);
 		}
 
 		$resp = wp_remote_post(

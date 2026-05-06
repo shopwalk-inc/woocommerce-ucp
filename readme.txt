@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.3
+Stable tag: 3.1.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.4 =
+* Dashboard cleanup pass for unlicensed (WP.org standalone) installs. (1) Removed the License key check from the Local Self-Test — Tier 1 (UCP standalone) doesn't require a Shopwalk license, so reporting "Not set" as a failure was wrong; the self-test now strictly checks UCP-runtime concerns. (2) Hid the Payments and Sync sections on unlicensed installs — both are Shopwalk-network features and were confusing to merchants who downloaded the plugin from WordPress.org without a Shopwalk account. (3) Test Connectivity now shows a "Connect your store to Shopwalk" call-to-action when no license is configured, rather than the previous "Cannot reach Shopwalk API — service unavailable" framing that wrongly implied an outage. (4) Self-test failures no longer get auto-bucketed under "Server issues — contact your hosting provider"; the framing was misleading for non-server-managed checks (permalinks, cron, REST API config, missing DB tables). The hosting provider info still displays as a footer when detected, but as informational rather than directive. (5) Fixed a long-standing version-string drift bug — `WOOCOMMERCE_SHOPWALK_VERSION` was hardcoded to `3.1.1` in the bootstrap file and never updated alongside the plugin header, so "Plugin v3.1.1" rendered on every install since 3.1.1 (including outbound User-Agent headers, the Discovery doc payload, and the dashboard product-count strip). The constant is now derived from the file header at runtime via `get_file_data()` — it can no longer drift.
 
 = 3.1.3 =
 * Hotfix: fatal error on activation. The 3.0 brand-rename pass swept `shopwalk_ucp_*` to `shopwalk_*` in one `add_action()` callback string but left the underlying function definition unchanged, leaving a dangling reference (`add_action( 'woocommerce_init', 'shopwalk_define_payment_gateway_class' )` pointed at a function that doesn't exist). When WooCommerce fired `woocommerce_init`, WordPress hit the missing callback and threw `TypeError: function "shopwalk_define_payment_gateway_class" not found`, taking down WP Admin until the plugin was deactivated via FTP. Restored the original callback name `shopwalk_ucp_define_payment_gateway_class` so the action registration matches the function definition. No other behavior change. Affects 3.1.0, 3.1.1, and 3.1.2 — anyone already on those should upgrade immediately.

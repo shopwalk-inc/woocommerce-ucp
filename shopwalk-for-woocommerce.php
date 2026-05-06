@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk for WooCommerce
  * Plugin URI:  https://github.com/shopwalk-inc/shopwalk-for-woocommerce
  * Description: Make any WooCommerce store fully purchasable by AI shopping agents. UCP-compliant — implements the Universal Commerce Protocol (ucp.dev) for checkout, OAuth identity, orders, webhooks. Optional Shopwalk network integration available with a free license.
- * Version:     3.1.3
+ * Version:     3.1.4
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
@@ -23,7 +23,14 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-define( 'WOOCOMMERCE_SHOPWALK_VERSION', '3.1.1' );
+// Read the version from this file's "Version:" header so the runtime constant
+// can never drift from the header — that drift caused the dashboard to display
+// "Plugin v3.1.1" on a 3.1.3 install. get_file_data() is in wp-includes and is
+// available before plugins load.
+$shopwalk_plugin_data = get_file_data( __FILE__, array( 'Version' => 'Version' ) );
+define( 'WOOCOMMERCE_SHOPWALK_VERSION', $shopwalk_plugin_data['Version'] ?? '0.0.0' );
+unset( $shopwalk_plugin_data );
+
 define( 'WOOCOMMERCE_SHOPWALK_PLUGIN_FILE', __FILE__ );
 define( 'WOOCOMMERCE_SHOPWALK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WOOCOMMERCE_SHOPWALK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
