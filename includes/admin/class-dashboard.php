@@ -36,8 +36,8 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 
 	public function register_menu(): void {
 		add_menu_page(
-			__( 'UCP Commerce', 'shopwalk-for-woocommerce' ),
-			__( 'UCP', 'shopwalk-for-woocommerce' ),
+			__( 'Shopwalk for WooCommerce', 'shopwalk-for-woocommerce' ),
+			__( 'Shopwalk', 'shopwalk-for-woocommerce' ),
 			'manage_woocommerce',
 			'shopwalk-for-woocommerce',
 			array( $this, 'render_page' ),
@@ -211,7 +211,7 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 		?>
 		<div class="wrap sw-wrap">
 			<h1>
-				<?php esc_html_e( 'UCP Commerce', 'shopwalk-for-woocommerce' ); ?>
+				<?php esc_html_e( 'Shopwalk for WooCommerce', 'shopwalk-for-woocommerce' ); ?>
 				<?php if ( 'free' === $tier || 'pro' === $tier ) : ?>
 					<span class="sw-connected">✅ <?php esc_html_e( 'Connected', 'shopwalk-for-woocommerce' ); ?></span>
 				<?php endif; ?>
