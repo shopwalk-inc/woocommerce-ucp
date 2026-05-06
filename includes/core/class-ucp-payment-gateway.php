@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  * @return void
  */
 function shopwalk_ucp_register_payment_gateway(): void {
-	add_action( 'woocommerce_init', 'shopwalk_define_payment_gateway_class' );
+	add_action( 'woocommerce_init', 'shopwalk_ucp_define_payment_gateway_class' );
 	add_filter(
 		'woocommerce_payment_gateways',
 		static function ( array $gateways ): array {
