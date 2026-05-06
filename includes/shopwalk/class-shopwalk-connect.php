@@ -49,18 +49,35 @@ final class Shopwalk_Connect {
 	/**
 	 * Returns the URL the "Connect to Shopwalk" button sends the merchant to.
 	 * Stashes a fresh state nonce in a transient so we can verify the callback.
+	 *
+	 * Routes through `/partners/signup` (not `/partners/oauth/plugin/authorize`
+	 * directly) so a brand-new merchant who installed the plugin from WP.org
+	 * has a working signup → activate path. shopwalk-web's signup page
+	 * supports a `?next=<relative-path>` redirect that survives the
+	 * email-magic-link round-trip via the `sw_login_next` cookie:
+	 *
+	 *   - Logged-in merchant: signup page detects active session, redirects
+	 *     immediately to the `next` URL (the OAuth authorize page).
+	 *   - New merchant: signup form persists `next` to the cookie before
+	 *     submit. After they click the magic link, `/auth/verify` reads the
+	 *     cookie and continues to the OAuth authorize URL — license arrives
+	 *     in WP via the same callback as the logged-in path.
+	 *
+	 * `next` must be a same-origin relative path per shopwalk-web's
+	 * `validateNextPath()`, so we build a path-only string here.
 	 */
 	public static function connect_url(): string {
 		$state = wp_generate_password( 32, false, false );
 		set_transient( self::STATE_TRANSIENT, $state, self::STATE_TTL );
 
-		$callback = admin_url( 'admin.php?page=shopwalk-for-woocommerce&action=oauth-callback' );
-		$params   = array(
+		$callback     = admin_url( 'admin.php?page=shopwalk-for-woocommerce&action=oauth-callback' );
+		$oauth_params = array(
 			'site_url' => home_url(),
 			'state'    => $state,
 			'callback' => $callback,
 		);
-		return add_query_arg( $params, SHOPWALK_PARTNERS_URL . '/oauth/plugin/authorize' );
+		$next         = add_query_arg( $oauth_params, '/partners/oauth/plugin/authorize' );
+		return add_query_arg( array( 'next' => $next ), SHOPWALK_SIGNUP_URL );
 	}
 
 	/**

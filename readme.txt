@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.4
+Stable tag: 3.1.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.5 =
+* Connect to Shopwalk now opens shopwalk.com/partners/signup in a new tab and survives a brand-new merchant signing up. Previously the CTA pointed straight at /partners/oauth/plugin/authorize, which requires a partner session — merchants who installed the plugin from WordPress.org and didn't yet have a Shopwalk account had no obvious activation path. The new URL routes through the signup page with the OAuth authorize URL stashed as `?next=…`, so logged-in partners go straight to the approve screen and new partners sign up, click the email magic link, and get auto-redirected to approve and activate without ever needing to find the WP Admin tab again.
 
 = 3.1.4 =
 * Dashboard cleanup pass for unlicensed (WP.org standalone) installs. (1) Removed the License key check from the Local Self-Test — Tier 1 (UCP standalone) doesn't require a Shopwalk license, so reporting "Not set" as a failure was wrong; the self-test now strictly checks UCP-runtime concerns. (2) Hid the Payments and Sync sections on unlicensed installs — both are Shopwalk-network features and were confusing to merchants who downloaded the plugin from WordPress.org without a Shopwalk account. (3) Test Connectivity now shows a "Connect your store to Shopwalk" call-to-action when no license is configured, rather than the previous "Cannot reach Shopwalk API — service unavailable" framing that wrongly implied an outage. (4) Self-test failures no longer get auto-bucketed under "Server issues — contact your hosting provider"; the framing was misleading for non-server-managed checks (permalinks, cron, REST API config, missing DB tables). The hosting provider info still displays as a footer when detected, but as informational rather than directive. (5) Fixed a long-standing version-string drift bug — `WOOCOMMERCE_SHOPWALK_VERSION` was hardcoded to `3.1.1` in the bootstrap file and never updated alongside the plugin header, so "Plugin v3.1.1" rendered on every install since 3.1.1 (including outbound User-Agent headers, the Discovery doc payload, and the dashboard product-count strip). The constant is now derived from the file header at runtime via `get_file_data()` — it can no longer drift.

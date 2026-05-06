@@ -335,11 +335,11 @@ final class WooCommerce_Shopwalk_Admin_Dashboard {
 					<p class="sw-muted" style="margin:0 0 12px;">
 						<?php esc_html_e( 'Make your products discoverable by AI shopping agents. Shopwalk connects your WooCommerce store to the AI commerce network — your products appear in search results across Claude, ChatGPT, and other AI agents. 5% commission only on AI purchases made through Shopwalk.', 'shopwalk-for-woocommerce' ); ?>
 					</p>
-					<a href="<?php echo esc_url( Shopwalk_Connect::connect_url() ); ?>" class="button button-primary">
+					<a href="<?php echo esc_url( Shopwalk_Connect::connect_url() ); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
 						<?php esc_html_e( 'Connect to Shopwalk', 'shopwalk-for-woocommerce' ); ?>
 					</a>
 					<p class="sw-muted" style="margin:12px 0 0;font-size:12px;">
-						<?php esc_html_e( 'Opens shopwalk.com. After you approve, we mint a license bound to this domain.', 'shopwalk-for-woocommerce' ); ?>
+						<?php esc_html_e( 'Opens shopwalk.com in a new tab. New here? You\'ll sign up and be returned to activate. Already a partner? You\'ll go straight to the approve screen. Either way, we mint a license bound to this domain when you finish.', 'shopwalk-for-woocommerce' ); ?>
 					</p>
 				</div>
 
