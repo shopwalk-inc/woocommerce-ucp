@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.5
+Stable tag: 3.1.6
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.6 =
+* Hotfix: the v3.1.5 "Connect to Shopwalk" CTA built a malformed signup URL because WordPress's `add_query_arg()` does not URL-encode new array values (its `build_query()` calls `_http_build_query()` with `$urlencode = false`). The inner OAuth authorize URL — which carries its own `?site_url=…&state=…&callback=…` query string — was concatenated into the outer URL raw, so the browser parsed `&state=…&callback=…` as siblings of `next=…` instead of as part of it. The OAuth approve page then landed with `site_url` alone and rejected the request with "Missing one of site_url, state, callback." Switched to PHP's built-in `http_build_query()` (which always encodes) for the inner URL and `rawurlencode()` for the outer wrap, so all three OAuth params survive the `signup → magic link → /auth/verify → approve` round-trip end-to-end. Adds tests/ConnectUrlTest.php to pin the encoding contract: outer URL has only `next` as a query key, the inner `?site_url`, `state`, `callback` round-trip cleanly, and the callback URL with its own `?page=…&action=…` query is preserved intact through the OAuth approval and back to WP-admin.
 
 = 3.1.5 =
 * Connect to Shopwalk now opens shopwalk.com/partners/signup in a new tab and survives a brand-new merchant signing up. Previously the CTA pointed straight at /partners/oauth/plugin/authorize, which requires a partner session — merchants who installed the plugin from WordPress.org and didn't yet have a Shopwalk account had no obvious activation path. The new URL routes through the signup page with the OAuth authorize URL stashed as `?next=…`, so logged-in partners go straight to the approve screen and new partners sign up, click the email magic link, and get auto-redirected to approve and activate without ever needing to find the WP Admin tab again.
