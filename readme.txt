@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.6
+Stable tag: 3.1.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
+
+= 3.1.7 =
+* Connect to Shopwalk now generates a flat URL instead of nesting the OAuth URL inside `?next=…`. The 3.1.6 shape was technically valid but produced double-percent-encoded reserved characters (e.g. `%2526` for `&`, `%253A` for `:`), which some WAFs and host-side firewalls flag as URL-encoding-evasion attempts and block outright — surfacing to merchants as a non-functional Connect button. The new shape passes the OAuth params as top-level query params (`?source=plugin&p_site_url=…&p_state=…&p_callback=…`) — single-encoded throughout, no `%25` sequences anywhere, ~half the URL length. shopwalk.com's signup page recognises `source=plugin` and reconstructs the OAuth approve URL on its side before feeding it into the same magic-link redirect chain that v3.1.6 used. Activation flow is unchanged downstream — only the WP-admin → shopwalk.com hop is reshaped. tests/ConnectUrlTest.php updated to pin the new shape and the no-`%25` invariant.
 
 = 3.1.6 =
 * Hotfix: the v3.1.5 "Connect to Shopwalk" CTA built a malformed signup URL because WordPress's `add_query_arg()` does not URL-encode new array values (its `build_query()` calls `_http_build_query()` with `$urlencode = false`). The inner OAuth authorize URL — which carries its own `?site_url=…&state=…&callback=…` query string — was concatenated into the outer URL raw, so the browser parsed `&state=…&callback=…` as siblings of `next=…` instead of as part of it. The OAuth approve page then landed with `site_url` alone and rejected the request with "Missing one of site_url, state, callback." Switched to PHP's built-in `http_build_query()` (which always encodes) for the inner URL and `rawurlencode()` for the outer wrap, so all three OAuth params survive the `signup → magic link → /auth/verify → approve` round-trip end-to-end. Adds tests/ConnectUrlTest.php to pin the encoding contract: outer URL has only `next` as a query key, the inner `?site_url`, `state`, `callback` round-trip cleanly, and the callback URL with its own `?page=…&action=…` query is preserved intact through the OAuth approval and back to WP-admin.
