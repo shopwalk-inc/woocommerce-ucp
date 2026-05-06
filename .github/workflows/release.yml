@@ -70,11 +70,17 @@ jobs:
 
       - name: Build zip
         id: zip
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
         run: |
           cd "${RUNNER_TEMP}/dist"
-          zip -rq shopwalk-for-woocommerce.zip shopwalk-for-woocommerce/
-          echo "path=${RUNNER_TEMP}/dist/shopwalk-for-woocommerce.zip" >> "$GITHUB_OUTPUT"
-          ls -la shopwalk-for-woocommerce.zip
+          ZIP_NAME="shopwalk-for-woocommerce-${VERSION}.zip"
+          # Top-level dir inside the zip stays slug-only (shopwalk-for-woocommerce/)
+          # so manual installs land at wp-content/plugins/shopwalk-for-woocommerce/.
+          # Only the zip filename carries the version.
+          zip -rq "$ZIP_NAME" shopwalk-for-woocommerce/
+          echo "path=${RUNNER_TEMP}/dist/${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+          ls -la "$ZIP_NAME"
 
       - name: Upload to release (create if missing)
         env:
