@@ -70,29 +70,28 @@ final class Shopwalk_Connect {
 		$state = wp_generate_password( 32, false, false );
 		set_transient( self::STATE_TRANSIENT, $state, self::STATE_TTL );
 
-		// Use http_build_query (PHP built-in) instead of WP's add_query_arg
-		// for the inner URL. WP's add_query_arg passes new array values
-		// through to build_query() with $urlencode=false, so the inner
-		// callback (which has its own `?page=…&action=…` query string)
-		// would leak `&` and `=` into the outer URL. http_build_query
-		// encodes reserved characters in values, so the resulting query
-		// string is safe to embed inside another URL as a value.
-		$inner_query = http_build_query(
+		// Pass the OAuth params as flat top-level query params on the
+		// signup URL rather than nesting the OAuth URL inside a `next=`
+		// value. Nesting would force double-percent-encoding of the inner
+		// reserved characters (%2526, %253A …) — some WAFs and host-side
+		// firewalls flag repeated `%25` sequences as URL-encoding-evasion
+		// attempts and block the request, leaving the merchant's "Connect
+		// to Shopwalk" click silently dead.
+		//
+		// shopwalk-web's signup page recognises `source=plugin` plus the
+		// `p_*` params and reconstructs the OAuth approve URL on its side
+		// before feeding it into the same `next=` / sw_login_next-cookie
+		// chain that the magic-link flow uses, so the activation path is
+		// unchanged from v3.1.6 — only the URL shape changes.
+		$query = http_build_query(
 			array(
-				'site_url' => home_url(),
-				'state'    => $state,
-				'callback' => admin_url( 'admin.php?page=shopwalk-for-woocommerce&action=oauth-callback' ),
+				'source'     => 'plugin',
+				'p_site_url' => home_url(),
+				'p_state'    => $state,
+				'p_callback' => admin_url( 'admin.php?page=shopwalk-for-woocommerce&action=oauth-callback' ),
 			)
 		);
-		$next        = '/partners/oauth/plugin/authorize?' . $inner_query;
-
-		// rawurlencode (RFC 3986) the entire $next so when shopwalk-web's
-		// signup page reads `useSearchParams().get('next')` it gets the
-		// inner URL back exactly as we wrote it — `?` and `&` inside the
-		// value stay encoded as %3F and %26 in the outer URL, so the
-		// outer URLSearchParams parser doesn't split them off as outer
-		// siblings of `next`.
-		return SHOPWALK_SIGNUP_URL . '?next=' . rawurlencode( $next );
+		return SHOPWALK_SIGNUP_URL . '?' . $query;
 	}
 
 	/**

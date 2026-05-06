@@ -73,39 +73,39 @@ final class ConnectUrlTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_connect_url_round_trips_oauth_params_through_signup_next(): void {
+	public function test_connect_url_emits_flat_plugin_params_for_signup(): void {
 		$url = Shopwalk_Connect::connect_url();
 
 		// Outer URL must point at the signup page.
-		$this->assertStringStartsWith( 'https://shopwalk.com/partners/signup?next=', $url );
+		$this->assertStringStartsWith( 'https://shopwalk.com/partners/signup?', $url );
 
-		// Parse the outer query and recover `next`.
+		// Parse the outer query.
 		$query  = parse_url( $url, PHP_URL_QUERY );
 		$parsed = array();
-		parse_str( $query, $parsed );
-		$this->assertArrayHasKey( 'next', $parsed, 'Outer URL must have a `next` query param' );
+		parse_str( (string) $query, $parsed );
 
-		// `state` and `callback` must NOT have leaked out as outer-level
-		// params — that's exactly the bug this test is guarding against.
-		$this->assertArrayNotHasKey( 'state', $parsed, 'state must live inside next, not as an outer sibling' );
-		$this->assertArrayNotHasKey( 'callback', $parsed, 'callback must live inside next, not as an outer sibling' );
-		$this->assertArrayNotHasKey( 'site_url', $parsed, 'site_url must live inside next, not as an outer sibling' );
+		// No nested `next=` — that shape forced double-percent-encoding
+		// (%2526, %253A …) which some WAFs flag as evasion and blocked
+		// outright. We're now passing flat top-level params so signup can
+		// reconstruct the OAuth URL itself.
+		$this->assertArrayNotHasKey( 'next', $parsed, 'Connect URL must NOT use nested ?next= (WAF-hostile)' );
 
-		// Recover the inner URL the way shopwalk-web's signup page does:
-		// `useSearchParams().get('next')` returns the URL-decoded value.
-		$next = $parsed['next'];
-		$this->assertStringStartsWith( '/partners/oauth/plugin/authorize?', $next );
+		// Source marker so signup knows to look for p_* params.
+		$this->assertSame( 'plugin', $parsed['source'] ?? null );
 
-		// The inner URL must carry all three OAuth params, intact.
-		$inner_query = parse_url( $next, PHP_URL_QUERY );
-		$inner       = array();
-		parse_str( $inner_query, $inner );
-		$this->assertSame( 'https://shopwalkstore.com', $inner['site_url'] ?? null );
-		$this->assertSame( 'STATE_NONCE_FIXED', $inner['state'] ?? null );
+		// All three OAuth params present and single-encoded — no `%25`
+		// sequences anywhere in the URL.
+		$this->assertSame( 'https://shopwalkstore.com', $parsed['p_site_url'] ?? null );
+		$this->assertSame( 'STATE_NONCE_FIXED', $parsed['p_state'] ?? null );
 		$this->assertSame(
 			'https://shopwalkstore.com/wp-admin/admin.php?page=shopwalk-for-woocommerce&action=oauth-callback',
-			$inner['callback'] ?? null,
-			'callback must round-trip with its own ?page=…&action=… query string'
+			$parsed['p_callback'] ?? null,
+			'p_callback must round-trip with its own ?page=…&action=… query string'
 		);
+
+		// Pin the no-double-encoding invariant: the URL must not contain
+		// any `%25` (encoded `%`) sequences. If a future change reintroduces
+		// nested URLs, this fails immediately.
+		$this->assertStringNotContainsString( '%25', $url, 'Connect URL must not double-encode' );
 	}
 }
