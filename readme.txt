@@ -128,7 +128,6 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 1. WP Admin → UCP dashboard. UCP status panel showing endpoint health, the self-test diagnostic launcher, and the optional Shopwalk connection card.
 2. Self-test diagnostic results. Eight automated checks covering the WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery document.
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
-4. Webhook dead-letter queue. Operational view of webhook deliveries that exhausted their retries, with re-queue and inspect actions.
 
 == Changelog ==
 
