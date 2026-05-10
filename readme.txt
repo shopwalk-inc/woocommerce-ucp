@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.11
+Stable tag: 3.1.12
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -130,6 +130,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.12 =
+* Perf: bump `BATCH_SIZE` 100 → 500 and drop the post-flush re-schedule delay 5s → 1s. With #61's flush re-schedule, this takes a 1490-product `full_sync` drain from ~75s (15 batches × 5s) to ~5s (3 batches × 1s + transit). The 500-product batch lands at ~450 KB on the wire — well under the shopwalk-api 4 MB Fiber body limit. No new code paths; both knobs.
 
 = 3.1.11 =
 * Fix: `Shopwalk_Sync::flush()` now re-schedules itself when the queue still has items after a batch send. Previously each flush splice-d up to 100 products off the queue, POSTed them, and returned without scheduling another tick — so a `full_sync` of 1490 products drained at one batch per hourly recurring cron tick (~15 hours to finish) instead of in seconds. With the same single-event re-schedule pattern used by `push_to_queue` and `full_sync`, large catalogs drain at WP-Cron loopback speed.
