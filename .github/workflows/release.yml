@@ -47,10 +47,13 @@ jobs:
           SRC="$GITHUB_WORKSPACE"
           OUT="${RUNNER_TEMP}/dist/shopwalk-for-woocommerce"
           mkdir -p "$OUT"
-          # Honour .distignore entries explicitly.
+          # NOTE: this list is a hand-mirror of .distignore. Any
+          # exclusion added there must be added here too — the workflow
+          # does not actually parse .distignore.
           rsync -a \
             --exclude='/.git/' \
             --exclude='/.github/' \
+            --exclude='/.wordpress-org/' \
             --exclude='/tests/' \
             --exclude='/vendor/' \
             --exclude='/node_modules/' \
@@ -58,8 +61,10 @@ jobs:
             --exclude='/.gitignore' \
             --exclude='/.editorconfig' \
             --exclude='/.phpcs.xml.dist' \
+            --exclude='/phpcs.xml' \
             --exclude='/phpunit.xml' \
             --exclude='/phpunit.xml.dist' \
+            --exclude='/.phpunit.result.cache' \
             --exclude='/composer.json' \
             --exclude='/composer.lock' \
             --exclude='/package.json' \

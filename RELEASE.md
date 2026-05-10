@@ -22,8 +22,21 @@ wordpress.org. Excluded from the plugin zip via `.distignore`.
    ```
 5. The `Build and publish release zip` workflow will:
    - Verify the tag matches `Version:` and `Stable tag:` (fails the build if not)
-   - Assemble the dist tree honouring `.distignore`
+   - Assemble the dist tree using a hand-maintained mirror of `.distignore`
+     (the workflow does **not** parse the file — see the rsync `--exclude`
+     list in `.github/workflows/release.yml`; **any new entry added to
+     `.distignore` must be added there too**)
    - Attach the zip to a new GitHub Release at the same tag
+
+If you need to rebuild the zip for an existing tag (e.g. after
+patching the workflow itself), trigger it manually:
+
+```bash
+gh workflow run release.yml -f tag=v<X.Y.Z>
+```
+
+The rerun checks out at the tag, builds with the current `main`-side
+workflow file, and clobbers the existing release asset.
 
 That's the whole release loop for GitHub. The wordpress.org loop is below.
 
