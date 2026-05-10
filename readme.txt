@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.12
+Stable tag: 3.1.13
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,7 +49,7 @@ This plugin implements the UCP spec from [ucp.dev](https://ucp.dev) exactly. It 
 
 1. Upload the `shopwalk-for-woocommerce` folder to `/wp-content/plugins/`, or install via **Plugins → Add New → Search for "Shopwalk for WooCommerce"**
 2. Activate the plugin
-3. Visit **UCP** in the WP Admin sidebar
+3. Visit **Shopwalk** in the WP Admin sidebar
 4. Click **"Run self-test"** to verify your environment supports the UCP layer
 5. (Optional) Click **"Connect to Shopwalk"** if you also want to sync to the Shopwalk network
 
@@ -85,7 +85,7 @@ The agent creates a UCP checkout session, submits a tokenized payment credential
 
 = Which payment gateways are supported out of the box? =
 
-Stripe (via the WooCommerce Stripe Gateway plugin). Additional adapters for PayPal, Square, and others can be added via the `shopwalk_ucp_payment_adapters` filter without modifying plugin code. The WP Admin **UCP → Payments** panel shows which adapters are registered, which are ready, and deep-links into WooCommerce for any that aren't configured yet.
+Stripe (via the WooCommerce Stripe Gateway plugin). Additional adapters for PayPal, Square, and others can be added via the `shopwalk_ucp_payment_adapters` filter without modifying plugin code. The **Payments** section on the Shopwalk dashboard shows which adapters are registered, which are ready, and deep-links into WooCommerce for any that aren't configured yet.
 
 = How do I uninstall cleanly? =
 
@@ -126,10 +126,13 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 == Screenshots ==
 
 1. WP Admin → UCP dashboard. UCP status panel showing endpoint health, the self-test diagnostic launcher, and the optional Shopwalk connection card.
-2. Self-test diagnostic results. Eight automated checks covering the WooCommerce REST API, OAuth endpoints, webhook delivery, and the `/.well-known/ucp` discovery document.
+2. Self-test diagnostic results. Eight automated checks covering the `/.well-known/` discovery + OAuth-metadata documents, the OAuth authorize endpoint, the UCP checkout endpoint, the WP-Cron worker that drives webhook delivery, the "Pay via UCP" gateway registration, the webhook signing secret, and the UCP database tables.
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.13 =
+* Documentation accuracy. Installation step 3 and the "Which payment gateways are supported" FAQ both referenced the **UCP** sidebar entry / **UCP → Payments** panel — the sidebar was renamed to **Shopwalk** in v3.1.2 and the Payments panel is a section on the Shopwalk dashboard, not a submenu. Both now match the shipped UI. Self-test screenshot caption rewritten to enumerate the eight checks the diagnostic actually performs (the previous wording named the WooCommerce REST API, which the self-test does not probe — it covers `/.well-known/` discovery, OAuth, the UCP checkout endpoint, WP-Cron, payment-gateway registration, webhook signing, and the UCP database tables). No code changes.
 
 = 3.1.12 =
 * Perf: bump `BATCH_SIZE` 100 → 500 and drop the post-flush re-schedule delay 5s → 1s. With #61's flush re-schedule, this takes a 1490-product `full_sync` drain from ~75s (15 batches × 5s) to ~5s (3 batches × 1s + transit). The 500-product batch lands at ~450 KB on the wire — well under the shopwalk-api 4 MB Fiber body limit. No new code paths; both knobs.
