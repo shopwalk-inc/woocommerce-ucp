@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.8
+Stable tag: 3.1.9
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -130,6 +130,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.9 =
+* WP.org submission prep. Tightened `.distignore` so `.wordpress-org/` (banner/icon/screenshot PNGs consumed only by the SVN /assets/ deploy path), `.phpunit.result.cache`, and `phpcs.xml` no longer get bundled into the release zip — trims the zip and removes files reviewers have no reason to see. `RELEASE.md` updated to reflect the post-#59 layout: marketing assets live under `.wordpress-org/` (10up deploy-action convention → SVN /assets/) rather than under `assets/`, and the icon filenames are the WP.org-standard `icon-128x128.png` / `icon-256x256.png`. No runtime code changes.
 
 = 3.1.8 =
 * Fix: `Shopwalk_Sync::full_sync()` (called from the activation hook and the dashboard "Sync now" button) now schedules an immediate flush. Previously it wrote 1000+ products to the queue option but didn't schedule anything, so the queue sat idle until the next hourly `shopwalk_flush_queue` recurring tick — meaning a freshly-activated plugin queued every product but pushed nothing for up to an hour. Mirrors the `push_to_queue` scheduling pattern: enqueue a single event ~5s out unless one closer is already scheduled.

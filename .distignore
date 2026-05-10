@@ -1,5 +1,6 @@
 /.git
 /.github
+/.wordpress-org
 /tests
 /vendor
 /node_modules
@@ -7,8 +8,10 @@
 /.gitignore
 /.editorconfig
 /.phpcs.xml.dist
+/phpcs.xml
 /phpunit.xml
 /phpunit.xml.dist
+/.phpunit.result.cache
 /composer.json
 /composer.lock
 /package.json
