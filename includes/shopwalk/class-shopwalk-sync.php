@@ -28,9 +28,12 @@ final class Shopwalk_Sync {
 	private static ?self $instance = null;
 
 	/**
-	 * Batch size for API pushes.
+	 * Batch size for API pushes. Sized to keep the request body under the
+	 * shopwalk-api Fiber default body limit (~4 MB) while pushing as many
+	 * products per round-trip as possible. With ~900 bytes/product on the
+	 * wire, 500 lands at ~450 KB — generous headroom against the limit.
 	 */
-	private const BATCH_SIZE = 100;
+	private const BATCH_SIZE = 500;
 
 	/**
 	 * Queue option name.
@@ -183,7 +186,7 @@ final class Shopwalk_Sync {
 		// next pageload (typically seconds later) instead of waiting up to
 		// 5 min for the recurring backstop.
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) || wp_next_scheduled( 'shopwalk_flush_queue' ) > time() + 30 ) {
-			wp_schedule_single_event( time() + 5, 'shopwalk_flush_queue' );
+			wp_schedule_single_event( time() + 1, 'shopwalk_flush_queue' );
 		}
 	}
 
@@ -322,7 +325,7 @@ final class Shopwalk_Sync {
 			return;
 		}
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) || wp_next_scheduled( 'shopwalk_flush_queue' ) > time() + 30 ) {
-			wp_schedule_single_event( time() + 5, 'shopwalk_flush_queue' );
+			wp_schedule_single_event( time() + 1, 'shopwalk_flush_queue' );
 		}
 	}
 
@@ -361,7 +364,7 @@ final class Shopwalk_Sync {
 		// ASAP via a single event ~5s out, but only if nothing closer is
 		// already scheduled.
 		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) || wp_next_scheduled( 'shopwalk_flush_queue' ) > time() + 30 ) {
-			wp_schedule_single_event( time() + 5, 'shopwalk_flush_queue' );
+			wp_schedule_single_event( time() + 1, 'shopwalk_flush_queue' );
 		}
 
 		return count( (array) $pids );
