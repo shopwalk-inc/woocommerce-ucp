@@ -44,12 +44,17 @@ Do this once, ever. After approval, every release goes through the SVN loop.
           --domain=shopwalk-for-woocommerce \
           --exclude=vendor,node_modules,tests,assets,languages
       ```
-- [ ] `assets/screenshot-1.png` … `screenshot-N.png` exist and match the
-      captions in the `== Screenshots ==` section of `readme.txt`. WP.org
-      shows these on the listing page.
-- [ ] `assets/banner-1544x500.png`, `assets/banner-772x250.png`,
-      `assets/icon-128.png`, `assets/icon-256.png` exist (already in
-      the repo).
+- [ ] `.wordpress-org/screenshot-1.png` … `screenshot-N.png` exist and
+      match the captions in the `== Screenshots ==` section of `readme.txt`.
+      WP.org shows these on the listing page.
+- [ ] `.wordpress-org/banner-1544x500.png`, `.wordpress-org/banner-772x250.png`,
+      `.wordpress-org/icon-128x128.png`, `.wordpress-org/icon-256x256.png`
+      exist (already in the repo).
+- [ ] Marketing assets live in `.wordpress-org/` — this is the
+      `10up/action-wordpress-plugin-deploy` convention; that action
+      mirrors `.wordpress-org/` → SVN root `/assets/` on release.
+      `.distignore` excludes `.wordpress-org/` so these PNGs do not
+      bloat the plugin zip.
 - [ ] Run **Plugin Check** locally — the *real* gate (see next section).
 
 ### Run Plugin Check (the WP.org auto-review tool)
