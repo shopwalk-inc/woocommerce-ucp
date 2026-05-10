@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.10
+Stable tag: 3.1.11
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -130,6 +130,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.11 =
+* Fix: `Shopwalk_Sync::flush()` now re-schedules itself when the queue still has items after a batch send. Previously each flush splice-d up to 100 products off the queue, POSTed them, and returned without scheduling another tick — so a `full_sync` of 1490 products drained at one batch per hourly recurring cron tick (~15 hours to finish) instead of in seconds. With the same single-event re-schedule pattern used by `push_to_queue` and `full_sync`, large catalogs drain at WP-Cron loopback speed.
 
 = 3.1.10 =
 * Re-cuts the v3.1.9 release zip after the matching `release.yml` rsync-exclude fix landed in #62. The v3.1.9 zip was built before that fix and still carried `.wordpress-org/` (~770 KB of marketing PNGs) and `phpcs.xml`; the v3.1.9 GitHub Release went immutable before it could be clobbered, so the only path to a clean zip is a fresh tag. No plugin source changes from 3.1.9.

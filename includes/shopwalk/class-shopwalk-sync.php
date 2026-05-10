@@ -278,6 +278,7 @@ final class Shopwalk_Sync {
 			);
 		}
 		if ( count( $products ) === 0 ) {
+			$this->maybe_reschedule_flush();
 			return;
 		}
 		// Extract domain from site URL for license domain-binding.
@@ -303,6 +304,26 @@ final class Shopwalk_Sync {
 				),
 			)
 		);
+
+		$this->maybe_reschedule_flush();
+	}
+
+	/**
+	 * If the queue still has items after a flush(), schedule another flush
+	 * ~5s out so the catalog drains in seconds rather than over hours of
+	 * hourly recurring ticks. Match the push_to_queue / full_sync pattern:
+	 * single event, only when nothing closer is already scheduled.
+	 *
+	 * @return void
+	 */
+	private function maybe_reschedule_flush(): void {
+		$queue = (array) get_option( self::QUEUE_OPTION, array() );
+		if ( count( $queue ) === 0 ) {
+			return;
+		}
+		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) || wp_next_scheduled( 'shopwalk_flush_queue' ) > time() + 30 ) {
+			wp_schedule_single_event( time() + 5, 'shopwalk_flush_queue' );
+		}
 	}
 
 	/**
