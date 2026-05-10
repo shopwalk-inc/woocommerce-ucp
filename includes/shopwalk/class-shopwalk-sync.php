@@ -332,6 +332,17 @@ final class Shopwalk_Sync {
 			);
 		}
 		update_option( self::QUEUE_OPTION, $queue, false );
+
+		// Schedule an immediate flush. Without this, the queue sits idle
+		// until the next hourly recurring tick — which means a fresh
+		// activation queues 1000+ products and then nothing happens for
+		// up to an hour. Match the push_to_queue scheduling pattern: drain
+		// ASAP via a single event ~5s out, but only if nothing closer is
+		// already scheduled.
+		if ( ! wp_next_scheduled( 'shopwalk_flush_queue' ) || wp_next_scheduled( 'shopwalk_flush_queue' ) > time() + 30 ) {
+			wp_schedule_single_event( time() + 5, 'shopwalk_flush_queue' );
+		}
+
 		return count( (array) $pids );
 	}
 }

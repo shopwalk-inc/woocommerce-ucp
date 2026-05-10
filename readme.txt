@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.7
+Stable tag: 3.1.8
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -130,6 +130,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.8 =
+* Fix: `Shopwalk_Sync::full_sync()` (called from the activation hook and the dashboard "Sync now" button) now schedules an immediate flush. Previously it wrote 1000+ products to the queue option but didn't schedule anything, so the queue sat idle until the next hourly `shopwalk_flush_queue` recurring tick — meaning a freshly-activated plugin queued every product but pushed nothing for up to an hour. Mirrors the `push_to_queue` scheduling pattern: enqueue a single event ~5s out unless one closer is already scheduled.
 
 = 3.1.7 =
 * Connect to Shopwalk now generates a flat URL instead of nesting the OAuth URL inside `?next=…`. The 3.1.6 shape was technically valid but produced double-percent-encoded reserved characters (e.g. `%2526` for `&`, `%253A` for `:`), which some WAFs and host-side firewalls flag as URL-encoding-evasion attempts and block outright — surfacing to merchants as a non-functional Connect button. The new shape passes the OAuth params as top-level query params (`?source=plugin&p_site_url=…&p_state=…&p_callback=…`) — single-encoded throughout, no `%25` sequences anywhere, ~half the URL length. shopwalk.com's signup page recognises `source=plugin` and reconstructs the OAuth approve URL on its side before feeding it into the same magic-link redirect chain that v3.1.6 used. Activation flow is unchanged downstream — only the WP-admin → shopwalk.com hop is reshaped. tests/ConnectUrlTest.php updated to pin the new shape and the no-`%25` invariant.
