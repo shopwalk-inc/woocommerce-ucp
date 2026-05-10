@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 8.1
 WC requires at least: 8.0
 WC tested up to: 9.8
-Stable tag: 3.1.13
+Stable tag: 3.1.14
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -130,6 +130,9 @@ Shopwalk Privacy Policy: https://shopwalk.com/privacy
 3. WooCommerce → Settings → Payments. The "Pay via UCP" gateway is registered automatically alongside Stripe, PayPal, and any other gateway you already use.
 
 == Changelog ==
+
+= 3.1.14 =
+* Fix: "Connect to Shopwalk" silent failure where merchants completed signup + approved in the partner portal but the plugin never picked up the issued license. Cause: the round-trip dropped the `&action=oauth-callback` query param somewhere between portal redirect and WP admin (suspect: a host-side security plugin or `redirect_canonical` filtering `action=`). The plugin's callback handler gated on the action marker and bailed silently when it wasn't present. Now gates on `page=shopwalk-for-woocommerce` + presence of `code+state` instead — the state nonce is the CSRF guard, action is redundant. Also: the state transient is now only deleted on successful exchange or explicit decline, so a retry after a wp-login.php bounce can succeed within the 10-minute TTL.
 
 = 3.1.13 =
 * Documentation accuracy. Installation step 3 and the "Which payment gateways are supported" FAQ both referenced the **UCP** sidebar entry / **UCP → Payments** panel — the sidebar was renamed to **Shopwalk** in v3.1.2 and the Payments panel is a section on the Shopwalk dashboard, not a submenu. Both now match the shipped UI. Self-test screenshot caption rewritten to enumerate the eight checks the diagnostic actually performs (the previous wording named the WooCommerce REST API, which the self-test does not probe — it covers `/.well-known/` discovery, OAuth, the UCP checkout endpoint, WP-Cron, payment-gateway registration, webhook signing, and the UCP database tables). No code changes.

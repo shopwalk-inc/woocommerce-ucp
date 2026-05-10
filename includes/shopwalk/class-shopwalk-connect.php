@@ -103,21 +103,30 @@ final class Shopwalk_Connect {
 			return;
 		}
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- state nonce is the CSRF guard here.
-		$page   = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
-		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
-		if ( 'shopwalk-for-woocommerce' !== $page ) {
-			return;
-		}
-		if ( 'oauth-callback' !== $action ) {
-			return;
-		}
+		$page  = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		$code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		$error = isset( $_GET['error'] ) ? sanitize_text_field( wp_unslash( $_GET['error'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
+		// Match on page + presence of OAuth payload, NOT on a separate
+		// `action=oauth-callback` marker. The action param was getting stripped
+		// somewhere in the round trip (suspect: WP redirect_canonical or a
+		// host-side security plugin sanitising `action=` because it's a common
+		// attack-vector parameter), so a merchant approving the connect flow
+		// landed at `?page=...&code=...&state=...` with no action marker and
+		// the handler bailed silently. The state nonce itself is the CSRF
+		// guard — adding `code` + `state` presence as the dispatch trigger
+		// keeps the gate tight and removes one round-trip strip vector.
+		if ( 'shopwalk-for-woocommerce' !== $page ) {
+			return;
+		}
+		if ( '' === $code && '' === $error ) {
+			// Normal admin page load — not a callback. Don't touch the transient.
+			return;
+		}
+
 		$expected = (string) get_transient( self::STATE_TRANSIENT );
-		delete_transient( self::STATE_TRANSIENT );
 
 		$redirect = add_query_arg(
 			array( 'page' => 'shopwalk-for-woocommerce' ),
@@ -125,13 +134,19 @@ final class Shopwalk_Connect {
 		);
 
 		if ( '' !== $error ) {
+			delete_transient( self::STATE_TRANSIENT );
 			wp_safe_redirect( add_query_arg( 'sw_connect', 'declined', $redirect ) );
 			exit;
 		}
 		if ( '' === $code || '' === $state || ! hash_equals( $expected, $state ) ) {
+			// Don't delete the transient on mismatch — a retry (e.g. user lands
+			// twice via login bounce) should be allowed to succeed within TTL.
 			wp_safe_redirect( add_query_arg( 'sw_connect', 'state_mismatch', $redirect ) );
 			exit;
 		}
+
+		// State validated — consume the transient now so a replay can't reuse it.
+		delete_transient( self::STATE_TRANSIENT );
 
 		$result = self::exchange_code( $code );
 		if ( ! $result['ok'] ) {
