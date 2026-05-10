@@ -3,7 +3,7 @@
  * Plugin Name: Shopwalk for WooCommerce
  * Plugin URI:  https://github.com/shopwalk-inc/shopwalk-for-woocommerce
  * Description: Make any WooCommerce store fully purchasable by AI shopping agents. UCP-compliant — implements the Universal Commerce Protocol (ucp.dev) for checkout, OAuth identity, orders, webhooks. Optional Shopwalk network integration available with a free license.
- * Version:     3.1.10
+ * Version:     3.1.11
  * Author:      Shopwalk, Inc.
  * Author URI:  https://shopwalk.com
  * Requires Plugins: woocommerce
